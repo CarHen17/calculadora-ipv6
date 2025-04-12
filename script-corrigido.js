@@ -201,46 +201,6 @@ window.utils = {
         prefix: prefix,
         numSubRedes: numSubRedes.toString()
       });
-
-// Adicionar um diagnóstico para verificar se os objetos globais estão acessíveis
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    console.log("Verificação final de objetos globais:");
-    console.log("- window.utils disponível:", typeof window.utils !== 'undefined');
-    console.log("- window.ui disponível:", typeof window.ui !== 'undefined');
-    console.log("- window.appState disponível:", typeof window.appState !== 'undefined');
-    
-    const diagnosticoDiv = document.createElement('div');
-    diagnosticoDiv.style.position = 'fixed';
-    diagnosticoDiv.style.bottom = '10px';
-    diagnosticoDiv.style.left = '10px';
-    diagnosticoDiv.style.background = '#4CAF50';
-    diagnosticoDiv.style.color = 'white';
-    diagnosticoDiv.style.padding = '10px';
-    diagnosticoDiv.style.borderRadius = '5px';
-    diagnosticoDiv.style.zIndex = '9999';
-    diagnosticoDiv.style.fontSize = '12px';
-    
-    if (typeof window.utils !== 'undefined' && typeof window.ui !== 'undefined' && typeof window.appState !== 'undefined') {
-      diagnosticoDiv.textContent = "✓ Inicialização OK";
-      diagnosticoDiv.style.cursor = 'pointer';
-      diagnosticoDiv.title = "Clique para fechar";
-      diagnosticoDiv.onclick = function() {
-        document.body.removeChild(diagnosticoDiv);
-      };
-      setTimeout(function() {
-        if (diagnosticoDiv.parentNode) {
-          document.body.removeChild(diagnosticoDiv);
-        }
-      }, 5000);
-    } else {
-      diagnosticoDiv.textContent = "❌ Erro na inicialização";
-      diagnosticoDiv.style.background = '#F44336';
-    }
-    
-    document.body.appendChild(diagnosticoDiv);
-  }, 1000);
-});
       
       let i = 0n;
       const chunkSize = 1000n;
@@ -732,135 +692,6 @@ window.gerarMaisIPs = gerarMaisIPs;
 window.resetarIPsGerados = resetarIPsGerados;
 window.selecionarPrefixo = selecionarPrefixo;
 
-// PARTE 5: INICIALIZAÇÃO DA APLICAÇÃO
-// =============================================
-document.addEventListener('DOMContentLoaded', function() {
-  try {
-    console.log("DOM carregado - iniciando aplicação");
-    
-    // Associar funções aos elementos
-    if (document.getElementById('calcularBtn')) {
-      document.getElementById('calcularBtn').addEventListener('click', calcularSubRedes);
-      console.log("Evento click adicionado ao botão calcularBtn");
-    } else {
-      console.error("Elemento calcularBtn não encontrado!");
-    }
-    
-    if (document.getElementById('resetBtn')) {
-      document.getElementById('resetBtn').addEventListener('click', resetarCalculadora);
-      console.log("Evento click adicionado ao botão resetBtn");
-    } else {
-      console.error("Elemento resetBtn não encontrado!");
-    }
-    
-    if (document.getElementById('toggleThemeButton')) {
-      document.getElementById('toggleThemeButton').addEventListener('click', window.ui.toggleTheme);
-      console.log("Evento click adicionado ao botão toggleThemeButton");
-    } else {
-      console.error("Elemento toggleThemeButton não encontrado!");
-    }
-    
-    if (document.getElementById('toggleMainBlockIpsBtn')) {
-      document.getElementById('toggleMainBlockIpsBtn').addEventListener('click', toggleMainBlockIps);
-      console.log("Evento click adicionado ao botão toggleMainBlockIpsBtn");
-    } else {
-      console.error("Elemento toggleMainBlockIpsBtn não encontrado!");
-    }
-    
-    if (document.getElementById('loadMoreButton')) {
-      document.getElementById('loadMoreButton').addEventListener('click', function() {
-        window.ui.carregarMaisSubRedes();
-      });
-      console.log("Evento click adicionado ao botão loadMoreButton");
-    } else {
-      console.error("Elemento loadMoreButton não encontrado!");
-    }
-    
-    if (document.getElementById('gerarIPsButton')) {
-      document.getElementById('gerarIPsButton').addEventListener('click', gerarPrimeirosIPs);
-      console.log("Evento click adicionado ao botão gerarIPsButton");
-    } else {
-      console.error("Elemento gerarIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('gerarMaisIPsButton')) {
-      document.getElementById('gerarMaisIPsButton').addEventListener('click', gerarMaisIPs);
-      console.log("Evento click adicionado ao botão gerarMaisIPsButton");
-    } else {
-      console.error("Elemento gerarMaisIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('resetIPsButton')) {
-      document.getElementById('resetIPsButton').addEventListener('click', resetarIPsGerados);
-      console.log("Evento click adicionado ao botão resetIPsButton");
-    } else {
-      console.error("Elemento resetIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('moreMainBlockIpsBtn')) {
-      document.getElementById('moreMainBlockIpsBtn').addEventListener('click', gerarMaisIPsDoBloco);
-      console.log("Evento click adicionado ao botão moreMainBlockIpsBtn");
-    } else {
-      console.error("Elemento moreMainBlockIpsBtn não encontrado!");
-    }
-    
-    if (document.getElementById('resetMainBlockIPsButton')) {
-      document.getElementById('resetMainBlockIPsButton').addEventListener('click', resetarIPsMainBlock);
-      console.log("Evento click adicionado ao botão resetMainBlockIPsButton");
-    } else {
-      console.error("Elemento resetMainBlockIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('continuarBtn')) {
-      document.getElementById('continuarBtn').addEventListener('click', mostrarSugestoesDivisao);
-      console.log("Evento click adicionado ao botão continuarBtn");
-    } else {
-      console.error("Elemento continuarBtn não encontrado!");
-    }
-    
-    if (document.getElementById('selectAll')) {
-      document.getElementById('selectAll').addEventListener('change', window.ui.toggleSelectAll);
-      console.log("Evento change adicionado ao elemento selectAll");
-    } else {
-      console.error("Elemento selectAll não encontrado!");
-    }
-    
-    // Botões de navegação
-    if (document.getElementById('topBtn')) {
-      document.getElementById('topBtn').addEventListener('click', window.ui.scrollToTop);
-      console.log("Evento click adicionado ao botão topBtn");
-    } else {
-      console.error("Elemento topBtn não encontrado!");
-    }
-    
-    if (document.getElementById('bottomBtn')) {
-      document.getElementById('bottomBtn').addEventListener('click', window.ui.scrollToBottom);
-      console.log("Evento click adicionado ao botão bottomBtn");
-    } else {
-      console.error("Elemento bottomBtn não encontrado!");
-    }
-    
-    // Detectar preferência de tema escuro do sistema
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      window.ui.toggleTheme();
-      console.log("Tema escuro ativado baseado na preferência do sistema");
-    }
-    
-    // Inicializar otimizações móveis
-    window.ui.initMobileOptimizations();
-    console.log("Otimizações para dispositivos móveis inicializadas");
-    
-    // Adicionar listener para redimensionamento da janela
-    window.addEventListener('resize', window.ui.ajustarLayoutResponsive);
-    console.log("Listener de redimensionamento adicionado");
-    
-    console.log("Inicialização completa da calculadora IPv6");
-  } catch (error) {
-    console.error("Erro durante a inicialização da aplicação:", error);
-    alert("Ocorreu um erro ao inicializar a aplicação. Verifique o console para mais detalhes.");
-  }
-});
-
 // Função para calcular sub-redes
 function calcularSubRedes() {
   try {
@@ -1203,6 +1034,61 @@ function resetarIPsGerados() {
 }
 
 // Função para selecionar prefixo
+function selecionarPrefixo(prefix) {
+  try {
+    console.log("Selecionando prefixo:", prefix);
+    let ipv6Input = document.getElementById('ipv6').value.trim();
+    let [endereco, prefixoInicial] = ipv6Input.split('/');
+    prefixoInicial = parseInt(prefixoInicial);
+    
+    if (!endereco || isNaN(prefixoInicial)) {
+      alert("Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).");
+      return;
+    }
+    
+    if (prefix <= prefixoInicial) {
+      alert("O prefixo selecionado deve ser maior que o prefixo inicial.");
+      return;
+    }
+    
+    let enderecoCompleto = window.utils.expandIPv6Address(ipv6Input);
+    if (enderecoCompleto.startsWith("Erro")) {
+      alert(enderecoCompleto);
+      return;
+    }
+    
+    let ipv6SemDoisPontos = enderecoCompleto.replace(/:/g, '');
+    let ipv6BigInt = BigInt("0x" + ipv6SemDoisPontos);
+    let bitsAdicionais = prefix - prefixoInicial;
+    let numSubRedes = 1n << BigInt(bitsAdicionais);
+    
+    document.getElementById('loadingIndicator').style.display = 'flex';
+    document.getElementById('suggestions').style.display = 'none';
+    
+    let initialMask = ((1n << BigInt(prefixoInicial)) - 1n) << (128n - BigInt(prefixoInicial));
+    window.appState.subRedesGeradas = [];
+    window.appState.subRedesExibidas = 0;
+    document.getElementById('subnetsTable').getElementsByTagName('tbody')[0].innerHTML = "";
+    window.appState.totalSubRedesGerar = Number(numSubRedes);
+    
+    setTimeout(() => {
+      window.utils.gerarSubRedesAssincronamente(ipv6BigInt, initialMask, prefix, numSubRedes, () => {
+        window.ui.carregarMaisSubRedes();
+        document.getElementById('loadMoreContainer').style.display = window.appState.subRedesGeradas.length > 100 ? 'block' : 'none';
+        document.getElementById('resultado').style.display = 'block';
+        document.getElementById('mainBlockSection').style.display = 'none';
+        document.getElementById('aggregatedSidebar').style.display = 'none';
+        document.getElementById('aggregatedPrefix').innerText = "N/A";
+        window.ui.ajustarLayoutResponsive();
+      }, window.appState);
+    }, 50);
+  } catch (error) {
+    console.error("Erro ao selecionar prefixo:", error);
+    document.getElementById('loadingIndicator').style.display = 'none';
+    alert("Ocorreu um erro ao processar as sub-redes. Verifique o console para mais detalhes.");
+  }
+}
+
 // PARTE 5: INICIALIZAÇÃO DA APLICAÇÃO
 // =============================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -1258,56 +1144,116 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('gerarMaisIPsButton').addEventListener('click', gerarMaisIPs);
       console.log("Evento click adicionado ao botão gerarMaisIPsButton");
     } else {
-  try {
-    console.log("Selecionando prefixo:", prefix);
-    let ipv6Input = document.getElementById('ipv6').value.trim();
-    let [endereco, prefixoInicial] = ipv6Input.split('/');
-    prefixoInicial = parseInt(prefixoInicial);
-    
-    if (!endereco || isNaN(prefixoInicial)) {
-      alert("Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).");
-      return;
+      console.error("Elemento gerarMaisIPsButton não encontrado!");
     }
     
-    if (prefix <= prefixoInicial) {
-      alert("O prefixo selecionado deve ser maior que o prefixo inicial.");
-      return;
+    if (document.getElementById('resetIPsButton')) {
+      document.getElementById('resetIPsButton').addEventListener('click', resetarIPsGerados);
+      console.log("Evento click adicionado ao botão resetIPsButton");
+    } else {
+      console.error("Elemento resetIPsButton não encontrado!");
     }
     
-    let enderecoCompleto = window.utils.expandIPv6Address(ipv6Input);
-    if (enderecoCompleto.startsWith("Erro")) {
-      alert(enderecoCompleto);
-      return;
+    if (document.getElementById('moreMainBlockIpsBtn')) {
+      document.getElementById('moreMainBlockIpsBtn').addEventListener('click', gerarMaisIPsDoBloco);
+      console.log("Evento click adicionado ao botão moreMainBlockIpsBtn");
+    } else {
+      console.error("Elemento moreMainBlockIpsBtn não encontrado!");
     }
     
-    let ipv6SemDoisPontos = enderecoCompleto.replace(/:/g, '');
-    let ipv6BigInt = BigInt("0x" + ipv6SemDoisPontos);
-    let bitsAdicionais = prefix - prefixoInicial;
-    let numSubRedes = 1n << BigInt(bitsAdicionais);
+    if (document.getElementById('resetMainBlockIPsButton')) {
+      document.getElementById('resetMainBlockIPsButton').addEventListener('click', resetarIPsMainBlock);
+      console.log("Evento click adicionado ao botão resetMainBlockIPsButton");
+    } else {
+      console.error("Elemento resetMainBlockIPsButton não encontrado!");
+    }
     
-    document.getElementById('loadingIndicator').style.display = 'flex';
-    document.getElementById('suggestions').style.display = 'none';
+    if (document.getElementById('continuarBtn')) {
+      document.getElementById('continuarBtn').addEventListener('click', mostrarSugestoesDivisao);
+      console.log("Evento click adicionado ao botão continuarBtn");
+    } else {
+      console.error("Elemento continuarBtn não encontrado!");
+    }
     
-    let initialMask = ((1n << BigInt(prefixoInicial)) - 1n) << (128n - BigInt(prefixoInicial));
-    window.appState.subRedesGeradas = [];
-    window.appState.subRedesExibidas = 0;
-    document.getElementById('subnetsTable').getElementsByTagName('tbody')[0].innerHTML = "";
-    window.appState.totalSubRedesGerar = Number(numSubRedes);
+    if (document.getElementById('selectAll')) {
+      document.getElementById('selectAll').addEventListener('change', window.ui.toggleSelectAll);
+      console.log("Evento change adicionado ao elemento selectAll");
+    } else {
+      console.error("Elemento selectAll não encontrado!");
+    }
     
-    setTimeout(() => {
-      window.utils.gerarSubRedesAssincronamente(ipv6BigInt, initialMask, prefix, numSubRedes, () => {
-        window.ui.carregarMaisSubRedes();
-        document.getElementById('loadMoreContainer').style.display = window.appState.subRedesGeradas.length > 100 ? 'block' : 'none';
-        document.getElementById('resultado').style.display = 'block';
-        document.getElementById('mainBlockSection').style.display = 'none';
-        document.getElementById('aggregatedSidebar').style.display = 'none';
-        document.getElementById('aggregatedPrefix').innerText = "N/A";
-        window.ui.ajustarLayoutResponsive();
-      }, window.appState);
-    }, 50);
+    // Botões de navegação
+    if (document.getElementById('topBtn')) {
+      document.getElementById('topBtn').addEventListener('click', window.ui.scrollToTop);
+      console.log("Evento click adicionado ao botão topBtn");
+    } else {
+      console.error("Elemento topBtn não encontrado!");
+    }
+    
+    if (document.getElementById('bottomBtn')) {
+      document.getElementById('bottomBtn').addEventListener('click', window.ui.scrollToBottom);
+      console.log("Evento click adicionado ao botão bottomBtn");
+    } else {
+      console.error("Elemento bottomBtn não encontrado!");
+    }
+    
+    // Detectar preferência de tema escuro do sistema
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      window.ui.toggleTheme();
+      console.log("Tema escuro ativado baseado na preferência do sistema");
+    }
+    
+    // Inicializar otimizações móveis
+    window.ui.initMobileOptimizations();
+    console.log("Otimizações para dispositivos móveis inicializadas");
+    
+    // Adicionar listener para redimensionamento da janela
+    window.addEventListener('resize', window.ui.ajustarLayoutResponsive);
+    console.log("Listener de redimensionamento adicionado");
+    
+    console.log("Inicialização completa da calculadora IPv6");
   } catch (error) {
-    console.error("Erro ao selecionar prefixo:", error);
-    document.getElementById('loadingIndicator').style.display = 'none';
-    alert("Ocorreu um erro ao processar as sub-redes. Verifique o console para mais detalhes.");
+    console.error("Erro durante a inicialização da aplicação:", error);
+    alert("Ocorreu um erro ao inicializar a aplicação. Verifique o console para mais detalhes.");
   }
-}
+});
+
+// Adicionar diagnóstico para verificar se os objetos globais estão acessíveis
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    console.log("Verificação final de objetos globais:");
+    console.log("- window.utils disponível:", typeof window.utils !== 'undefined');
+    console.log("- window.ui disponível:", typeof window.ui !== 'undefined');
+    console.log("- window.appState disponível:", typeof window.appState !== 'undefined');
+    
+    const diagnosticoDiv = document.createElement('div');
+    diagnosticoDiv.style.position = 'fixed';
+    diagnosticoDiv.style.bottom = '10px';
+    diagnosticoDiv.style.left = '10px';
+    diagnosticoDiv.style.background = '#4CAF50';
+    diagnosticoDiv.style.color = 'white';
+    diagnosticoDiv.style.padding = '10px';
+    diagnosticoDiv.style.borderRadius = '5px';
+    diagnosticoDiv.style.zIndex = '9999';
+    diagnosticoDiv.style.fontSize = '12px';
+    
+    if (typeof window.utils !== 'undefined' && typeof window.ui !== 'undefined' && typeof window.appState !== 'undefined') {
+      diagnosticoDiv.textContent = "✓ Inicialização OK";
+      diagnosticoDiv.style.cursor = 'pointer';
+      diagnosticoDiv.title = "Clique para fechar";
+      diagnosticoDiv.onclick = function() {
+        document.body.removeChild(diagnosticoDiv);
+      };
+      setTimeout(function() {
+        if (diagnosticoDiv.parentNode) {
+          document.body.removeChild(diagnosticoDiv);
+        }
+      }, 5000);
+    } else {
+      diagnosticoDiv.textContent = "❌ Erro na inicialização";
+      diagnosticoDiv.style.background = '#F44336';
+    }
+    
+    document.body.appendChild(diagnosticoDiv);
+  }, 1000);
+});
