@@ -1,42 +1,60 @@
 /**************************************************************
    IMPORTAÇÃO DE FONTES
 **************************************************************/
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 /**************************************************************
    VARIÁVEIS BÁSICAS
 **************************************************************/
 :root {
-  --font-family: 'Roboto', sans-serif;
-  --primary-color: #0078d7;       /* Cor principal (botões, destaques) */
-  --primary-hover: #005fa3;       /* Hover da cor principal */
-  --secondary-color: #5cb85c;     /* Cor secundária (botões secundários) */
-  --secondary-hover: #4cae4c;     /* Hover secundário */
-  --error-color: #f44336;         /* Cor para erros */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   
-  --text-light: #333;            /* Texto modo claro */
-  --text-dark: #e2e2e2;           /* Texto modo escuro mais claro */
-
-  /* Tons de fundo e borda no modo claro */
-  --background-light: #fafafa;   
-  --sidebar-bg-light: #f7fdf7;   
-  --sidebar-border-light: #cbe3cb;
-
-  /* Tons de fundo e borda no modo escuro */
-  --background-dark: #1f1f1f;    
-  --sidebar-bg-dark: #2a2a2a;    
-  --sidebar-border-dark: #3a3a3a;
-
-  --blur-amount: 8px;
-  --container-shadow: 0 4px 24px rgba(0,0,0,0.1);
-  --border-radius: 10px;
+  /* Cores principais */
+  --primary-color: #0070d1;       /* Tom de azul mais vibrante */
+  --primary-light: #2689db;       /* Azul mais claro para hovers */
+  --primary-dark: #0056a3;        /* Azul mais escuro para bordas */
+  
+  /* Cores secundárias - Verde */
+  --secondary-color: #4caf50;     /* Verde principal para botões secundários */
+  --secondary-light: #66bb6a;     /* Verde mais claro para hovers */
+  --secondary-dark: #2e7d32;      /* Verde mais escuro para texto de sucesso */
+  
+  /* Cores de alerta e erro */
+  --error-color: #e53935;         /* Vermelho principal */
+  --error-light: #ffebee;         /* Fundo vermelho claro */
+  --warning-color: #ffa000;       /* Laranja/amarelo para avisos */
+  --success-color: #4caf50;       /* Verde para sucessos */
+  
+  /* Tons neutros - Modo Claro */
+  --text-light: #24292f;          /* Texto principal - quase preto com tom azulado */
+  --text-light-secondary: #57606a; /* Texto secundário - cinza mais escuro */
+  --bg-light: #ffffff;            /* Fundo branco */
+  --bg-light-accent: #f6f8fa;     /* Fundo cinza muito claro para cards */
+  --border-light: #d0d7de;        /* Borda cinza claro */
+  
+  /* Tons neutros - Modo Escuro */
+  --text-dark: #e6edf3;           /* Texto principal - quase branco */
+  --text-dark-secondary: #8b949e; /* Texto secundário - cinza mais claro */
+  --bg-dark: #0d1117;             /* Fundo escuro */
+  --bg-dark-accent: #161b22;      /* Fundo ligeiramente mais claro para cards */
+  --border-dark: #30363d;         /* Borda cinza escuro */
+  
+  /* Elementos específicos */
+  --blur-amount: 10px;
+  --container-shadow: 0 8px 30px rgba(0,0,0,0.12);
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --border-radius: 8px;
+  --border-radius-sm: 4px;
   --sidebar-gap: 24px;
   
+  /* Transições */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  
   /* Ajustes para mobile */
-  --mobile-padding: 12px;
-  --mobile-button-height: 44px;
-  --mobile-input-height: 48px;
-  --mobile-border-radius: 8px;
+  --mobile-padding: 16px;
+  --mobile-button-height: 48px;
+  --mobile-input-height: 52px;
   --mobile-font-size: 16px;
   --mobile-header-font-size: 1.5em;
 }
@@ -44,13 +62,27 @@
 /**************************************************************
    CONFIGURAÇÃO GLOBAL
 **************************************************************/
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: var(--font-family);
-  margin: 0;
-  background: url('https://source.unsplash.com/1600x900/?cloud') no-repeat center center fixed;
-  background-size: cover;
+  font-size: 16px;
+  line-height: 1.5;
   color: var(--text-light);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background: url('https://source.unsplash.com/1600x900/?cloud,tech') no-repeat center center fixed;
+  background-size: cover;
+  transition: color var(--transition-normal), background-color var(--transition-normal);
+  min-height: 100vh;
+  padding: 0;
+  margin: 0;
 }
 
 /**************************************************************
@@ -63,32 +95,54 @@ a:focus {
   outline-offset: 2px;
 }
 
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible),
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
 /**************************************************************
-   MODO CLARO
+   CONTAINER PRINCIPAL
 **************************************************************/
 .container {
   max-width: 1200px;
-  margin: 20px auto;
-  background: var(--background-light);
+  margin: 24px auto;
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(var(--blur-amount));
+  -webkit-backdrop-filter: blur(var(--blur-amount));
   border-radius: var(--border-radius);
-  padding: 20px;
+  padding: 32px;
   box-shadow: var(--container-shadow);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color var(--transition-normal);
 }
 
 /**************************************************************
    MODO ESCURO
 **************************************************************/
 body.dark-mode {
-  background-color: #171717;
-  background-image: none;
+  background-color: var(--bg-dark);
   color: var(--text-dark);
 }
 
 body.dark-mode .container {
-  background-color: var(--background-dark);
-  border: 1px solid #2b2b2b;
+  background: rgba(13, 17, 23, 0.92);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Cores de texto no modo escuro */
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode h3, 
+body.dark-mode h4,
+body.dark-mode label {
+  color: var(--text-dark);
 }
 
 /* Principais blocos no modo escuro */
@@ -98,50 +152,59 @@ body.dark-mode .sidebar,
 body.dark-mode .suggestions,
 body.dark-mode .scrollable-list,
 body.dark-mode .info-block {
-  background-color: var(--sidebar-bg-dark) !important;
-  color: var(--text-dark) !important;
-  border-color: var(--sidebar-border-dark) !important;
+  background-color: var(--bg-dark-accent);
+  color: var(--text-dark);
+  border-color: var(--border-dark);
 }
 
-body.dark-mode table th,
+/* Tabelas no modo escuro */
+body.dark-mode table th {
+  background-color: var(--bg-dark-accent);
+  border-color: var(--border-dark);
+  color: var(--text-dark);
+}
+
 body.dark-mode table td {
-  background-color: var(--sidebar-bg-dark);
-  border-color: var(--sidebar-border-dark);
+  background-color: var(--bg-dark-accent);
+  border-color: var(--border-dark);
   color: var(--text-dark);
 }
 
+/* Inputs no modo escuro */
 body.dark-mode input {
-  background-color: #2c2c2c;
+  background-color: var(--bg-dark-accent);
   color: var(--text-dark);
-  border: 1px solid #555;
+  border: 1px solid var(--border-dark);
 }
 
+body.dark-mode input:focus {
+  border-color: var(--primary-light);
+  box-shadow: 0 0 0 3px rgba(0, 112, 209, 0.2);
+}
+
+/* Lista de IPs no modo escuro */
 body.dark-mode .ips-item {
-  background-color: #2c2c2c;
+  background-color: var(--bg-dark-accent);
   color: var(--text-dark);
-  border-color: #444;
+  border-color: var(--border-dark);
 }
+
 body.dark-mode .ips-item:hover {
-  background-color: #353535;
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-body.dark-mode label,
-body.dark-mode .info-label {
-  color: var(--text-dark);
-}
-
+/* Mensagens de erro no modo escuro */
 body.dark-mode .error-message {
-  background-color: #2c2c2c;
-  color: #ff9999;
+  background-color: rgba(229, 57, 53, 0.1);
+  color: #ff8a85;
   border-left-color: var(--error-color);
 }
 
-body.dark-mode .nav-btn {
-  background-color: var(--primary-color);
-  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-body.dark-mode .nav-btn:hover {
-  background-color: var(--primary-hover);
+/* Tooltip no modo escuro */
+body.dark-mode .sidebar-tooltip,
+body.dark-mode .ips-tooltip {
+  background-color: var(--bg-dark-accent);
+  color: var(--secondary-light);
 }
 
 /**************************************************************
@@ -152,52 +215,138 @@ body.dark-mode .nav-btn:hover {
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-  transition: all 0.3s ease;
+  gap: 16px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding-bottom: 16px;
+}
+
+body.dark-mode .header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .header h1 {
   margin: 0;
-  font-size: 2em;
-  font-weight: 600;
+  font-size: 28px;
+  font-weight: 700;
   color: var(--text-light);
-}
-
-body.dark-mode .header h1 {
-  color: #fafafa !important;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+  transition: color var(--transition-normal);
 }
 
 .header-buttons {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-.header-buttons button {
+/**************************************************************
+   BOTÕES PRINCIPAIS
+**************************************************************/
+button {
+  cursor: pointer;
+  font-family: var(--font-family);
+  font-weight: 500;
+  border: none;
+  border-radius: var(--border-radius-sm);
+  padding: 10px 16px;
+  transition: all var(--transition-fast);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 12px;
-  font-size: 14px;
-  cursor: pointer;
-  border: none;
-  border-radius: 5px;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  color: #fff;
-  background-color: var(--primary-color);
-}
-.header-buttons button:hover {
-  background-color: var(--primary-hover);
-  transform: scale(1.02);
+  gap: 8px;
+  white-space: nowrap;
+  outline: none;
 }
 
+/* Botões primários e secundários */
+.btn-primary,
+.btn-secondary {
+  font-size: 14px;
+  font-weight: 500;
+  width: auto;
+  color: white;
+  height: 40px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-primary:hover, 
+.btn-primary:focus {
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-primary:active {
+  background-color: var(--primary-dark);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  color: white;
+}
+
+.btn-secondary:hover, 
+.btn-secondary:focus {
+  background-color: var(--secondary-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.btn-secondary:active {
+  background-color: var(--secondary-dark);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Botão de resetar */
 #resetBtn {
   background-color: var(--error-color);
 }
-#resetBtn:hover {
-  background-color: #d32f2f;
+
+#resetBtn:hover, 
+#resetBtn:focus {
+  background-color: #f44336;
+}
+
+/* Botões de menu - compactos */
+.header-buttons button {
+  padding: 8px 12px;
+  border-radius: var(--border-radius-sm);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Botão full-width */
+.full-width-button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Ícones dentro dos botões */
+.btn-icon {
+  font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botão desabilitado */
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+  box-shadow: none;
+}
+
+button:disabled:hover {
+  transform: none;
+  box-shadow: none;
 }
 
 /**************************************************************
@@ -212,51 +361,32 @@ body.dark-mode .header h1 {
 /**************************************************************
    FORMULÁRIO
 **************************************************************/
-label {
+.main-content > label {
   display: block;
-  margin-bottom: 6px;
-  font-weight: bold;
-}
-input {
-  display: block;
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 12px;
-  font-size: 16px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: var(--text-light);
+  transition: color var(--transition-normal);
 }
 
-/**************************************************************
-   BOTÕES PRIMÁRIOS E SECUNDÁRIOS
-**************************************************************/
-.btn-primary,
-.btn-secondary {
-  padding: 10px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-  color: #fff;
-  width: auto;
-  font-family: var(--font-family);
-  font-size: 14px;
-  font-weight: 500;
+.main-content > input {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 16px;
+  font-size: 16px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-sm);
+  transition: all var(--transition-fast);
 }
-.btn-primary {
-  background-color: var(--primary-color);
+
+.main-content > input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(0, 112, 209, 0.2);
 }
-.btn-primary:hover {
-  background-color: var(--primary-hover);
-  transform: scale(1.02);
-}
-.btn-secondary {
-  background-color: var(--secondary-color);
-}
-.btn-secondary:hover {
-  background-color: var(--secondary-hover);
-  transform: scale(1.02);
+
+.main-content > input::placeholder {
+  color: #aaa;
 }
 
 /**************************************************************
@@ -265,128 +395,201 @@ input {
 .resultado,
 .ips-container,
 .suggestions {
-  background-color: var(--sidebar-bg-light);
-  border: 1px solid var(--sidebar-border-light);
-  border-radius: 5px;
-  padding: 15px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--bg-light-accent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 24px;
+  transition: all var(--transition-normal);
 }
+
 .resultado h3,
 .ips-container h3,
 .suggestions h3 {
-  margin-top: 0;
-  color: #2e7d32;
+  margin: 0 0 16px 0;
   font-weight: 600;
+  font-size: 18px;
+  color: var(--secondary-dark);
+  transition: color var(--transition-normal);
 }
 
+body.dark-mode .resultado h3,
+body.dark-mode .ips-container h3,
+body.dark-mode .suggestions h3 {
+  color: var(--secondary-light);
+}
+
+/* Estilo para tabelas */
 table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 15px;
-  transition: all 0.3s ease;
-}
-table th,
-table td {
-  border: 1px solid #ddd;
-  padding: 10px;
-  text-align: left;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  margin-top: 16px;
+  border-radius: var(--border-radius-sm);
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-/* Load More Container */
+table th {
+  background-color: var(--bg-light-accent);
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
+}
+
+table td {
+  padding: 12px;
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
+}
+
+table tr:hover td {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+body.dark-mode table tr:hover td {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+/* Checkbox na tabela */
+table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
+  border: 1px solid var(--border-light);
+  cursor: pointer;
+}
+
+/* Linha selecionada na tabela */
+tr.selected td {
+  background-color: rgba(76, 175, 80, 0.05);
+}
+
+body.dark-mode tr.selected td {
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+/* Botão carregar mais */
 .load-more {
   text-align: center;
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 /**************************************************************
    LISTA DE IPS
 **************************************************************/
-ul#ipsList,
-ul#mainBlockIpsList {
+ul.mobile-optimized-list {
   list-style: none;
   margin: 0;
   padding: 0;
 }
+
 .ips-item {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  margin: 6px 0;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  background-color: #fff;
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  gap: 12px;
+  padding: 12px 16px;
+  margin: 8px 0;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-sm);
+  background-color: white;
+  transition: all var(--transition-fast);
   position: relative;
 }
+
 .ips-item:hover {
-  transform: scale(1.01);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
+
 .ip-number {
   width: 30px;
   text-align: right;
-  color: #666;
+  color: var(--text-light-secondary);
   font-size: 13px;
+  font-weight: 500;
   flex-shrink: 0;
+  transition: color var(--transition-normal);
 }
+
+body.dark-mode .ip-number {
+  color: var(--text-dark-secondary);
+}
+
 .ip-text {
   flex: 1;
-  font-family: monospace;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 14px;
   overflow-wrap: break-word;
 }
 
 /**************************************************************
-   BOTÃO DE COPIAR (COPY BUTTON)
+   BOTÃO COPIAR APRIMORADO
 **************************************************************/
-/*
-   Estrutura interna do botão:
-   <button class="copy-btn" onclick="...">
-     <span class="icon">📋</span>
-     <span class="copy-text">Copiado!</span>
-   </button>
-*/
 .copy-btn {
-  margin-left: auto;
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: var(--border-radius-sm);
+  height: 32px;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 500;
+  position: relative;
+  transition: all var(--transition-fast);
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  background-color: var(--primary-color);
-  color: #fff;
-  font-weight: 500;
-  border: none;
-  border-radius: 5px;
-  padding: 6px 10px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  justify-content: center;
 }
 
 .copy-btn:hover {
-  background-color: var(--primary-hover);
-  transform: scale(1.1);
+  background-color: var(--primary-light);
+  transform: translateY(-1px);
 }
 
-.copy-btn .icon {
-  display: inline-block;
+.copy-btn:active {
+  background-color: var(--primary-dark);
+  transform: translateY(0);
 }
 
-.copy-btn .copy-text {
-  display: none;
-  font-weight: bold;
+/* Variante para botões de copiar nas listas de IPs */
+.ips-item .copy-btn {
+  margin-left: auto;
+  display: inline-flex;
+  flex-shrink: 0;
 }
 
-/* Ao clicar, o ícone some e aparece o texto "Copiado!" */
-.copy-btn.clicked .icon {
-  display: none;
+/* Tooltip para feedback visual */
+.copy-btn.copied::after {
+  content: "Copiado!";
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--secondary-dark);
+  color: white;
+  padding: 4px 8px;
+  border-radius: var(--border-radius-sm);
+  font-size: 12px;
+  white-space: nowrap;
+  animation: fade-out 1.5s ease-in-out forwards;
+  pointer-events: none;
 }
 
-.copy-btn.clicked .copy-text {
-  display: inline-block;
+@keyframes fade-out {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Personalização para alguns cenários */
+.info-value-container .copy-btn {
+  margin-left: 8px;
+  height: 28px;
+  padding: 0 8px;
 }
 
 /**************************************************************
@@ -395,28 +598,64 @@ ul#mainBlockIpsList {
 .scrollable-list {
   max-height: 200px;
   overflow-y: auto;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 10px;
-  background-color: #fff;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-sm);
+  padding: 12px;
+  background-color: white;
+  transition: all var(--transition-normal);
+  scrollbar-width: thin;
 }
+
+.scrollable-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollable-list::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 4px;
+}
+
+.scrollable-list::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
 .scrollable-list div {
   padding: 10px;
   cursor: pointer;
-  border-radius: 4px;
-  margin-bottom: 2px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: var(--border-radius-sm);
+  margin-bottom: 4px;
+  transition: all var(--transition-fast);
+  font-weight: 500;
 }
+
+.scrollable-list div:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .scrollable-list div:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.scrollable-list div.selected {
+  background-color: rgba(0, 112, 209, 0.1);
+  border-left: 3px solid var(--primary-color);
+}
+
+body.dark-mode .scrollable-list div.selected {
+  background-color: rgba(0, 112, 209, 0.2);
+}
+
+/* Mensagens de erro */
 .error-message {
   color: var(--error-color);
-  font-weight: bold;
-  margin-top: 10px;
-  padding: 10px;
-  background-color: #ffebee;
-  border-radius: 4px;
+  font-weight: 500;
+  margin: 12px 0;
+  padding: 12px 16px;
+  background-color: var(--error-light);
+  border-radius: var(--border-radius-sm);
   border-left: 4px solid var(--error-color);
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  transition: all var(--transition-normal);
 }
 
 /**************************************************************
@@ -424,355 +663,230 @@ ul#mainBlockIpsList {
 **************************************************************/
 .loader-container {
   display: flex;
+  align-items: center;
   justify-content: center;
   margin: 25px 0;
+  padding: 24px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: var(--border-radius);
+  backdrop-filter: blur(4px);
 }
+
+body.dark-mode .loader-container {
+  background-color: rgba(13, 17, 23, 0.7);
+}
+
 .loader {
-  border: 4px solid #f3f3f3;
+  border: 3px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  border-top: 4px solid var(--primary-color);
-  width: 32px;
-  height: 32px;
-  animation: spin 0.7s linear infinite;
+  border-top: 3px solid var(--primary-color);
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
 }
+
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
 .loading-message {
-  margin-left: 12px;
-  line-height: 32px;
-  color: var(--primary-color);
-  font-weight: bold;
+  margin-left: 16px;
+  font-weight: 500;
+  color: var(--text-light);
+}
+
+body.dark-mode .loading-message {
+  color: var(--text-dark);
 }
 
 /**************************************************************
    SIDEBAR E NAVEGAÇÃO LATERAL
 **************************************************************/
 .sidebar {
-  background-color: var(--sidebar-bg-light);
-  border: 1px solid var(--sidebar-border-light);
-  border-radius: 5px;
-  padding: 15px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  background-color: var(--bg-light-accent);
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  transition: all var(--transition-normal);
   min-width: 250px;
 }
+
+.sidebar h3 {
+  margin: 0 0 16px 0;
+  color: var(--primary-color);
+  font-weight: 600;
+  font-size: 18px;
+}
+
+body.dark-mode .sidebar h3 {
+  color: var(--primary-light);
+}
+
+/* Botões de navegação fixos */
 .nav-buttons {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  right: 24px;
+  bottom: 24px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   z-index: 1000;
 }
+
 .nav-btn {
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   background-color: var(--primary-color);
   color: white;
-  border: none;
+  font-size: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+  transition: all var(--transition-fast);
+  border: none;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  font-size: 22px;
 }
-.nav-btn:hover {
-  background-color: var(--primary-hover);
-  transform: scale(1.1);
+
+.nav-btn:hover, 
+.nav-btn:focus {
+  background-color: var(--primary-light);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.nav-btn:active {
+  transform: translateY(0) scale(1);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 /**************************************************************
    BLOCOS DE INFORMAÇÃO (SIDEBAR)
 **************************************************************/
 .info-block {
-  background-color: #f2fcff;
-  border: 1px solid #b8d7e3;
-  border-radius: 5px;
-  padding: 15px;
-  margin: 15px 0;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  background-color: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--border-radius-sm);
+  padding: 16px;
+  margin: 12px 0 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all var(--transition-normal);
 }
+
 .info-item {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 15px;
-  position: relative;
+  margin-bottom: 16px;
+  transition: transform var(--transition-fast);
 }
+
+.info-item:last-child {
+  margin-bottom: 0;
+}
+
 .info-label {
-  font-weight: bold;
-  color: var(--text-light);
-  margin-bottom: 5px;
-  white-space: nowrap;
-  font-size: 0.9rem;
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-light-secondary);
+  margin-bottom: 6px;
+  transition: color var(--transition-normal);
 }
+
 .info-value-container {
   display: flex !important;
   align-items: center !important;
+  gap: 8px;
 }
+
 .info-value {
-  margin-right: auto;
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
+  flex: 1;
+  background-color: var(--bg-light-accent);
+  padding: 10px 12px;
+  border-radius: var(--border-radius-sm);
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 14px;
-  width: auto;
-  box-sizing: border-box;
   color: var(--primary-color);
   overflow-x: auto;
   white-space: nowrap;
+  border: 1px solid var(--border-light);
+  transition: all var(--transition-normal);
 }
 
-.info-block .copy-btn {
-  margin-left: auto;
-  color: var(--primary-color);
-  font-size: 18px;
-  transition: transform 0.2s ease;
-  border: none;
-  background-color: transparent;
-}
-.info-block .copy-btn:hover {
-  color: var(--primary-hover);
-  transform: scale(1.1);
-}
-
-body.dark-mode .info-block {
-  background-color: #2a2a2a !important;
-  color: #d1d4dc !important;
-  border-color: #444 !important;
-}
-body.dark-mode .info-block .info-label {
-  color: #cccccc !important;
-}
-body.dark-mode .info-block .info-value {
-  background-color: #323232 !important;
-  color: #efefef !important;
-  border-color: #555 !important;
-}
-body.dark-mode .info-block .copy-btn {
-  color: #cccccc !important;
-}
-body.dark-mode .info-block .copy-btn:hover {
-  color: var(--primary-hover) !important;
+body.dark-mode .info-value {
+  color: #66b5ff;
 }
 
 /**************************************************************
-   BOTÕES ESPECÍFICOS (GERAR/RESETAR IPS)
+   BOTÕES DE AÇÃO
 **************************************************************/
-#gerarMaisIPsButton,
-#resetIPsButton {
-  font-size: 14px;
-  padding: 8px 12px;
-  border-radius: 5px;
-  width: auto;
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.action-buttons button {
+  flex: 1;
+  min-width: 120px;
+}
+
+.two-button-container {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.two-button-container button {
+  flex: 1;
+}
+
+/**************************************************************
+   HINTING PARA DISPOSITIVOS MÓVEIS
+**************************************************************/
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.section-header h3 {
   margin: 0;
-  flex: 0 0 auto;
-  transition: background-color 0.3s ease, transform 0.2s ease;
 }
-#gerarMaisIPsButton:hover,
-#resetIPsButton:hover {
-  transform: scale(1.02);
+
+.mobile-hint {
+  font-size: 13px;
+  color: var(--text-light-secondary);
+  font-style: italic;
+  display: none;
+}
+
+body.dark-mode .mobile-hint {
+  color: var(--text-dark-secondary);
+}
+
+body.mobile-device .mobile-hint {
+  display: block;
+}
+
+.table-scroll-hint {
+  display: none;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-light-secondary);
+  margin-bottom: 12px;
+  font-style: italic;
+}
+
+body.dark-mode .table-scroll-hint {
+  color: var(--text-dark-secondary);
 }
 
 /**************************************************************
-   AJUSTES PARA DISPOSITIVOS MÓVEIS (<=768px)
-**************************************************************/
-@media (max-width: 768px) {
-  .container {
-    padding: var(--mobile-padding);
-    margin: 10px;
-    max-width: 100%;
-  }
-  .main-layout {
-    grid-template-columns: 1fr;
-  }
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    margin-bottom: 20px;
-  }
-  .header h1 {
-    font-size: var(--mobile-header-font-size);
-    margin-bottom: 15px;
-    width: 100%;
-    text-align: center;
-  }
-  .header-buttons {
-    width: 100%;
-    justify-content: space-between;
-  }
-  .header-buttons button {
-    flex: 1;
-    height: var(--mobile-button-height);
-    margin: 0 5px;
-    font-size: var(--mobile-font-size);
-  }
-  input {
-    height: var(--mobile-input-height);
-    font-size: var(--mobile-font-size);
-    margin-bottom: 20px;
-  }
-  #calcularBtn {
-    width: 100%;
-    height: var(--mobile-button-height);
-    font-size: var(--mobile-font-size);
-    margin-bottom: 20px;
-  }
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-    border-radius: var(--mobile-border-radius);
-    font-size: 14px;
-  }
-  table th,
-  table td {
-    padding: 8px;
-  }
-  input[type="checkbox"] {
-    transform: scale(1.3);
-    margin: 0 auto;
-    display: block;
-  }
-  .btn-primary, .btn-secondary {
-    height: var(--mobile-button-height);
-    font-size: var(--mobile-font-size);
-    padding-left: 15px;
-    padding-right: 15px;
-  }
-  .two-button-container {
-    display: flex;
-    gap: 10px;
-    margin: 15px 0;
-  }
-  .two-button-container button {
-    flex: 1;
-  }
-  .info-block {
-    padding: 12px;
-  }
-  .info-item {
-    margin-bottom: 12px;
-  }
-  .info-label {
-    font-size: 14px;
-  }
-  .info-value {
-    font-size: 14px;
-    padding: 10px 40px 10px 10px;
-    width: auto;
-  }
-  .nav-buttons {
-    right: 10px;
-    bottom: 10px;
-  }
-  .nav-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-  }
-  .resultado,
-  .ips-container,
-  .suggestions {
-    padding: 12px;
-    margin-top: 15px;
-  }
-  .ips-item {
-    padding: 12px 40px 12px 10px;
-    position: relative;
-  }
-  .ip-text {
-    font-size: 14px;
-    word-break: break-all;
-    white-space: normal;
-  }
-  .copy-icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-  .full-width-button {
-    width: 100%;
-    margin-top: 15px;
-  }
-  .table-container {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border-radius: var(--mobile-border-radius);
-    margin-bottom: 15px;
-  }
-  .table-scroll-hint {
-    display: block;
-    text-align: center;
-    font-size: 12px;
-    color: #666;
-    margin-bottom: 8px;
-    font-style: italic;
-  }
-  .sidebar-tooltip,
-  .ips-tooltip {
-    padding: 4px 8px;
-    font-size: 12px;
-  }
-  .error-message {
-    font-size: 14px;
-    padding: 10px;
-  }
-  .sidebar-container {
-    margin-top: 20px;
-  }
-}
-
-/**************************************************************
-   AJUSTES EXTRAS PARA TELAS MUITO PEQUENAS (<480PX)
-**************************************************************/
-@media (max-width: 480px) {
-  .header h1 {
-    font-size: 1.3em;
-  }
-  .header-buttons {
-    flex-direction: column;
-    gap: 8px;
-  }
-  .header-buttons button {
-    width: 100%;
-    margin: 0;
-  }
-  .ip-text {
-    font-size: 13px;
-    white-space: normal;
-    word-break: break-all;
-  }
-  .nav-buttons {
-    right: 5px;
-    bottom: 5px;
-  }
-  .nav-btn {
-    width: 35px;
-    height: 35px;
-    font-size: 16px;
-  }
-}
-
-/**************************************************************
-   CLASSE PARA DISPOSITIVOS MÓVEIS (<768PX)
-**************************************************************/
-body.mobile-device {
-  font-size: 16px;
-  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
-}
-
-/**************************************************************
-   BANNER DE DICA (ROTACIONAR)
+   DICA MOBILE (BANNER)
 **************************************************************/
 .mobile-tip-banner {
   display: none;
@@ -783,14 +897,15 @@ body.mobile-device {
   background-color: var(--primary-color);
   color: white;
   text-align: center;
-  padding: 10px;
+  padding: 12px 40px 12px 12px;
   font-size: 14px;
   z-index: 1000;
-  box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
 }
+
 .close-tip {
   position: absolute;
-  right: 10px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -799,9 +914,248 @@ body.mobile-device {
   font-size: 20px;
   cursor: pointer;
   padding: 0 5px;
+  opacity: 0.8;
+  transition: opacity var(--transition-fast);
 }
+
+.close-tip:hover {
+  opacity: 1;
+}
+
+/**************************************************************
+   AJUSTES PARA DISPOSITIVOS MÓVEIS (<=768px)
+**************************************************************/
+@media (max-width: 768px) {
+  /* Container principal com padding reduzido */
+  .container {
+    padding: var(--mobile-padding);
+    margin: 10px;
+    max-width: 100%;
+  }
+  
+  /* Layout em coluna única */
+  .main-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  /* Header compacto */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 24px;
+  }
+  
+  .header h1 {
+    font-size: var(--mobile-header-font-size);
+    margin-bottom: 16px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .header-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .header-buttons button {
+    flex: 1;
+    height: var(--mobile-button-height);
+    margin: 0 4px;
+    font-size: var(--mobile-font-size);
+  }
+  
+  /* Inputs mais fáceis de clicar/tocar */
+  input {
+    height: var(--mobile-input-height);
+    font-size: var(--mobile-font-size);
+    margin-bottom: 20px;
+  }
+  
+  /* Botão calcular mais proeminente */
+  #calcularBtn {
+    width: 100%;
+    height: var(--mobile-button-height);
+    font-size: var(--mobile-font-size);
+    margin-bottom: 20px;
+  }
+  
+  /* Tabelas com rolagem horizontal */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-radius: var(--mobile-border-radius);
+    font-size: 14px;
+  }
+  
+  table th, table td {
+    padding: 10px;
+  }
+  
+  /* Checkboxes mais fáceis de tocar */
+  input[type="checkbox"] {
+    transform: scale(1.3);
+    margin: 0 auto;
+    display: block;
+  }
+  
+  .table-scroll-hint {
+    display: block;
+  }
+  
+  /* Ajustes nos blocos de informação */
+  .info-block {
+    padding: 12px;
+  }
+  
+  .info-item {
+    margin-bottom: 12px;
+  }
+  
+  .info-label {
+    font-size: 14px;
+  }
+  
+  .info-value {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+  
+  /* Botões de navegação menores */
+  .nav-buttons {
+    right: 12px;
+    bottom: 12px;
+  }
+  
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  /* Cards com padding menor */
+  .resultado,
+  .ips-container,
+  .suggestions {
+    padding: 16px;
+    margin-top: 16px;
+  }
+  
+  /* Lista de IPs mais compacta */
+  .ips-item {
+    padding: 10px 12px;
+  }
+  
+  /* Botão que ocupa toda a largura */
+  .full-width-button {
+    width: 100%;
+    margin-top: 16px;
+  }
+  
+  /* Container para tabelas com rolagem */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 16px;
+  }
+}
+
+/* Ajustes para telas muito pequenas (<480px) */
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.3em;
+  }
+  
+  .header-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .header-buttons button {
+    width: 100%;
+    margin: 0;
+  }
+  
+  /* Ajuste da visualização do IP para mobile */
+  .ip-text {
+    font-size: 13px;
+    white-space: normal;
+    word-break: break-all;
+  }
+  
+  /* Posição ajustada para os botões de navegação */
+  .nav-buttons {
+    right: 8px;
+    bottom: 8px;
+  }
+  
+  .nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+  
+  /* Ajuste nas ações */
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons button {
+    width: 100%;
+  }
+}
+
+/* Classe para dispositivos móveis */
+body.mobile-device {
+  font-size: 16px;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+}
+
+/* Mostrar banner de dica apenas em dispositivos móveis em modo retrato */
 @media (max-width: 768px) and (orientation: portrait) {
   .mobile-tip-banner {
     display: block;
   }
+}
+
+/* Tema preferido do sistema */
+@media (prefers-color-scheme: dark) {
+  /* A aplicação usará este seletor para aplicar automaticamente o tema escuro
+     quando a preferência do sistema operacional for tema escuro */
+  /* O toggle manual no site continua funcionando normalmente */
+}
+
+/* Correção para a cor de fundo dos campos de texto no modo escuro */
+
+/* Corrigindo o fundo dos valores de informação no modo escuro */
+body.dark-mode .info-value {
+  background-color: rgba(45, 55, 72, 0.8); /* Azul escuro semitransparente */
+  color: #63b3ed; /* Azul mais claro para o texto */
+  border-color: var(--border-dark);
+}
+
+/* Corrigindo o fundo dos itens de IP no modo escuro */
+body.dark-mode .ips-item {
+  background-color: rgba(45, 55, 72, 0.8); /* Azul escuro semitransparente */
+  border-color: var(--border-dark);
+}
+
+body.dark-mode .ips-item:hover {
+  background-color: rgba(55, 65, 81, 0.9); /* Um pouco mais claro no hover */
+}
+
+/* Corrigindo também outros elementos de texto em fundo branco */
+body.dark-mode .scrollable-list {
+  background-color: rgba(45, 55, 72, 0.8);
+}
+
+body.dark-mode .scrollable-list div:hover {
+  background-color: rgba(66, 82, 110, 0.8);
+}
+
+body.dark-mode input {
+  background-color: rgba(45, 55, 72, 0.8);
+  color: #f7fafc; /* Texto mais claro nos inputs */
 }
