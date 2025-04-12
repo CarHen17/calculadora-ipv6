@@ -8,6 +8,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Calculadora de Sub-Redes IPv6</title>
   <link rel="stylesheet" href="styles.css">
+  <script>
+    // Verificação inicial para debugging
+    console.log("Iniciando carregamento da página...");
+    
+    // Detectar problemas de carregamento
+    window.onerror = function(msg, url, line, col, error) {
+      console.error("Erro detectado:", msg, "em", url, "linha:", line, "coluna:", col);
+      console.error("Detalhes do erro:", error);
+      return false;
+    };
+  </script>
 </head>
 <body>
   <div class="container">
@@ -19,6 +30,9 @@
         </button>
         <button id="toggleThemeButton" class="btn-secondary mobile-friendly-btn" aria-label="Alternar modo claro/escuro">
           <span class="btn-icon">☀/☾</span> Tema
+        </button>
+        <button id="diagnosticBtn" class="btn-secondary mobile-friendly-btn" aria-label="Executar diagnóstico">
+          <span class="btn-icon">🔍</span> Diagnóstico
         </button>
       </div>
     </div>
@@ -179,34 +193,87 @@
     </li>
   </template>
 
-  <!-- Scripts - Adicionado console.log para debugging -->
-  <script>console.log("Carregando scripts...");</script>
-  <script src="utils.js"></script>
-  <script src="ui.js"></script>
-  <script src="main.js"></script>
-  <script src="debug.js"></script>
+  <!-- Scripts - Nova abordagem com script único -->
+  <script src="script-combinado.js"></script>
   <script>
-    // Script de inicialização para verificar se tudo está funcionando
-    window.addEventListener('load', function() {
-      console.log("Página completamente carregada");
+    // Script de diagnóstico integrado
+    document.addEventListener('DOMContentLoaded', function() {
+      // Adicionar função de diagnóstico ao botão
+      const diagnosticBtn = document.getElementById('diagnosticBtn');
+      if (diagnosticBtn) {
+        diagnosticBtn.addEventListener('click', function() {
+          executarDiagnostico();
+        });
+      }
       
-      // Verificar objetos globais
-      setTimeout(function() {
-        console.log("Verificando objetos globais após 1 segundo:");
-        console.log("window.utils disponível:", typeof window.utils !== 'undefined');
-        console.log("window.ui disponível:", typeof window.ui !== 'undefined');
-        console.log("window.appState disponível:", typeof window.appState !== 'undefined');
+      // Função de diagnóstico completo
+      function executarDiagnostico() {
+        console.clear();
+        console.log("======================================");
+        console.log("DIAGNÓSTICO COMPLETO DA CALCULADORA IPV6");
+        console.log("======================================");
         
-        // Testar funções críticas
-        if (typeof window.utils !== 'undefined' && typeof window.utils.expandIPv6Address === 'function') {
-          console.log("Teste de expandIPv6Address:", window.utils.expandIPv6Address("2001:db8::/32"));
+        // Verificar objetos globais
+        const utils = typeof window.utils !== 'undefined';
+        const ui = typeof window.ui !== 'undefined';
+        const appState = typeof window.appState !== 'undefined';
+        
+        console.log("Objetos globais:");
+        console.log("- window.utils disponível:", utils);
+        console.log("- window.ui disponível:", ui);
+        console.log("- window.appState disponível:", appState);
+        
+        // Verificar elementos DOM essenciais
+        const elementosChave = [
+          'ipv6', 'calcularBtn', 'resetBtn', 'errorMessage',
+          'mainBlockSection', 'suggestions', 'resultado'
+        ];
+        
+        console.log("\nElementos DOM essenciais:");
+        let elementosAusentes = [];
+        elementosChave.forEach(id => {
+          const elemento = document.getElementById(id);
+          console.log(`- #${id} existe:`, elemento !== null);
+          if (elemento === null) {
+            elementosAusentes.push(id);
+          }
+        });
+        
+        // Testar funções essenciais
+        console.log("\nFunções essenciais:");
+        let funcoesComProblema = [];
+        
+        if (utils) {
+          try {
+            const testResult = window.utils.expandIPv6Address("2001:db8::/32");
+            console.log("- utils.expandIPv6Address funciona:", !testResult.startsWith("Erro"));
+          } catch (e) {
+            console.error("- Erro ao chamar utils.expandIPv6Address:", e);
+            funcoesComProblema.push("utils.expandIPv6Address");
+          }
         } else {
-          console.error("Função expandIPv6Address não está disponível!");
+          funcoesComProblema.push("Todas as funções utils (objeto não disponível)");
         }
         
-        // Verificar elementos do DOM
-        console.log("Botão calcular encontrado:", document.getElementById('calcularBtn') !== null);
-      }, 1000);
+        // Gerar relatório
+        console.log("\nRELATÓRIO FINAL:");
+        const problemas = [];
+        
+        if (!utils) problemas.push("Objeto utils não inicializado");
+        if (!ui) problemas.push("Objeto ui não inicializado");
+        if (!appState) problemas.push("Objeto appState não inicializado");
+        if (elementosAusentes.length > 0) problemas.push(`Elementos ausentes: ${elementosAusentes.join(', ')}`);
+        if (funcoesComProblema.length > 0) problemas.push(`Funções com problema: ${funcoesComProblema.join(', ')}`);
+        
+        console.log("======================================");
+        
+        // Exibir alerta com resultados
+        if (problemas.length > 0) {
+          alert(`Problemas detectados:\n${problemas.join('\n')}\n\nVerifique o console para mais detalhes.`);
+        } else {
+          alert("Nenhum problema crítico detectado. A calculadora deve estar funcionando corretamente.");
+        }
+      }
     });
   </script>
 </body>
