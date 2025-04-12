@@ -4,6 +4,184 @@
 
 // Objeto UI que conterá todas as funções relacionadas a interface
 const ui = {
+  // Função para atualizar informações do bloco selecionado na sidebar
+  atualizarInformacoesDoBloco: function() {
+    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
+    if (checkboxes.length === 1) {
+      let indice = parseInt(checkboxes[0].value);
+      let blocoSelecionado = appState.subRedesGeradas[indice];
+      document.getElementById('sidebarBlockCidr').innerText = utils.shortenIPv6(blocoSelecionado.subnet);
+      let redeHex = blocoSelecionado.network.replace(/:/g, '');
+      let redeBigInt = BigInt("0x" + redeHex);
+      let gatewayIpBigInt = redeBigInt + 1n; 
+      let gatewayIpFormatado = utils.formatIPv6Address(gatewayIpBigInt);
+      let gatewayIpShort = utils.shortenIPv6(gatewayIpFormatado);
+      document.getElementById('mainBlockGateway').innerText = gatewayIpShort;
+    }
+  },
+
+  // Função para atualizar o bloco agregado
+  atualizarBlocoAgregado: function() {
+    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) {
+      document.getElementById('aggregatedPrefix').innerText = "N/A";
+      document.getElementById('aggregatedSidebar').style.display = 'none';
+      return;
+    }
+    document.getElementById('aggregatedSidebar').style.display = 'block';
+    let selectedSubnets = Array.from(checkboxes).map(checkbox => appState.subRedesGeradas[parseInt(checkbox.value)]);
+    let aggregate = utils.calcularBlocoAgregado(selectedSubnets);
+    if (aggregate === null) {
+      document.getElementById('aggregatedPrefix').innerText = "Bloco inválido";
+    } else {
+      document.getElementById('aggregatedPrefix').innerText = utils.shortenIPv6(aggregate.network) + "/" + aggregate.prefix;
+    }
+  },
+
+  // Função para atualizar botão gerar IPs
+  atualizarGerarIPsButton: function() {
+    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
+    let btn = document.getElementById('gerarIPsButton');
+    btn.style.display = (checkboxes.length === 1) ? 'inline-block' : 'none';
+    if (checkboxes.length !== 1) {
+      document.getElementById('ipsResult').style.display = 'none';
+    }
+  },
+
+  // Função para selecionar/desselecionar todos os checkboxes
+  toggleSelectAll: function() {
+    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]');
+    let selectAll = document.getElementById('selectAll').checked;
+    checkboxes.forEach(checkbox => {
+      checkbox.checked = selectAll;
+      checkbox.dispatchEvent(new Event('change'));
+    });
+  },
+
+  // Função para carregar mais sub-redes na tabela
+  carregarMaisSubRedes: function() {
+    let tbody = document.getElementById('subnetsTable').getElementsByTagName('tbody')[0];
+    let limite = Math.min(appState.subRedesExibidas + 100, appState.subRedesGeradas.length);
+    for (let i = appState.subRedesExibidas; i < limite; i++) {
+      let row = tbody.insertRow();
+      let checkboxCell = row.insertCell(0);
+      let checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.value = i;
+      checkbox.setAttribute('aria-label', `Selecionar sub-rede ${utils.shortenIPv6(appState.subRedesGeradas[i].subnet)}`);
+      checkbox.addEventListener('change', () => {
+        ui.atualizarBlocoAgregado();
+        ui.atualizarGerarIPsButton();
+        ui.atualizarInformacoesDoBloco();
+        
+        // Adicionar classe para destacar linha selecionada (melhoria mobile)
+        row.classList.toggle('selected', checkbox.checked);
+      });
+      checkboxCell.appendChild(checkbox);
+      row.insertCell(1).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].subnet);
+      row.insertCell(2).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].initial);
+      row.insertCell(3).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].final);
+      row.insertCell(4).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].network);
+    }
+    appState.subRedesExibidas = limite;
+    document.getElementById('loadMoreContainer').style.display = 
+      appState.subRedesExibidas < appState.subRedesGeradas.length ? 'block' : 'none';
+  },
+
+  // Função para copiar texto (sidebar)
+  copiarTexto: function(elementId, feedback = true) {
+    let text;
+    const element = document.getElementById(elementId);
+    
+    if (element.hasAttribute('data-value')) {
+      text = element.getAttribute('data-value');
+    } else {
+      text = element.innerText;
+    }
+    
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        if (feedback) {
+          let tooltip = document.createElement('span');
+          tooltip.innerText = "Copiado!";
+          tooltip.classList.add('sidebar-tooltip');
+          element.parentNode.appendChild(tooltip);
+          setTimeout(() => element.parentNode.removeChild(tooltip), 1500);
+        }
+      })
+      .catch(() => alert("Falha ao copiar o texto."));
+  },
+
+  // Função para adicionar IP à lista
+  appendIpToList: function(ip, number, listId) {
+    // Usar o template para criar itens consistentes
+    const ipsList = document.getElementById(listId);
+    
+    // Verificar se o navegador suporta templates
+    if ('content' in document.createElement('template')) {
+      const template = document.getElementById('ipItemTemplate');
+      const clone = document.importNode(template.content, true);
+      
+      // Preencher o item clonado
+      clone.querySelector('.ip-number').textContent = `${number}.`;
+      clone.querySelector('.ip-text').textContent = ip;
+      
+      // Configurar botão de cópia
+      const copyBtn = clone.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(ip)
+          .then(() => {
+            const tooltip = document.createElement('span');
+            tooltip.innerText = "Copiado!";
+            tooltip.classList.add('ips-tooltip');
+            copyBtn.appendChild(tooltip);
+            setTimeout(() => copyBtn.removeChild(tooltip), 1500);
+          })
+          .catch(() => alert("Falha ao copiar IP."));
+      });
+      
+      ipsList.appendChild(clone);
+    } else {
+      // Fallback para navegadores que não suportam template
+      const li = document.createElement('li');
+      li.classList.add('ips-item');
+      
+      const numberSpan = document.createElement('span');
+      numberSpan.classList.add('ip-number');
+      numberSpan.textContent = `${number}.`;
+      
+      const ipSpan = document.createElement('span');
+      ipSpan.textContent = ip;
+      ipSpan.classList.add('ip-text');
+      
+      const copyIcon = document.createElement('button');
+      copyIcon.innerHTML = "📋";
+      copyIcon.classList.add('copy-btn');
+      copyIcon.title = "Clique para copiar";
+      copyIcon.addEventListener('click', () => {
+        navigator.clipboard.writeText(ip)
+          .then(() => {
+            const tooltip = document.createElement('span');
+            tooltip.innerText = "Copiado!";
+            tooltip.classList.add('ips-tooltip');
+            copyIcon.appendChild(tooltip);
+            setTimeout(() => copyIcon.removeChild(tooltip), 1500);
+          })
+          .catch(() => alert("Falha ao copiar IP."));
+      });
+      
+      li.appendChild(numberSpan);
+      li.appendChild(ipSpan);
+      li.appendChild(copyIcon);
+      ipsList.appendChild(li);
+    }
+  },
+
+  // Função para alternar tema claro/escuro
+  toggleTheme: function() {
+    document.body.classList.toggle('dark-mode');
+  },
+  
   // Função para ajustar o layout responsivo
   ajustarLayoutResponsive: function() {
     const isMobile = window.innerWidth <= 992;
@@ -11,7 +189,7 @@ const ui = {
       const infoSidebar = document.getElementById('infoSidebar');
       const aggregatedSidebar = document.getElementById('aggregatedSidebar');
       const container = document.querySelector('.container');
-      if (infoSidebar.style.display !== 'none') {
+      if (infoSidebar && infoSidebar.style.display !== 'none') {
         if (!document.getElementById('infoSidebarMobile')) {
           const infoClone = infoSidebar.cloneNode(true);
           infoClone.id = 'infoSidebarMobile';
@@ -20,7 +198,7 @@ const ui = {
           container.insertBefore(infoClone, container.firstChild.nextSibling);
         }
       }
-      if (aggregatedSidebar.style.display !== 'none') {
+      if (aggregatedSidebar && aggregatedSidebar.style.display !== 'none') {
         if (!document.getElementById('aggregatedSidebarMobile')) {
           const aggregatedClone = aggregatedSidebar.cloneNode(true);
           aggregatedClone.id = 'aggregatedSidebarMobile';
@@ -303,182 +481,6 @@ const ui = {
 };
 
 // Exportar a função copiarTexto globalmente para uso nos eventos onclick do HTML
-window.copiarTexto = ui.copiarTexto; Função para atualizar informações do bloco selecionado na sidebar
-  atualizarInformacoesDoBloco: function() {
-    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-    if (checkboxes.length === 1) {
-      let indice = parseInt(checkboxes[0].value);
-      let blocoSelecionado = appState.subRedesGeradas[indice];
-      document.getElementById('sidebarBlockCidr').innerText = utils.shortenIPv6(blocoSelecionado.subnet);
-      let redeHex = blocoSelecionado.network.replace(/:/g, '');
-      let redeBigInt = BigInt("0x" + redeHex);
-      let gatewayIpBigInt = redeBigInt + 1n; 
-      let gatewayIpFormatado = utils.formatIPv6Address(gatewayIpBigInt);
-      let gatewayIpShort = utils.shortenIPv6(gatewayIpFormatado);
-      document.getElementById('mainBlockGateway').innerText = gatewayIpShort;
-    }
-  },
-
-  // Função para atualizar o bloco agregado
-  atualizarBlocoAgregado: function() {
-    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-    if (checkboxes.length === 0) {
-      document.getElementById('aggregatedPrefix').innerText = "N/A";
-      document.getElementById('aggregatedSidebar').style.display = 'none';
-      return;
-    }
-    document.getElementById('aggregatedSidebar').style.display = 'block';
-    let selectedSubnets = Array.from(checkboxes).map(checkbox => appState.subRedesGeradas[parseInt(checkbox.value)]);
-    let aggregate = utils.calcularBlocoAgregado(selectedSubnets);
-    if (aggregate === null) {
-      document.getElementById('aggregatedPrefix').innerText = "Bloco inválido";
-    } else {
-      document.getElementById('aggregatedPrefix').innerText = utils.shortenIPv6(aggregate.network) + "/" + aggregate.prefix;
-    }
-  },
-
-  // Função para atualizar botão gerar IPs
-  atualizarGerarIPsButton: function() {
-    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-    let btn = document.getElementById('gerarIPsButton');
-    btn.style.display = (checkboxes.length === 1) ? 'inline-block' : 'none';
-    if (checkboxes.length !== 1) {
-      document.getElementById('ipsResult').style.display = 'none';
-    }
-  },
-
-  // Função para selecionar/desselecionar todos os checkboxes
-  toggleSelectAll: function() {
-    let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]');
-    let selectAll = document.getElementById('selectAll').checked;
-    checkboxes.forEach(checkbox => {
-      checkbox.checked = selectAll;
-      checkbox.dispatchEvent(new Event('change'));
-    });
-  },
-
-  // Função para carregar mais sub-redes na tabela
-  carregarMaisSubRedes: function() {
-    let tbody = document.getElementById('subnetsTable').getElementsByTagName('tbody')[0];
-    let limite = Math.min(appState.subRedesExibidas + 100, appState.subRedesGeradas.length);
-    for (let i = appState.subRedesExibidas; i < limite; i++) {
-      let row = tbody.insertRow();
-      let checkboxCell = row.insertCell(0);
-      let checkbox = document.createElement('input');
-      checkbox.type = 'checkbox';
-      checkbox.value = i;
-      checkbox.setAttribute('aria-label', `Selecionar sub-rede ${utils.shortenIPv6(appState.subRedesGeradas[i].subnet)}`);
-      checkbox.addEventListener('change', () => {
-        ui.atualizarBlocoAgregado();
-        ui.atualizarGerarIPsButton();
-        ui.atualizarInformacoesDoBloco();
-        
-        // Adicionar classe para destacar linha selecionada (melhoria mobile)
-        row.classList.toggle('selected', checkbox.checked);
-      });
-      checkboxCell.appendChild(checkbox);
-      row.insertCell(1).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].subnet);
-      row.insertCell(2).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].initial);
-      row.insertCell(3).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].final);
-      row.insertCell(4).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].network);
-    }
-    appState.subRedesExibidas = limite;
-    document.getElementById('loadMoreContainer').style.display = 
-      appState.subRedesExibidas < appState.subRedesGeradas.length ? 'block' : 'none';
-  },
-
-  // Função para copiar texto (sidebar)
-  copiarTexto: function(elementId, feedback = true) {
-    let text;
-    const element = document.getElementById(elementId);
-    
-    if (element.hasAttribute('data-value')) {
-      text = element.getAttribute('data-value');
-    } else {
-      text = element.innerText;
-    }
-    
-    navigator.clipboard.writeText(text)
-      .then(() => {
-        if (feedback) {
-          let tooltip = document.createElement('span');
-          tooltip.innerText = "Copiado!";
-          tooltip.classList.add('sidebar-tooltip');
-          element.parentNode.appendChild(tooltip);
-          setTimeout(() => element.parentNode.removeChild(tooltip), 1500);
-        }
-      })
-      .catch(() => alert("Falha ao copiar o texto."));
-  },
-
-  // Função para adicionar IP à lista
-  appendIpToList: function(ip, number, listId) {
-    // Usar o template para criar itens consistentes
-    const ipsList = document.getElementById(listId);
-    
-    // Verificar se o navegador suporta templates
-    if ('content' in document.createElement('template')) {
-      const template = document.getElementById('ipItemTemplate');
-      const clone = document.importNode(template.content, true);
-      
-      // Preencher o item clonado
-      clone.querySelector('.ip-number').textContent = `${number}.`;
-      clone.querySelector('.ip-text').textContent = ip;
-      
-      // Configurar botão de cópia
-      const copyBtn = clone.querySelector('.copy-btn');
-      copyBtn.addEventListener('click', () => {
-        navigator.clipboard.writeText(ip)
-          .then(() => {
-            const tooltip = document.createElement('span');
-            tooltip.innerText = "Copiado!";
-            tooltip.classList.add('ips-tooltip');
-            copyBtn.appendChild(tooltip);
-            setTimeout(() => copyBtn.removeChild(tooltip), 1500);
-          })
-          .catch(() => alert("Falha ao copiar IP."));
-      });
-      
-      ipsList.appendChild(clone);
-    } else {
-      // Fallback para navegadores que não suportam template
-      const li = document.createElement('li');
-      li.classList.add('ips-item');
-      
-      const numberSpan = document.createElement('span');
-      numberSpan.classList.add('ip-number');
-      numberSpan.textContent = `${number}.`;
-      
-      const ipSpan = document.createElement('span');
-      ipSpan.textContent = ip;
-      ipSpan.classList.add('ip-text');
-      
-      const copyIcon = document.createElement('button');
-      copyIcon.innerHTML = "📋";
-      copyIcon.classList.add('copy-btn');
-      copyIcon.title = "Clique para copiar";
-      copyIcon.addEventListener('click', () => {
-        navigator.clipboard.writeText(ip)
-          .then(() => {
-            const tooltip = document.createElement('span');
-            tooltip.innerText = "Copiado!";
-            tooltip.classList.add('ips-tooltip');
-            copyIcon.appendChild(tooltip);
-            setTimeout(() => copyIcon.removeChild(tooltip), 1500);
-          })
-          .catch(() => alert("Falha ao copiar IP."));
-      });
-      
-      li.appendChild(numberSpan);
-      li.appendChild(ipSpan);
-      li.appendChild(copyIcon);
-      ipsList.appendChild(li);
-    }
-  },
-
-  // Função para alternar tema claro/escuro
-  toggleTheme: function() {
-    document.body.classList.toggle('dark-mode');
-  },
-
-  //
+window.copiarTexto = function(elementId, feedback = true) {
+  ui.copiarTexto(elementId, feedback);
+};
