@@ -1,0 +1,1006 @@
+/* Variáveis CSS */
+:root {
+  --primary-color: #0078d7;
+  --primary-hover: #005fa3;
+  --secondary-color: #5cb85c;
+  --secondary-hover: #4cae4c;
+  --error-color: #f44336;
+  --text-light: #333;
+  --text-dark: #e0e0e0;
+  --background-light: rgba(255, 255, 255, 0.8);
+  --sidebar-bg-light: rgba(233, 245, 233, 0.9);
+  --sidebar-border-light: rgba(178, 216, 178, 0.7);
+  --background-dark: #1e1e1e;
+  --sidebar-bg-dark: #2b2b2b;
+  --sidebar-border-dark: #444;
+  --blur-amount: 10px;
+  --container-shadow: 0 8px 32px rgba(0,0,0,0.1);
+  --border-radius: 12px;
+  --sidebar-gap: 20px; /* Espaçamento entre sidebars */
+  --mobile-padding: 12px;
+  --mobile-button-height: 44px;
+  --mobile-input-height: 48px;
+  --mobile-border-radius: 8px;
+  --mobile-font-size: 16px;
+  --mobile-header-font-size: 1.5em;
+}
+
+/* Estilos Gerais */
+body {
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  margin: 0;
+  background: url('https://source.unsplash.com/1600x900/?cloud') no-repeat center center fixed;
+  background-size: cover;
+  transition: background-color 0.3s, color 0.3s;
+  color: var(--text-light);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 20px auto;
+  background: var(--background-light);
+  backdrop-filter: blur(var(--blur-amount));
+  border-radius: var(--border-radius);
+  padding: 20px;
+  box-shadow: var(--container-shadow);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Modo Escuro */
+body.dark-mode {
+  background-color: #121212;
+  background-image: none;
+  color: var(--text-dark);
+}
+
+body.dark-mode .container {
+  background: var(--background-dark);
+  border: 1px solid rgba(80,80,80,0.7);
+}
+
+body.dark-mode .header h1,
+body.dark-mode label {
+  color: var(--text-dark);
+}
+
+body.dark-mode input {
+  background-color: #333;
+  color: var(--text-dark);
+  border-color: #555;
+}
+
+body.dark-mode .btn-primary {
+  background-color: var(--primary-color);
+}
+
+body.dark-mode .btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+body.dark-mode .btn-secondary {
+  background-color: var(--secondary-color);
+}
+
+body.dark-mode .btn-secondary:hover {
+  background-color: var(--secondary-hover);
+}
+
+body.dark-mode .resultado,
+body.dark-mode .ips-container,
+body.dark-mode .sidebar,
+body.dark-mode .suggestions {
+  background-color: var(--sidebar-bg-dark);
+  border-color: var(--sidebar-border-dark);
+  color: var(--text-dark);
+}
+
+body.dark-mode table th {
+  background-color: #333;
+  color: var(--text-dark);
+}
+
+body.dark-mode table td {
+  background-color: var(--background-dark);
+  color: var(--text-dark);
+  border-color: var(--sidebar-border-dark);
+}
+
+body.dark-mode .error-message {
+  background-color: #2b2b2b;
+  color: #ff9999;
+  border-left-color: var(--error-color);
+}
+
+body.dark-mode .scrollable-list {
+  background-color: var(--sidebar-bg-dark);
+  color: var(--text-dark);
+  border-color: var(--sidebar-border-dark);
+}
+
+body.dark-mode .scrollable-list div:hover {
+  background-color: #3b3b3b;
+}
+
+body.dark-mode .scrollable-list div.selected {
+  background-color: #555;
+}
+
+body.dark-mode .ips-item {
+  background-color: #333;
+  color: var(--text-dark);
+  border-color: var(--sidebar-border-dark);
+}
+
+body.dark-mode .ips-item:hover {
+  background-color: #444;
+}
+
+/* Cabeçalho */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 2em;
+  color: var(--text-light);
+}
+
+.header-buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.header-buttons button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: #fff;
+  background-color: var(--primary-color);
+}
+
+.header-buttons button:hover {
+  background-color: var(--primary-hover);
+}
+
+#resetBtn {
+  background-color: var(--error-color);
+}
+
+#resetBtn:hover {
+  background-color: #d32f2f;
+}
+
+/* Layout Principal */
+.main-layout {
+  display: grid;
+  grid-template-columns: 1fr minmax(auto, 320px);
+  gap: var(--sidebar-gap);
+}
+
+/* Formulário e Botões */
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: var(--text-light);
+}
+
+input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 10px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #fff;
+  width: auto;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--secondary-hover);
+}
+
+/* Resultados, Tabelas e Listas */
+.resultado, .ips-container, .suggestions {
+  background-color: var(--sidebar-bg-light);
+  border: 1px solid var(--sidebar-border-light);
+  border-radius: 6px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.resultado h3,
+.ips-container h3,
+.suggestions h3 {
+  margin-top: 0;
+  color: #2e7d32;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+table th, table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.load-more {
+  text-align: center;
+  margin-top: 15px;
+}
+
+ul#ipsList, ul#mainBlockIpsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ips-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  margin: 6px 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background-color: #fff;
+  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+  position: relative; /* Para posicionamento do tooltip */
+}
+
+.ip-text {
+  font-family: monospace;
+  font-size: 14px;
+}
+
+.copy-icon {
+  font-size: 1.2em;
+  cursor: pointer;
+  margin-left: 10px;
+  user-select: none;
+}
+
+.scrollable-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.scrollable-list div {
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.error-message {
+  color: var(--error-color);
+  font-weight: bold;
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #ffebee;
+  border-radius: 4px;
+  border-left: 4px solid var(--error-color);
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.loader-container {
+  display: flex;
+  justify-content: center;
+  margin: 25px 0;
+}
+
+.loader {
+  border: 5px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 5px solid var(--primary-color);
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-message {
+  margin-left: 15px;
+  line-height: 40px;
+  color: var(--primary-color);
+  font-weight: bold;
+}
+
+/* NOVO LAYOUT VERTICAL DA SIDEBAR */
+.sidebar {
+  background-color: var(--sidebar-bg-light);
+  border: 1px solid var(--sidebar-border-light);
+  border-radius: 6px;
+  padding: 15px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  transition: background-color 0.3s, color 0.3s;
+  min-width: 250px;
+}
+
+/* Botões de navegação lateral */
+.nav-buttons {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 1000;
+}
+
+.nav-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.3s, transform 0.2s;
+  font-size: 22px;
+}
+
+.nav-btn:hover {
+  background-color: var(--primary-hover);
+  transform: scale(1.1);
+}
+
+body.dark-mode .nav-btn {
+  background-color: var(--primary-color);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .nav-btn:hover {
+  background-color: var(--primary-hover);
+}
+
+/* Bloco de informações */
+.info-block {
+  background-color: #f0f8ff;
+  border: 1px solid #b8d0e8;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 15px 0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+/* Layout vertical para os itens */
+.info-item {
+  display: flex;
+  flex-direction: column; /* Alterado: elementos em coluna */
+  margin-bottom: 15px; /* Aumentado para maior separação */
+  position: relative; /* Para posicionamento relativo do botão de cópia */
+}
+
+/* Estilo para o rótulo */
+.info-label {
+  font-weight: bold;
+  color: var(--text-light);
+  margin-bottom: 5px; /* Espaço abaixo do rótulo */
+  white-space: nowrap;
+  font-size: 0.9rem; /* Tamanho mais compacto */
+}
+
+/* Estilo para o valor */
+.info-value {
+  font-family: monospace;
+  background-color: #fff;
+  padding: 10px; /* Mais espaço interno */
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+  width: 100%; /* Ocupa toda a largura */
+  box-sizing: border-box; /* Para não extrapolar a largura */
+  color: var(--primary-color);
+  position: relative; /* Para posicionamento do botão de cópia */
+  padding-right: 35px; /* Espaço para o botão de cópia */
+  overflow-x: auto; /* Adiciona rolagem horizontal se necessário */
+  white-space: nowrap; /* Mantém em uma linha */
+  display: block;
+}
+
+/* Botão de cópia posicionado diretamente no valor */
+.copy-btn {
+  background-color: transparent;
+  color: var(--primary-color);
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  transition: transform 0.2s;
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+}
+
+.copy-btn:hover {
+  color: var(--primary-hover);
+  transform: translateY(-50%) scale(1.1);
+}
+
+/* Modo escuro */
+body.dark-mode .info-block {
+  background-color: #202327;
+  border-color: #444;
+}
+
+body.dark-mode .info-block .info-value {
+  background-color: #2c2c2c;
+  color: #80dfff;
+  border-color: #555;
+}
+
+body.dark-mode .info-label {
+  color: #e0e0e0;
+}
+
+body.dark-mode .copy-btn {
+  color: #80dfff;
+}
+
+body.dark-mode .copy-btn:hover {
+  color: #99e6ff;
+}
+
+/* Adicionando cores de título para cada seção */
+.sidebar h3 {
+  color: #2e7d32; /* Verde para o título */
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2rem;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  padding-bottom: 8px;
+}
+
+body.dark-mode .sidebar h3 {
+  color: #8BC34A; /* Verde mais claro no modo escuro */
+  border-bottom-color: rgba(255,255,255,0.1);
+}
+
+/* Ajustes para container de valor */
+.info-value-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Tooltips - CORRIGIDOS */
+/* Sidebar tooltip */
+.sidebar-tooltip {
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  color: #4CAF50;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  z-index: 10;
+}
+
+/* Tooltip para listas de IPs */
+.ips-tooltip {
+  display: inline-block;
+  margin-left: 8px;
+  color: #4CAF50;
+  font-weight: bold;
+  background-color: rgba(255, 255, 255, 0.7);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+/* Ajustes para modo escuro */
+body.dark-mode .sidebar-tooltip {
+  background-color: rgba(40, 40, 40, 0.9);
+}
+
+body.dark-mode .ips-tooltip {
+  background-color: rgba(40, 40, 40, 0.7);
+  color: #80ff80;
+}
+
+/* Botão de gerar mais IPs - Usando as mesmas classes dos outros botões */
+#gerarMaisIPsButton {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  font-family: 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  color: #fff;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+#gerarMaisIPsButton:hover {
+  background-color: var(--primary-hover);
+}
+
+/* NOVAS OTIMIZAÇÕES PARA DISPOSITIVOS MÓVEIS */
+
+/* Ajustes para Dispositivos Móveis */
+@media (max-width: 768px) {
+  /* Container principal com menos padding */
+  .container {
+    padding: var(--mobile-padding);
+    margin: 10px;
+    max-width: 100%;
+  }
+  
+  /* Layout principal para uma coluna */
+  .main-layout {
+    grid-template-columns: 1fr; /* Muda para uma coluna em telas pequenas */
+  }
+  
+  /* Cabeçalho compacto */
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  
+  .header h1 {
+    font-size: var(--mobile-header-font-size);
+    margin-bottom: 15px;
+    width: 100%;
+    text-align: center;
+  }
+  
+  .header-buttons {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .header-buttons button {
+    flex: 1;
+    height: var(--mobile-button-height);
+    margin: 0 5px;
+    font-size: var(--mobile-font-size);
+  }
+  
+  /* Formulário otimizado */
+  input {
+    height: var(--mobile-input-height);
+    font-size: var(--mobile-font-size);
+    margin-bottom: 20px;
+  }
+  
+  /* Botão principal em full-width */
+  #calcularBtn {
+    width: 100%;
+    height: var(--mobile-button-height);
+    font-size: var(--mobile-font-size);
+    margin-bottom: 20px;
+  }
+  
+  /* Tabelas responsivas */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    border-radius: var(--mobile-border-radius);
+    font-size: 14px;
+  }
+  
+  table th, table td {
+    padding: 8px;
+  }
+  
+  /* Checkbox mais fácil de tocar */
+  input[type="checkbox"] {
+    transform: scale(1.3);
+    margin: 0 auto;
+    display: block;
+  }
+  
+  /* Alinhamento de botões */
+  .btn-primary, .btn-secondary {
+    height: var(--mobile-button-height);
+    font-size: var(--mobile-font-size);
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  /* Layout de dois botões */
+  .two-button-container {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+  }
+  
+  .two-button-container button {
+    flex: 1;
+  }
+  
+  /* Blocos de informação vertical */
+  .info-block {
+    padding: 12px;
+  }
+  
+  .info-item {
+    margin-bottom: 12px;
+  }
+  
+  .info-label {
+    font-size: 14px;
+  }
+  
+  .info-value {
+    font-size: 14px;
+    padding: 10px 40px 10px 10px;
+  }
+  
+  /* Botões de navegação */
+  .nav-buttons {
+    right: 10px;
+    bottom: 10px;
+  }
+  
+  .nav-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+  
+  /* Caixas de resultado */
+  .resultado, .ips-container, .suggestions {
+    padding: 12px;
+    margin-top: 15px;
+  }
+  
+  /* Lista de IPs */
+  .ips-item {
+    padding: 12px 40px 12px 10px;
+    position: relative;
+  }
+  
+  .ip-text {
+    font-size: 14px;
+    word-break: break-all;
+    white-space: normal;
+  }
+  
+  .copy-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+  
+  /* Botão full-width no final das seções */
+  .full-width-button {
+    width: 100%;
+    margin-top: 15px;
+  }
+  
+  /* Melhorias na rolagem horizontal para tabelas */
+  .table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: var(--mobile-border-radius);
+    margin-bottom: 15px;
+  }
+  
+  /* Dicas visuais para tabelas roláveis */
+  .table-scroll-hint {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 8px;
+    font-style: italic;
+  }
+  
+  /* Tooltip de ação adaptado */
+  .sidebar-tooltip, .ips-tooltip {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+  
+  /* Ajuste para o erro */
+  .error-message {
+    font-size: 14px;
+    padding: 10px;
+  }
+  
+  /* Sidebar móvel */
+  .sidebar-container {
+    margin-top: 20px;
+  }
+}
+
+/* Ajustes extras para telas muito pequenas (< 480px) */
+@media (max-width: 480px) {
+  .header h1 {
+    font-size: 1.3em;
+  }
+  
+  .header-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .header-buttons button {
+    width: 100%;
+    margin: 0;
+  }
+  
+  /* Ajuste da visualização do ip para evitar quebra */
+  .ip-text {
+    font-size: 13px;
+    white-space: normal;
+    word-break: break-all;
+  }
+  
+  /* Compactação de menu lateral */
+  .nav-buttons {
+    right: 5px;
+    bottom: 5px;
+  }
+  
+  .nav-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+}
+
+/* Classe aplicada ao body quando é um dispositivo móvel */
+body.mobile-device {
+  /* Ajuste do tamanho base da fonte para dispositivos móveis */
+  font-size: 16px;
+  -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+}
+
+/* Banner de dica para rotação do dispositivo */
+.mobile-tip-banner {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--primary-color);
+  color: white;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
+}
+
+.close-tip {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+/* Mostrar banner apenas em dispositivos móveis em modo retrato */
+@media (max-width: 768px) and (orientation: portrait) {
+  .mobile-tip-banner {
+    display: block;
+  }
+}
+
+/* Botões com ícones */
+.btn-icon {
+  margin-right: 5px;
+  font-size: 1.1em;
+}
+
+/* Botões otimizados para toque */
+.mobile-friendly-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 15px;
+}
+
+/* Melhoria para containers de ação */
+.action-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.action-buttons button {
+  flex: 1;
+  min-width: 120px;
+}
+
+/* Cabeçalhos de seção com indicações mobile */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.section-header h3 {
+  margin: 0;
+}
+
+.mobile-hint {
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
+  display: none;
+}
+
+/* Mostrar dicas apenas em dispositivos móveis */
+body.mobile-device .mobile-hint {
+  display: block;
+}
+
+/* Lista de IPs otimizada */
+.mobile-optimized-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mobile-optimized-list .ips-item {
+  margin: 8px 0;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s, opacity 0.2s;
+}
+
+.mobile-optimized-list .ip-number {
+  min-width: 30px;
+  display: inline-block;
+  color: #666;
+  font-size: 13px;
+}
+
+/* Indicador de carregamento para mobile */
+.loader-mobile {
+  padding: 15px;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.loader-mobile .loading-message {
+  font-size: 14px;
+}
+
+/* Melhorias tácteis para formulários */
+@media (max-width: 768px) {
+  /* Campos de formulário maiores para facilitar o toque */
+  input[type="text"],
+  input[type="number"],
+  select {
+    font-size: 16px; /* Evita zoom em iOS */
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
+  
+  /* Checkboxes maiores para facilitar o toque */
+  input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+  }
+  
+  /* Adicionar espaço entre linhas de tabela para facilitar o toque */
+  table td, table th {
+    padding: 12px 8px;
+  }
+  
+  /* Melhorar visibilidade dos itens selecionados */
+  tr.selected td {
+    background-color: rgba(0, 120, 215, 0.1);
+  }
+  
+  /* Animação de feedback ao tocar */
+  .ips-item:active,
+  .btn-primary:active,
+  .btn-secondary:active {
+    transform: scale(0.98);
+    opacity: 0.9;
+  }
+  
+  /* Melhorar espaçamento de listas em dispositivos móveis */
+  #possiblePrefixesList div {
+    padding: 15px 10px;
+    margin-bottom: 8px;
+  }
+}
+
+/* Otimização especial para dispositivos muito pequenos */
+@media (max-width: 320px) {
+  .header h1 {
+    font-size: 1.2em;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .section-header h3 {
+    margin-bottom: 5px;
+  }
+  
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .action-buttons button {
+    width: 100%;
+  }
+}
