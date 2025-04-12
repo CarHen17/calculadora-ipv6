@@ -2,8 +2,11 @@
  * Utilitários para manipulação de endereços IPv6
  */
 
+console.log("Inicializando utils.js...");
+
 // Função para validar IPv6 com prefixo
 function isValidIPv6(addressCIDR) {
+  console.log("Validando IPv6:", addressCIDR);
   let [addr, prefix] = addressCIDR.split('/');
   if (!prefix || isNaN(prefix)) return false;
   const prefixNum = parseInt(prefix);
@@ -16,6 +19,7 @@ function isValidIPv6(addressCIDR) {
 
 // Função para validar e retornar mensagem de erro
 function validateIPv6(addressCIDR) {
+  console.log("Validando IPv6 com detalhes:", addressCIDR);
   const [addr, prefix] = addressCIDR.split('/');
   if (!addr || !prefix || isNaN(prefix)) {
     return "Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).";
@@ -105,12 +109,14 @@ function shortenIPv6(address) {
 
 // Função para formatar IPv6 como string hexadecimal
 function formatIPv6Address(ipv6BigInt) {
+  console.log("Formatando IPv6 BigInt:", ipv6BigInt.toString());
   let hexStr = ipv6BigInt.toString(16).padStart(32, '0');
   return hexStr.match(/.{1,4}/g).join(':');
 }
 
 // Função para calcular bloco agregado
 function calcularBlocoAgregado(selectedSubnets) {
+  console.log("Calculando bloco agregado para", selectedSubnets.length, "sub-redes");
   if (selectedSubnets.length === 0) return null;
   let prefixLength = parseInt(selectedSubnets[0].subnet.split('/')[1]);
   for (let s of selectedSubnets) {
@@ -135,53 +141,3 @@ function calcularBlocoAgregado(selectedSubnets) {
   let aggregatedHex = aggregatedNetwork.toString(16).padStart(32, '0');
   let aggregatedFormatted = aggregatedHex.match(/.{1,4}/g).join(':');
   return { network: aggregatedFormatted, prefix: newPrefix };
-}
-
-// Função para gerar sub-redes assincronamente
-function gerarSubRedesAssincronamente(ipv6BigInt, initialMask, prefix, numSubRedes, callback, appState) {
-  let i = 0n;
-  const chunkSize = 1000n;
-  
-  function processChunk() {
-    let chunkCount = 0n;
-    while (i < numSubRedes && chunkCount < chunkSize) {
-      let subnetBigInt = (ipv6BigInt & initialMask) + (i << (128n - BigInt(prefix)));
-      let subnetHex = subnetBigInt.toString(16).padStart(32, '0');
-      let subnetFormatada = subnetHex.match(/.{1,4}/g).join(':');
-      let subnetInitial = subnetBigInt;
-      let subnetFinal = subnetBigInt + (1n << (128n - BigInt(prefix))) - 1n;
-      let subnetInitialFormatted = subnetInitial.toString(16).padStart(32, '0').match(/.{1,4}/g).join(':');
-      let subnetFinalFormatted = subnetFinal.toString(16).padStart(32, '0').match(/.{1,4}/g).join(':');
-      
-      appState.subRedesGeradas.push({
-        subnet: `${subnetFormatada}/${prefix}`,
-        initial: subnetInitialFormatted,
-        final: subnetFinalFormatted,
-        network: `${subnetFormatada}`
-      });
-      
-      i++;
-      chunkCount++;
-    }
-    
-    if (i < numSubRedes) {
-      setTimeout(processChunk, 0);
-    } else {
-      document.getElementById('loadingIndicator').style.display = 'none';
-      callback();
-    }
-  }
-  
-  processChunk();
-}
-
-// Exportar funções para uso global
-window.utils = {
-  isValidIPv6,
-  validateIPv6,
-  expandIPv6Address,
-  shortenIPv6,
-  formatIPv6Address,
-  calcularBlocoAgregado,
-  gerarSubRedesAssincronamente
-};
