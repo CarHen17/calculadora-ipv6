@@ -179,9 +179,35 @@
     </li>
   </template>
 
-  <!-- Scripts -->
+  <!-- Scripts - Adicionado console.log para debugging -->
+  <script>console.log("Carregando scripts...");</script>
   <script src="utils.js"></script>
   <script src="ui.js"></script>
   <script src="main.js"></script>
+  <script src="debug.js"></script>
+  <script>
+    // Script de inicialização para verificar se tudo está funcionando
+    window.addEventListener('load', function() {
+      console.log("Página completamente carregada");
+      
+      // Verificar objetos globais
+      setTimeout(function() {
+        console.log("Verificando objetos globais após 1 segundo:");
+        console.log("window.utils disponível:", typeof window.utils !== 'undefined');
+        console.log("window.ui disponível:", typeof window.ui !== 'undefined');
+        console.log("window.appState disponível:", typeof window.appState !== 'undefined');
+        
+        // Testar funções críticas
+        if (typeof window.utils !== 'undefined' && typeof window.utils.expandIPv6Address === 'function') {
+          console.log("Teste de expandIPv6Address:", window.utils.expandIPv6Address("2001:db8::/32"));
+        } else {
+          console.error("Função expandIPv6Address não está disponível!");
+        }
+        
+        // Verificar elementos do DOM
+        console.log("Botão calcular encontrado:", document.getElementById('calcularBtn') !== null);
+      }, 1000);
+    });
+  </script>
 </body>
 </html>
