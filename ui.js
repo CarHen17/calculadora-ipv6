@@ -2,26 +2,30 @@
  * Funções de interface do usuário para a calculadora de sub-redes IPv6
  */
 
+console.log("Inicializando ui.js...");
+
 // Objeto UI que conterá todas as funções relacionadas a interface
-const ui = {
+window.ui = {
   // Função para atualizar informações do bloco selecionado na sidebar
   atualizarInformacoesDoBloco: function() {
+    console.log("Atualizando informações do bloco na sidebar");
     let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
     if (checkboxes.length === 1) {
       let indice = parseInt(checkboxes[0].value);
-      let blocoSelecionado = appState.subRedesGeradas[indice];
-      document.getElementById('sidebarBlockCidr').innerText = utils.shortenIPv6(blocoSelecionado.subnet);
+      let blocoSelecionado = window.appState.subRedesGeradas[indice];
+      document.getElementById('sidebarBlockCidr').innerText = window.utils.shortenIPv6(blocoSelecionado.subnet);
       let redeHex = blocoSelecionado.network.replace(/:/g, '');
       let redeBigInt = BigInt("0x" + redeHex);
       let gatewayIpBigInt = redeBigInt + 1n; 
-      let gatewayIpFormatado = utils.formatIPv6Address(gatewayIpBigInt);
-      let gatewayIpShort = utils.shortenIPv6(gatewayIpFormatado);
+      let gatewayIpFormatado = window.utils.formatIPv6Address(gatewayIpBigInt);
+      let gatewayIpShort = window.utils.shortenIPv6(gatewayIpFormatado);
       document.getElementById('mainBlockGateway').innerText = gatewayIpShort;
     }
   },
 
   // Função para atualizar o bloco agregado
   atualizarBlocoAgregado: function() {
+    console.log("Atualizando bloco agregado");
     let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
     if (checkboxes.length === 0) {
       document.getElementById('aggregatedPrefix').innerText = "N/A";
@@ -29,17 +33,18 @@ const ui = {
       return;
     }
     document.getElementById('aggregatedSidebar').style.display = 'block';
-    let selectedSubnets = Array.from(checkboxes).map(checkbox => appState.subRedesGeradas[parseInt(checkbox.value)]);
-    let aggregate = utils.calcularBlocoAgregado(selectedSubnets);
+    let selectedSubnets = Array.from(checkboxes).map(checkbox => window.appState.subRedesGeradas[parseInt(checkbox.value)]);
+    let aggregate = window.utils.calcularBlocoAgregado(selectedSubnets);
     if (aggregate === null) {
       document.getElementById('aggregatedPrefix').innerText = "Bloco inválido";
     } else {
-      document.getElementById('aggregatedPrefix').innerText = utils.shortenIPv6(aggregate.network) + "/" + aggregate.prefix;
+      document.getElementById('aggregatedPrefix').innerText = window.utils.shortenIPv6(aggregate.network) + "/" + aggregate.prefix;
     }
   },
 
   // Função para atualizar botão gerar IPs
   atualizarGerarIPsButton: function() {
+    console.log("Atualizando botão gerar IPs");
     let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
     let btn = document.getElementById('gerarIPsButton');
     btn.style.display = (checkboxes.length === 1) ? 'inline-block' : 'none';
@@ -50,6 +55,7 @@ const ui = {
 
   // Função para selecionar/desselecionar todos os checkboxes
   toggleSelectAll: function() {
+    console.log("Alternando seleção de todas as sub-redes");
     let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]');
     let selectAll = document.getElementById('selectAll').checked;
     checkboxes.forEach(checkbox => {
@@ -60,36 +66,38 @@ const ui = {
 
   // Função para carregar mais sub-redes na tabela
   carregarMaisSubRedes: function() {
+    console.log("Carregando mais sub-redes na tabela");
     let tbody = document.getElementById('subnetsTable').getElementsByTagName('tbody')[0];
-    let limite = Math.min(appState.subRedesExibidas + 100, appState.subRedesGeradas.length);
-    for (let i = appState.subRedesExibidas; i < limite; i++) {
+    let limite = Math.min(window.appState.subRedesExibidas + 100, window.appState.subRedesGeradas.length);
+    for (let i = window.appState.subRedesExibidas; i < limite; i++) {
       let row = tbody.insertRow();
       let checkboxCell = row.insertCell(0);
       let checkbox = document.createElement('input');
       checkbox.type = 'checkbox';
       checkbox.value = i;
-      checkbox.setAttribute('aria-label', `Selecionar sub-rede ${utils.shortenIPv6(appState.subRedesGeradas[i].subnet)}`);
+      checkbox.setAttribute('aria-label', `Selecionar sub-rede ${window.utils.shortenIPv6(window.appState.subRedesGeradas[i].subnet)}`);
       checkbox.addEventListener('change', () => {
-        ui.atualizarBlocoAgregado();
-        ui.atualizarGerarIPsButton();
-        ui.atualizarInformacoesDoBloco();
+        this.atualizarBlocoAgregado();
+        this.atualizarGerarIPsButton();
+        this.atualizarInformacoesDoBloco();
         
         // Adicionar classe para destacar linha selecionada (melhoria mobile)
         row.classList.toggle('selected', checkbox.checked);
       });
       checkboxCell.appendChild(checkbox);
-      row.insertCell(1).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].subnet);
-      row.insertCell(2).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].initial);
-      row.insertCell(3).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].final);
-      row.insertCell(4).innerText = utils.shortenIPv6(appState.subRedesGeradas[i].network);
+      row.insertCell(1).innerText = window.utils.shortenIPv6(window.appState.subRedesGeradas[i].subnet);
+      row.insertCell(2).innerText = window.utils.shortenIPv6(window.appState.subRedesGeradas[i].initial);
+      row.insertCell(3).innerText = window.utils.shortenIPv6(window.appState.subRedesGeradas[i].final);
+      row.insertCell(4).innerText = window.utils.shortenIPv6(window.appState.subRedesGeradas[i].network);
     }
-    appState.subRedesExibidas = limite;
+    window.appState.subRedesExibidas = limite;
     document.getElementById('loadMoreContainer').style.display = 
-      appState.subRedesExibidas < appState.subRedesGeradas.length ? 'block' : 'none';
+      window.appState.subRedesExibidas < window.appState.subRedesGeradas.length ? 'block' : 'none';
   },
 
   // Função para copiar texto (sidebar)
   copiarTexto: function(elementId, feedback = true) {
+    console.log("Copiando texto do elemento:", elementId);
     let text;
     const element = document.getElementById(elementId);
     
@@ -106,7 +114,11 @@ const ui = {
           tooltip.innerText = "Copiado!";
           tooltip.classList.add('sidebar-tooltip');
           element.parentNode.appendChild(tooltip);
-          setTimeout(() => element.parentNode.removeChild(tooltip), 1500);
+          setTimeout(() => {
+            if (element.parentNode && tooltip.parentNode === element.parentNode) {
+              element.parentNode.removeChild(tooltip);
+            }
+          }, 1500);
         }
       })
       .catch(() => alert("Falha ao copiar o texto."));
@@ -114,6 +126,7 @@ const ui = {
 
   // Função para adicionar IP à lista
   appendIpToList: function(ip, number, listId) {
+    console.log(`Adicionando IP ${ip} à lista ${listId}`);
     // Usar o template para criar itens consistentes
     const ipsList = document.getElementById(listId);
     
@@ -135,7 +148,11 @@ const ui = {
             tooltip.innerText = "Copiado!";
             tooltip.classList.add('ips-tooltip');
             copyBtn.appendChild(tooltip);
-            setTimeout(() => copyBtn.removeChild(tooltip), 1500);
+            setTimeout(() => {
+              if (tooltip.parentNode === copyBtn) {
+                copyBtn.removeChild(tooltip);
+              }
+            }, 1500);
           })
           .catch(() => alert("Falha ao copiar IP."));
       });
@@ -165,7 +182,11 @@ const ui = {
             tooltip.innerText = "Copiado!";
             tooltip.classList.add('ips-tooltip');
             copyIcon.appendChild(tooltip);
-            setTimeout(() => copyIcon.removeChild(tooltip), 1500);
+            setTimeout(() => {
+              if (tooltip.parentNode === copyIcon) {
+                copyIcon.removeChild(tooltip);
+              }
+            }, 1500);
           })
           .catch(() => alert("Falha ao copiar IP."));
       });
@@ -179,11 +200,13 @@ const ui = {
 
   // Função para alternar tema claro/escuro
   toggleTheme: function() {
+    console.log("Alternando tema");
     document.body.classList.toggle('dark-mode');
   },
   
   // Função para ajustar o layout responsivo
   ajustarLayoutResponsive: function() {
+    console.log("Ajustando layout responsivo");
     const isMobile = window.innerWidth <= 992;
     if (isMobile) {
       const infoSidebar = document.getElementById('infoSidebar');
@@ -224,6 +247,7 @@ const ui = {
   // Otimizar para dispositivos móveis
   optimizeForMobile: function() {
     const isMobile = this.isMobileDevice();
+    console.log("Dispositivo móvel detectado:", isMobile);
     
     // Adicionar classe para estilos específicos de mobile
     document.body.classList.toggle('mobile-device', isMobile);
@@ -372,7 +396,7 @@ const ui = {
     });
     
     item.addEventListener('touchend', e => {
-      if (startX - currentX > threshold) {
+      if (startX && currentX && startX - currentX > threshold) {
         // Deslizou além do limite - remover
         item.style.transition = 'transform 0.3s, opacity 0.3s';
         item.style.transform = 'translateX(-100%)';
@@ -482,5 +506,5 @@ const ui = {
 
 // Exportar a função copiarTexto globalmente para uso nos eventos onclick do HTML
 window.copiarTexto = function(elementId, feedback = true) {
-  ui.copiarTexto(elementId, feedback);
+  window.ui.copiarTexto(elementId, feedback);
 };
