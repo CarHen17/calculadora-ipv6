@@ -1,16 +1,11 @@
 /**
- * Script combinado para calculadora IPv6
+ * Script combinado corrigido para calculadora IPv6
  * Este arquivo combina todas as funcionalidades em um único script
  * para eliminar problemas de ordem de carregamento e dependências.
  */
 
 // Inicialização imediata
 console.log("Iniciando calculadora IPv6...");
-
-// Garantir que não haja conflitos com variáveis existentes
-if (window.appState) console.log("Aviso: appState já existe e será sobrescrito");
-if (window.utils) console.log("Aviso: utils já existe e será sobrescrito");
-if (window.ui) console.log("Aviso: ui já existe e será sobrescrito");
 
 // PARTE 1: DEFINIÇÃO DO OBJETO GLOBAL DE ESTADO
 // =============================================
@@ -206,6 +201,46 @@ window.utils = {
         prefix: prefix,
         numSubRedes: numSubRedes.toString()
       });
+
+// Adicionar um diagnóstico para verificar se os objetos globais estão acessíveis
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    console.log("Verificação final de objetos globais:");
+    console.log("- window.utils disponível:", typeof window.utils !== 'undefined');
+    console.log("- window.ui disponível:", typeof window.ui !== 'undefined');
+    console.log("- window.appState disponível:", typeof window.appState !== 'undefined');
+    
+    const diagnosticoDiv = document.createElement('div');
+    diagnosticoDiv.style.position = 'fixed';
+    diagnosticoDiv.style.bottom = '10px';
+    diagnosticoDiv.style.left = '10px';
+    diagnosticoDiv.style.background = '#4CAF50';
+    diagnosticoDiv.style.color = 'white';
+    diagnosticoDiv.style.padding = '10px';
+    diagnosticoDiv.style.borderRadius = '5px';
+    diagnosticoDiv.style.zIndex = '9999';
+    diagnosticoDiv.style.fontSize = '12px';
+    
+    if (typeof window.utils !== 'undefined' && typeof window.ui !== 'undefined' && typeof window.appState !== 'undefined') {
+      diagnosticoDiv.textContent = "✓ Inicialização OK";
+      diagnosticoDiv.style.cursor = 'pointer';
+      diagnosticoDiv.title = "Clique para fechar";
+      diagnosticoDiv.onclick = function() {
+        document.body.removeChild(diagnosticoDiv);
+      };
+      setTimeout(function() {
+        if (diagnosticoDiv.parentNode) {
+          document.body.removeChild(diagnosticoDiv);
+        }
+      }, 5000);
+    } else {
+      diagnosticoDiv.textContent = "❌ Erro na inicialização";
+      diagnosticoDiv.style.background = '#F44336';
+    }
+    
+    document.body.appendChild(diagnosticoDiv);
+  }, 1000);
+});
       
       let i = 0n;
       const chunkSize = 1000n;
@@ -684,6 +719,266 @@ window.copiarTexto = function(elementId, feedback = true) {
 // PARTE 4: FUNÇÕES PRINCIPAIS DA CALCULADORA
 // =============================================
 
+// Adicionar as funções globalmente para que possam ser acessadas pelo HTML
+window.calcularSubRedes = calcularSubRedes;
+window.resetarCalculadora = resetarCalculadora;
+window.toggleMainBlockIps = toggleMainBlockIps;
+window.mostrarSugestoesDivisao = mostrarSugestoesDivisao;
+window.gerarIPsDoBloco = gerarIPsDoBloco;
+window.gerarMaisIPsDoBloco = gerarMaisIPsDoBloco; 
+window.resetarIPsMainBlock = resetarIPsMainBlock;
+window.gerarPrimeirosIPs = gerarPrimeirosIPs;
+window.gerarMaisIPs = gerarMaisIPs;
+window.resetarIPsGerados = resetarIPsGerados;
+window.selecionarPrefixo = selecionarPrefixo;
+
+// PARTE 5: INICIALIZAÇÃO DA APLICAÇÃO
+// =============================================
+document.addEventListener('DOMContentLoaded', function() {
+  try {
+    console.log("DOM carregado - iniciando aplicação");
+    
+    // Associar funções aos elementos
+    if (document.getElementById('calcularBtn')) {
+      document.getElementById('calcularBtn').addEventListener('click', calcularSubRedes);
+      console.log("Evento click adicionado ao botão calcularBtn");
+    } else {
+      console.error("Elemento calcularBtn não encontrado!");
+    }
+    
+    if (document.getElementById('resetBtn')) {
+      document.getElementById('resetBtn').addEventListener('click', resetarCalculadora);
+      console.log("Evento click adicionado ao botão resetBtn");
+    } else {
+      console.error("Elemento resetBtn não encontrado!");
+    }
+    
+    if (document.getElementById('toggleThemeButton')) {
+      document.getElementById('toggleThemeButton').addEventListener('click', window.ui.toggleTheme);
+      console.log("Evento click adicionado ao botão toggleThemeButton");
+    } else {
+      console.error("Elemento toggleThemeButton não encontrado!");
+    }
+    
+    if (document.getElementById('toggleMainBlockIpsBtn')) {
+      document.getElementById('toggleMainBlockIpsBtn').addEventListener('click', toggleMainBlockIps);
+      console.log("Evento click adicionado ao botão toggleMainBlockIpsBtn");
+    } else {
+      console.error("Elemento toggleMainBlockIpsBtn não encontrado!");
+    }
+    
+    if (document.getElementById('loadMoreButton')) {
+      document.getElementById('loadMoreButton').addEventListener('click', function() {
+        window.ui.carregarMaisSubRedes();
+      });
+      console.log("Evento click adicionado ao botão loadMoreButton");
+    } else {
+      console.error("Elemento loadMoreButton não encontrado!");
+    }
+    
+    if (document.getElementById('gerarIPsButton')) {
+      document.getElementById('gerarIPsButton').addEventListener('click', gerarPrimeirosIPs);
+      console.log("Evento click adicionado ao botão gerarIPsButton");
+    } else {
+      console.error("Elemento gerarIPsButton não encontrado!");
+    }
+    
+    if (document.getElementById('gerarMaisIPsButton')) {
+      document.getElementById('gerarMaisIPsButton').addEventListener('click', gerarMaisIPs);
+      console.log("Evento click adicionado ao botão gerarMaisIPsButton");
+    } else {
+      console.error("Elemento gerarMaisIPsButton não encontrado!");
+    }
+    
+    if (document.getElementById('resetIPsButton')) {
+      document.getElementById('resetIPsButton').addEventListener('click', resetarIPsGerados);
+      console.log("Evento click adicionado ao botão resetIPsButton");
+    } else {
+      console.error("Elemento resetIPsButton não encontrado!");
+    }
+    
+    if (document.getElementById('moreMainBlockIpsBtn')) {
+      document.getElementById('moreMainBlockIpsBtn').addEventListener('click', gerarMaisIPsDoBloco);
+      console.log("Evento click adicionado ao botão moreMainBlockIpsBtn");
+    } else {
+      console.error("Elemento moreMainBlockIpsBtn não encontrado!");
+    }
+    
+    if (document.getElementById('resetMainBlockIPsButton')) {
+      document.getElementById('resetMainBlockIPsButton').addEventListener('click', resetarIPsMainBlock);
+      console.log("Evento click adicionado ao botão resetMainBlockIPsButton");
+    } else {
+      console.error("Elemento resetMainBlockIPsButton não encontrado!");
+    }
+    
+    if (document.getElementById('continuarBtn')) {
+      document.getElementById('continuarBtn').addEventListener('click', mostrarSugestoesDivisao);
+      console.log("Evento click adicionado ao botão continuarBtn");
+    } else {
+      console.error("Elemento continuarBtn não encontrado!");
+    }
+    
+    if (document.getElementById('selectAll')) {
+      document.getElementById('selectAll').addEventListener('change', window.ui.toggleSelectAll);
+      console.log("Evento change adicionado ao elemento selectAll");
+    } else {
+      console.error("Elemento selectAll não encontrado!");
+    }
+    
+    // Botões de navegação
+    if (document.getElementById('topBtn')) {
+      document.getElementById('topBtn').addEventListener('click', window.ui.scrollToTop);
+      console.log("Evento click adicionado ao botão topBtn");
+    } else {
+      console.error("Elemento topBtn não encontrado!");
+    }
+    
+    if (document.getElementById('bottomBtn')) {
+      document.getElementById('bottomBtn').addEventListener('click', window.ui.scrollToBottom);
+      console.log("Evento click adicionado ao botão bottomBtn");
+    } else {
+      console.error("Elemento bottomBtn não encontrado!");
+    }
+    
+    // Detectar preferência de tema escuro do sistema
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      window.ui.toggleTheme();
+      console.log("Tema escuro ativado baseado na preferência do sistema");
+    }
+    
+    // Inicializar otimizações móveis
+    window.ui.initMobileOptimizations();
+    console.log("Otimizações para dispositivos móveis inicializadas");
+    
+    // Adicionar listener para redimensionamento da janela
+    window.addEventListener('resize', window.ui.ajustarLayoutResponsive);
+    console.log("Listener de redimensionamento adicionado");
+    
+    console.log("Inicialização completa da calculadora IPv6");
+  } catch (error) {
+    console.error("Erro durante a inicialização da aplicação:", error);
+    alert("Ocorreu um erro ao inicializar a aplicação. Verifique o console para mais detalhes.");
+  }
+});
+
+// Função para calcular sub-redes
+function calcularSubRedes() {
+  try {
+    console.log("Função calcularSubRedes chamada");
+    // Limpeza do estado anterior
+    window.appState.subRedesGeradas = [];
+    window.appState.subRedesExibidas = 0;
+    window.appState.selectedBlock = null;
+    window.appState.currentIpOffset = 0;
+    document.getElementById('resultado').style.display = 'none';
+    document.getElementById('ipsResult').style.display = 'none';
+    document.getElementById('ipsList').innerHTML = '';
+    
+    let ipv6Input = document.getElementById('ipv6').value.trim();
+    console.log("Input IPv6:", ipv6Input);
+    
+    let errorMessage = window.utils.validateIPv6(ipv6Input);
+    document.getElementById('errorMessage').style.display = 'none';
+    
+    if (errorMessage) {
+      document.getElementById('errorMessage').innerText = errorMessage;
+      document.getElementById('errorMessage').style.display = 'block';
+      return;
+    }
+    
+    let [endereco, prefixoInicial] = ipv6Input.split('/');
+    prefixoInicial = parseInt(prefixoInicial);
+    let enderecoCompleto = window.utils.expandIPv6Address(ipv6Input);
+    
+    // Configurar o bloco principal
+    let enderecoFormatado = window.utils.shortenIPv6(enderecoCompleto);
+    document.getElementById('mainBlockCidr').innerText = `${enderecoFormatado}/${prefixoInicial}`;
+    window.appState.mainBlock = {
+      network: enderecoCompleto,
+      prefix: prefixoInicial
+    };
+    
+    // Calcular o gateway
+    let redeHex = enderecoCompleto.replace(/:/g, '');
+    let redeBigInt = BigInt("0x" + redeHex);
+    let gatewayIpBigInt = redeBigInt + 1n; 
+    let gatewayIpFormatado = window.utils.formatIPv6Address(gatewayIpBigInt);
+    let gatewayIpShort = window.utils.shortenIPv6(gatewayIpFormatado);
+    
+    document.getElementById('mainBlockGateway').innerText = gatewayIpShort;
+    document.getElementById('sidebarBlockCidr').innerText = `${enderecoFormatado}/${prefixoInicial}`;
+    
+    window.appState.mainBlockCurrentOffset = 0;
+    document.getElementById('mainBlockIpsContainer').style.display = 'none';
+    
+    // Exibir a seção de IPs do bloco principal e a sidebar de informações
+    document.getElementById('mainBlockSection').style.display = 'block';
+    document.getElementById('infoSidebar').style.display = 'block';
+    document.getElementById('aggregatedSidebar').style.display = 'none';
+    
+    // Pré-preencher a lista de possíveis prefixos
+    document.getElementById('possiblePrefixesList').innerHTML = "";
+    let possiblePrefixes = [];
+    for (let i = prefixoInicial + 1; i <= 128; i++) {
+      possiblePrefixes.push(i);
+    }
+    let suggestionsList = document.getElementById('possiblePrefixesList');
+    possiblePrefixes.forEach(prefix => {
+      let div = document.createElement('div');
+      div.innerText = `/${prefix}`;
+      div.tabIndex = 0;
+      div.setAttribute('role', 'button');
+      div.onclick = () => selecionarPrefixo(prefix);
+      div.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          selecionarPrefixo(prefix);
+        }
+      };
+      suggestionsList.appendChild(div);
+    });
+    
+    // Ajustar layout responsivo
+    window.ui.ajustarLayoutResponsive();
+  } catch (error) {
+    console.error("Erro ao calcular sub-redes:", error);
+    alert("Ocorreu um erro ao calcular as sub-redes. Verifique o console para mais detalhes.");
+  }
+}
+
+// Função para resetar a calculadora
+function resetarCalculadora() {
+  try {
+    console.log("Função resetarCalculadora chamada");
+    document.getElementById('ipv6').value = '';
+    document.getElementById('mainBlockSection').style.display = 'none';
+    document.getElementById('suggestions').style.display = 'none';
+    document.getElementById('resultado').style.display = 'none';
+    document.getElementById('aggregatedSidebar').style.display = 'none';
+    document.getElementById('infoSidebar').style.display = 'none';
+    document.getElementById('loadingIndicator').style.display = 'none';
+    document.getElementById('errorMessage').style.display = 'none';
+    
+    // Reiniciar variáveis
+    window.appState.subRedesGeradas = [];
+    window.appState.subRedesExibidas = 0;
+    window.appState.totalSubRedesGerar = 0;
+    window.appState.selectedBlock = null;
+    window.appState.currentIpOffset = 0;
+    window.appState.mainBlock = null;
+    window.appState.mainBlockCurrentOffset = 0;
+    window.appState.isMainBlockIpsVisible = false;
+    
+    // Limpar listas de IPs
+    document.getElementById('ipsList').innerHTML = '';
+    document.getElementById('mainBlockIpsList').innerHTML = '';
+    
+    // Focar no campo de entrada
+    document.getElementById('ipv6').focus();
+  } catch (error) {
+    console.error("Erro ao resetar calculadora:", error);
+  }
+}
+
 // Função para alternar IPs do bloco principal
 function toggleMainBlockIps() {
   try {
@@ -907,6 +1202,7 @@ function resetarIPsGerados() {
   }
 }
 
+// Função para selecionar prefixo
 // PARTE 5: INICIALIZAÇÃO DA APLICAÇÃO
 // =============================================
 document.addEventListener('DOMContentLoaded', function() {
@@ -962,119 +1258,6 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('gerarMaisIPsButton').addEventListener('click', gerarMaisIPs);
       console.log("Evento click adicionado ao botão gerarMaisIPsButton");
     } else {
-      console.error("Elemento gerarMaisIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('resetIPsButton')) {
-      document.getElementById('resetIPsButton').addEventListener('click', resetarIPsGerados);
-      console.log("Evento click adicionado ao botão resetIPsButton");
-    } else {
-      console.error("Elemento resetIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('moreMainBlockIpsBtn')) {
-      document.getElementById('moreMainBlockIpsBtn').addEventListener('click', gerarMaisIPsDoBloco);
-      console.log("Evento click adicionado ao botão moreMainBlockIpsBtn");
-    } else {
-      console.error("Elemento moreMainBlockIpsBtn não encontrado!");
-    }
-    
-    if (document.getElementById('resetMainBlockIPsButton')) {
-      document.getElementById('resetMainBlockIPsButton').addEventListener('click', resetarIPsMainBlock);
-      console.log("Evento click adicionado ao botão resetMainBlockIPsButton");
-    } else {
-      console.error("Elemento resetMainBlockIPsButton não encontrado!");
-    }
-    
-    if (document.getElementById('continuarBtn')) {
-      document.getElementById('continuarBtn').addEventListener('click', mostrarSugestoesDivisao);
-      console.log("Evento click adicionado ao botão continuarBtn");
-    } else {
-      console.error("Elemento continuarBtn não encontrado!");
-    }
-    
-    if (document.getElementById('selectAll')) {
-      document.getElementById('selectAll').addEventListener('change', window.ui.toggleSelectAll);
-      console.log("Evento change adicionado ao elemento selectAll");
-    } else {
-      console.error("Elemento selectAll não encontrado!");
-    }
-    
-    // Botões de navegação
-    if (document.getElementById('topBtn')) {
-      document.getElementById('topBtn').addEventListener('click', window.ui.scrollToTop);
-      console.log("Evento click adicionado ao botão topBtn");
-    } else {
-      console.error("Elemento topBtn não encontrado!");
-    }
-    
-    if (document.getElementById('bottomBtn')) {
-      document.getElementById('bottomBtn').addEventListener('click', window.ui.scrollToBottom);
-      console.log("Evento click adicionado ao botão bottomBtn");
-    } else {
-      console.error("Elemento bottomBtn não encontrado!");
-    }
-    
-    // Detectar preferência de tema escuro do sistema
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      window.ui.toggleTheme();
-      console.log("Tema escuro ativado baseado na preferência do sistema");
-    }
-    
-    // Inicializar otimizações móveis
-    window.ui.initMobileOptimizations();
-    console.log("Otimizações para dispositivos móveis inicializadas");
-    
-    // Adicionar listener para redimensionamento da janela
-    window.addEventListener('resize', window.ui.ajustarLayoutResponsive);
-    console.log("Listener de redimensionamento adicionado");
-    
-    console.log("Inicialização completa da calculadora IPv6");
-  } catch (error) {
-    console.error("Erro durante a inicialização da aplicação:", error);
-    alert("Ocorreu um erro ao inicializar a aplicação. Verifique o console para mais detalhes.");
-  }
-});
-
-// Adicionar um diagnóstico para verificar se os objetos globais estão acessíveis
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    console.log("Verificação final de objetos globais:");
-    console.log("- window.utils disponível:", typeof window.utils !== 'undefined');
-    console.log("- window.ui disponível:", typeof window.ui !== 'undefined');
-    console.log("- window.appState disponível:", typeof window.appState !== 'undefined');
-    
-    const diagnosticoDiv = document.createElement('div');
-    diagnosticoDiv.style.position = 'fixed';
-    diagnosticoDiv.style.bottom = '10px';
-    diagnosticoDiv.style.left = '10px';
-    diagnosticoDiv.style.background = '#4CAF50';
-    diagnosticoDiv.style.color = 'white';
-    diagnosticoDiv.style.padding = '10px';
-    diagnosticoDiv.style.borderRadius = '5px';
-    diagnosticoDiv.style.zIndex = '9999';
-    diagnosticoDiv.style.fontSize = '12px';
-    
-    if (typeof window.utils !== 'undefined' && typeof window.ui !== 'undefined' && typeof window.appState !== 'undefined') {
-      diagnosticoDiv.textContent = "✓ Inicialização OK";
-      diagnosticoDiv.style.cursor = 'pointer';
-      diagnosticoDiv.title = "Clique para fechar";
-      diagnosticoDiv.onclick = function() {
-        document.body.removeChild(diagnosticoDiv);
-      };
-      setTimeout(function() {
-        if (diagnosticoDiv.parentNode) {
-          document.body.removeChild(diagnosticoDiv);
-        }
-      }, 5000);
-    } else {
-      diagnosticoDiv.textContent = "❌ Erro na inicialização";
-      diagnosticoDiv.style.background = '#F44336';
-    }
-    
-    document.body.appendChild(diagnosticoDiv);
-  }, 1000);
-});
   try {
     console.log("Selecionando prefixo:", prefix);
     let ipv6Input = document.getElementById('ipv6').value.trim();
@@ -1128,114 +1311,3 @@ window.addEventListener('load', function() {
     alert("Ocorreu um erro ao processar as sub-redes. Verifique o console para mais detalhes.");
   }
 }
-  try {
-    console.log("Função resetarCalculadora chamada");
-    document.getElementById('ipv6').value = '';
-    document.getElementById('mainBlockSection').style.display = 'none';
-    document.getElementById('suggestions').style.display = 'none';
-    document.getElementById('resultado').style.display = 'none';
-    document.getElementById('aggregatedSidebar').style.display = 'none';
-    document.getElementById('infoSidebar').style.display = 'none';
-    document.getElementById('loadingIndicator').style.display = 'none';
-    document.getElementById('errorMessage').style.display = 'none';
-    
-    // Reiniciar variáveis
-    window.appState.subRedesGeradas = [];
-    window.appState.subRedesExibidas = 0;
-    window.appState.totalSubRedesGerar = 0;
-    window.appState.selectedBlock = null;
-    window.appState.currentIpOffset = 0;
-    window.appState.mainBlock = null;
-    window.appState.mainBlockCurrentOffset = 0;
-    window.appState.isMainBlockIpsVisible = false;
-    
-    // Limpar listas de IPs
-    document.getElementById('ipsList').innerHTML = '';
-    document.getElementById('mainBlockIpsList').innerHTML = '';
-    
-    // Focar no campo de entrada
-    document.getElementById('ipv6').focus();
-  } catch (error) {
-    console.error("Erro ao resetar calculadora:", error);
-  }
-}
-  try {
-    console.log("Função calcularSubRedes chamada");
-    // Limpeza do estado anterior
-    window.appState.subRedesGeradas = [];
-    window.appState.subRedesExibidas = 0;
-    window.appState.selectedBlock = null;
-    window.appState.currentIpOffset = 0;
-    document.getElementById('resultado').style.display = 'none';
-    document.getElementById('ipsResult').style.display = 'none';
-    document.getElementById('ipsList').innerHTML = '';
-    
-    let ipv6Input = document.getElementById('ipv6').value.trim();
-    console.log("Input IPv6:", ipv6Input);
-    
-    let errorMessage = window.utils.validateIPv6(ipv6Input);
-    document.getElementById('errorMessage').style.display = 'none';
-    
-    if (errorMessage) {
-      document.getElementById('errorMessage').innerText = errorMessage;
-      document.getElementById('errorMessage').style.display = 'block';
-      return;
-    }
-    
-    let [endereco, prefixoInicial] = ipv6Input.split('/');
-    prefixoInicial = parseInt(prefixoInicial);
-    let enderecoCompleto = window.utils.expandIPv6Address(ipv6Input);
-    
-    // Configurar o bloco principal
-    let enderecoFormatado = window.utils.shortenIPv6(enderecoCompleto);
-    document.getElementById('mainBlockCidr').innerText = `${enderecoFormatado}/${prefixoInicial}`;
-    window.appState.mainBlock = {
-      network: enderecoCompleto,
-      prefix: prefixoInicial
-    };
-    
-    // Calcular o gateway
-    let redeHex = enderecoCompleto.replace(/:/g, '');
-    let redeBigInt = BigInt("0x" + redeHex);
-    let gatewayIpBigInt = redeBigInt + 1n; 
-    let gatewayIpFormatado = window.utils.formatIPv6Address(gatewayIpBigInt);
-    let gatewayIpShort = window.utils.shortenIPv6(gatewayIpFormatado);
-    
-    document.getElementById('mainBlockGateway').innerText = gatewayIpShort;
-    document.getElementById('sidebarBlockCidr').innerText = `${enderecoFormatado}/${prefixoInicial}`;
-    
-    window.appState.mainBlockCurrentOffset = 0;
-    document.getElementById('mainBlockIpsContainer').style.display = 'none';
-    
-    // Exibir a seção de IPs do bloco principal e a sidebar de informações
-    document.getElementById('mainBlockSection').style.display = 'block';
-    document.getElementById('infoSidebar').style.display = 'block';
-    document.getElementById('aggregatedSidebar').style.display = 'none';
-    
-    // Pré-preencher a lista de possíveis prefixos
-    document.getElementById('possiblePrefixesList').innerHTML = "";
-    let possiblePrefixes = [];
-    for (let i = prefixoInicial + 1; i <= 128; i++) {
-      possiblePrefixes.push(i);
-    }
-    let suggestionsList = document.getElementById('possiblePrefixesList');
-    possiblePrefixes.forEach(prefix => {
-      let div = document.createElement('div');
-      div.innerText = `/${prefix}`;
-      div.tabIndex = 0;
-      div.setAttribute('role', 'button');
-      div.onclick = () => selecionarPrefixo(prefix);
-      div.onkeydown = (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          selecionarPrefixo(prefix);
-        }
-      };
-      suggestionsList.appendChild(div);
-    });
-    
-    // Ajustar layout responsivo
-    window.ui.ajustarLayoutResponsive();
-  } catch (error) {
-    console.error("Erro ao calcular sub-redes:", error);
-    alert("Ocorreu um erro ao calcular as sub-redes. Verifique o console para mais detalhes.");
-  }
