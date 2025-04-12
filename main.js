@@ -1,9 +1,15 @@
 /**
  * Código principal da Calculadora de Sub-Redes IPv6
+ * 
+ * Este arquivo contém as funções principais para manipulação de redes IPv6
+ * e gerenciamento do estado da aplicação.
  */
 
-// Estado da aplicação
-const appState = {
+// Adicionar logging de inicialização para debugging
+console.log("Inicializando main.js...");
+
+// Estado global da aplicação
+window.appState = {
   subRedesGeradas: [],
   subRedesExibidas: 0,
   totalSubRedesGerar: 0,
@@ -13,21 +19,24 @@ const appState = {
   mainBlockCurrentOffset: 0,
   mainBlockIpsChunkSize: 100,
   isMainBlockIpsVisible: false
-}
+};
 
 // Função para calcular sub-redes
 function calcularSubRedes() {
+  console.log("Função calcularSubRedes chamada");
   // Limpeza do estado anterior
-  appState.subRedesGeradas = [];
-  appState.subRedesExibidas = 0;
-  appState.selectedBlock = null;
-  appState.currentIpOffset = 0;
+  window.appState.subRedesGeradas = [];
+  window.appState.subRedesExibidas = 0;
+  window.appState.selectedBlock = null;
+  window.appState.currentIpOffset = 0;
   document.getElementById('resultado').style.display = 'none';
   document.getElementById('ipsResult').style.display = 'none';
   document.getElementById('ipsList').innerHTML = '';
   
   let ipv6Input = document.getElementById('ipv6').value.trim();
-  let errorMessage = utils.validateIPv6(ipv6Input);
+  console.log("Input IPv6:", ipv6Input);
+  
+  let errorMessage = window.utils.validateIPv6(ipv6Input);
   document.getElementById('errorMessage').style.display = 'none';
   
   if (errorMessage) {
@@ -38,12 +47,12 @@ function calcularSubRedes() {
   
   let [endereco, prefixoInicial] = ipv6Input.split('/');
   prefixoInicial = parseInt(prefixoInicial);
-  let enderecoCompleto = utils.expandIPv6Address(ipv6Input);
+  let enderecoCompleto = window.utils.expandIPv6Address(ipv6Input);
   
   // Configurar o bloco principal
-  let enderecoFormatado = utils.shortenIPv6(enderecoCompleto);
+  let enderecoFormatado = window.utils.shortenIPv6(enderecoCompleto);
   document.getElementById('mainBlockCidr').innerText = `${enderecoFormatado}/${prefixoInicial}`;
-  appState.mainBlock = {
+  window.appState.mainBlock = {
     network: enderecoCompleto,
     prefix: prefixoInicial
   };
@@ -52,12 +61,13 @@ function calcularSubRedes() {
   let redeHex = enderecoCompleto.replace(/:/g, '');
   let redeBigInt = BigInt("0x" + redeHex);
   let gatewayIpBigInt = redeBigInt + 1n; 
-  let gatewayIpFormatado = utils.formatIPv6Address(gatewayIpBigInt);
-  let gatewayIpShort = utils.shortenIPv6(gatewayIpFormatado);
+  let gatewayIpFormatado = window.utils.formatIPv6Address(gatewayIpBigInt);
+  let gatewayIpShort = window.utils.shortenIPv6(gatewayIpFormatado);
   
   document.getElementById('mainBlockGateway').innerText = gatewayIpShort;
+  document.getElementById('sidebarBlockCidr').innerText = `${enderecoFormatado}/${prefixoInicial}`;
   
-  appState.mainBlockCurrentOffset = 0;
+  window.appState.mainBlockCurrentOffset = 0;
   document.getElementById('mainBlockIpsContainer').style.display = 'none';
   
   // Exibir a seção de IPs do bloco principal e a sidebar de informações
@@ -87,11 +97,12 @@ function calcularSubRedes() {
   });
   
   // Ajustar layout responsivo
-  ui.ajustarLayoutResponsive();
+  window.ui.ajustarLayoutResponsive();
 }
 
 // Função para resetar a calculadora
 function resetarCalculadora() {
+  console.log("Função resetarCalculadora chamada");
   document.getElementById('ipv6').value = '';
   document.getElementById('mainBlockSection').style.display = 'none';
   document.getElementById('suggestions').style.display = 'none';
@@ -102,14 +113,14 @@ function resetarCalculadora() {
   document.getElementById('errorMessage').style.display = 'none';
   
   // Reiniciar variáveis
-  appState.subRedesGeradas = [];
-  appState.subRedesExibidas = 0;
-  appState.totalSubRedesGerar = 0;
-  appState.selectedBlock = null;
-  appState.currentIpOffset = 0;
-  appState.mainBlock = null;
-  appState.mainBlockCurrentOffset = 0;
-  appState.isMainBlockIpsVisible = false;
+  window.appState.subRedesGeradas = [];
+  window.appState.subRedesExibidas = 0;
+  window.appState.totalSubRedesGerar = 0;
+  window.appState.selectedBlock = null;
+  window.appState.currentIpOffset = 0;
+  window.appState.mainBlock = null;
+  window.appState.mainBlockCurrentOffset = 0;
+  window.appState.isMainBlockIpsVisible = false;
   
   // Limpar listas de IPs
   document.getElementById('ipsList').innerHTML = '';
@@ -119,156 +130,55 @@ function resetarCalculadora() {
   document.getElementById('ipv6').focus();
 }
 
-/**
- * Inicialização da aplicação
- */
-document.addEventListener('DOMContentLoaded', () => {
-  // Associar funções aos elementos
-  if (document.getElementById('calcularBtn')) {
-    document.getElementById('calcularBtn').addEventListener('click', calcularSubRedes);
+// Função para alternar IPs do bloco principal
+function toggleMainBlockIps() {
+  console.log("Alternando visibilidade dos IPs do bloco principal");
+  const ipsContainer = document.getElementById('mainBlockIpsContainer');
+  const toggleBtn = document.getElementById('toggleMainBlockIpsBtn');
+  if (window.appState.isMainBlockIpsVisible) {
+    ipsContainer.style.display = 'none';
+    toggleBtn.innerHTML = '<span class="btn-icon">⊕</span> Exibir IPs';
+    window.appState.isMainBlockIpsVisible = false;
+  } else {
+    ipsContainer.style.display = 'block';
+    toggleBtn.innerHTML = '<span class="btn-icon">⊖</span> Fechar IPs';
+    window.appState.isMainBlockIpsVisible = true;
+    if (document.getElementById('mainBlockIpsList').innerHTML === '') {
+      gerarIPsDoBloco();
+    }
   }
-  if (document.getElementById('resetBtn')) {
-    document.getElementById('resetBtn').addEventListener('click', resetarCalculadora);
-  }
-  if (document.getElementById('toggleThemeButton')) {
-    document.getElementById('toggleThemeButton').addEventListener('click', ui.toggleTheme);
-  }
-  if (document.getElementById('toggleMainBlockIpsBtn')) {
-    document.getElementById('toggleMainBlockIpsBtn').addEventListener('click', toggleMainBlockIps);
-  }
-  if (document.getElementById('loadMoreButton')) {
-    document.getElementById('loadMoreButton').addEventListener('click', function() {
-      ui.carregarMaisSubRedes();
-    });
-  }
-  if (document.getElementById('gerarIPsButton')) {
-    document.getElementById('gerarIPsButton').addEventListener('click', gerarPrimeirosIPs);
-  }
-  if (document.getElementById('gerarMaisIPsButton')) {
-    document.getElementById('gerarMaisIPsButton').addEventListener('click', gerarMaisIPs);
-  }
-  if (document.getElementById('resetIPsButton')) {
-    document.getElementById('resetIPsButton').addEventListener('click', resetarIPsGerados);
-  }
-  if (document.getElementById('moreMainBlockIpsBtn')) {
-    document.getElementById('moreMainBlockIpsBtn').addEventListener('click', gerarMaisIPsDoBloco);
-  }
-  if (document.getElementById('resetMainBlockIPsButton')) {
-    document.getElementById('resetMainBlockIPsButton').addEventListener('click', resetarIPsMainBlock);
-  }
-  if (document.getElementById('continuarBtn')) {
-    document.getElementById('continuarBtn').addEventListener('click', mostrarSugestoesDivisao);
-  }
-  if (document.getElementById('selectAll')) {
-    document.getElementById('selectAll').addEventListener('change', ui.toggleSelectAll);
-  }
-  
-  // Botões de navegação
-  if (document.getElementById('topBtn')) {
-    document.getElementById('topBtn').addEventListener('click', ui.scrollToTop);
-  }
-  if (document.getElementById('bottomBtn')) {
-    document.getElementById('bottomBtn').addEventListener('click', ui.scrollToBottom);
-  }
-  
-  // Detectar preferência de tema escuro do sistema
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    ui.toggleTheme();
-  }
-  
-  // Inicializar otimizações móveis
-  ui.initMobileOptimizations();
-  
-  // Adicionar listener para redimensionamento da janela
-  window.addEventListener('resize', ui.ajustarLayoutResponsive);
-});;
-
-/**
- * Funções de gerenciamento de sub-redes e IPs
- */
-
-// Função para gerar primeiros IPs
-function gerarPrimeirosIPs() {
-  let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-  if (checkboxes.length !== 1) {
-    alert("Selecione exatamente um bloco para gerar os IPs.");
-    return;
-  }
-  
-  // Resetar a lista de IPs
-  resetarIPsGerados();
-  
-  let indice = parseInt(checkboxes[0].value);
-  appState.selectedBlock = appState.subRedesGeradas[indice];
-  appState.currentIpOffset = 0;
-  let redeCompleta = appState.selectedBlock.network;
-  let redeHex = redeCompleta.replace(/:/g, '');
-  let redeBigInt = BigInt("0x" + redeHex);
-  let ipsList = document.getElementById('ipsList');
-  ipsList.innerHTML = "";
-  for (let i = 0; i < 50; i++) {
-    let ipBigInt = redeBigInt + BigInt(i);
-    let ipFormatado = utils.formatIPv6Address(ipBigInt);
-    let ipEnd = utils.shortenIPv6(ipFormatado);
-    ui.appendIpToList(ipEnd, i + 1, 'ipsList');
-  }
-  appState.currentIpOffset = 50;
-  document.getElementById('ipsResult').style.display = 'block';
-  document.getElementById('gerarMaisIPsButton').style.display = 'block';
 }
 
-// Função para gerar mais IPs
-function gerarMaisIPs() {
-  if (!appState.selectedBlock) return;
-  let redeCompleta = appState.selectedBlock.network;
-  let redeHex = redeCompleta.replace(/:/g, '');
-  let redeBigInt = BigInt("0x" + redeHex);
-  let inicio = appState.currentIpOffset;
-  let fim = inicio + 50;
-  
-  // Desabilitar o botão enquanto processa
-  document.getElementById('gerarMaisIPsButton').disabled = true;
-  
-  function processarLote() {
-    let limite = Math.min(appState.currentIpOffset + 10, fim);
-    for (let i = appState.currentIpOffset; i < limite; i++) {
-      let ipBigInt = redeBigInt + BigInt(i);
-      let ipFormatado = utils.formatIPv6Address(ipBigInt);
-      let ipEnd = utils.shortenIPv6(ipFormatado);
-      ui.appendIpToList(ipEnd, i + 1, 'ipsList');
-    }
-    appState.currentIpOffset = limite;
-    if (appState.currentIpOffset < fim) {
-      setTimeout(processarLote, 0);
-    } else {
-      document.getElementById('gerarMaisIPsButton').disabled = false;
-    }
-  }
-  processarLote();
+// Função para mostrar sugestões de divisão
+function mostrarSugestoesDivisao() {
+  console.log("Mostrando sugestões de divisão");
+  document.getElementById('suggestions').style.display = 'block';
+  document.getElementById('suggestions').scrollIntoView({ behavior: 'smooth' });
 }
 
 // Função para gerar IPs do bloco principal
 function gerarIPsDoBloco() {
-  if (!appState.mainBlock) return;
+  console.log("Gerando IPs do bloco principal");
+  if (!window.appState.mainBlock) return;
   document.getElementById('toggleMainBlockIpsBtn').disabled = true;
   document.getElementById('toggleMainBlockIpsBtn').innerHTML = '<span class="btn-icon">⌛</span> Gerando...';
-  let redeCompleta = appState.mainBlock.network;
+  let redeCompleta = window.appState.mainBlock.network;
   let redeHex = redeCompleta.replace(/:/g, '');
   let redeBigInt = BigInt("0x" + redeHex);
   let ipsList = document.getElementById('mainBlockIpsList');
   ipsList.innerHTML = "";
-  appState.mainBlockCurrentOffset = 0;
+  window.appState.mainBlockCurrentOffset = 0;
   
   function processarLote() {
-    let limite = Math.min(appState.mainBlockCurrentOffset + 10, 50);
-    for (let i = appState.mainBlockCurrentOffset; i < limite; i++) {
+    let limite = Math.min(window.appState.mainBlockCurrentOffset + 10, 50);
+    for (let i = window.appState.mainBlockCurrentOffset; i < limite; i++) {
       let ipBigInt = redeBigInt + BigInt(i);
-      let ipFormatado = utils.formatIPv6Address(ipBigInt);
-      let ipEnd = utils.shortenIPv6(ipFormatado);
-      ui.appendIpToList(ipEnd, i + 1, 'mainBlockIpsList');
+      let ipFormatado = window.utils.formatIPv6Address(ipBigInt);
+      let ipEnd = window.utils.shortenIPv6(ipFormatado);
+      window.ui.appendIpToList(ipEnd, i + 1, 'mainBlockIpsList');
     }
-    appState.mainBlockCurrentOffset = limite;
-    if (appState.mainBlockCurrentOffset < 50) {
+    window.appState.mainBlockCurrentOffset = limite;
+    if (window.appState.mainBlockCurrentOffset < 50) {
       setTimeout(processarLote, 0);
     } else {
       document.getElementById('toggleMainBlockIpsBtn').disabled = false;
@@ -280,26 +190,27 @@ function gerarIPsDoBloco() {
 
 // Função para gerar mais IPs do bloco principal
 function gerarMaisIPsDoBloco() {
-  if (!appState.mainBlock) return;
+  console.log("Gerando mais IPs do bloco principal");
+  if (!window.appState.mainBlock) return;
   const btn = document.getElementById('moreMainBlockIpsBtn');
   btn.disabled = true;
   btn.innerHTML = '<span class="btn-icon">⌛</span> Gerando...';
-  let redeCompleta = appState.mainBlock.network;
+  let redeCompleta = window.appState.mainBlock.network;
   let redeHex = redeCompleta.replace(/:/g, '');
   let redeBigInt = BigInt("0x" + redeHex);
-  let inicio = appState.mainBlockCurrentOffset;
+  let inicio = window.appState.mainBlockCurrentOffset;
   let fim = inicio + 50;
   
   function processarLote() {
-    let limite = Math.min(appState.mainBlockCurrentOffset + 10, fim);
-    for (let i = appState.mainBlockCurrentOffset; i < limite; i++) {
+    let limite = Math.min(window.appState.mainBlockCurrentOffset + 10, fim);
+    for (let i = window.appState.mainBlockCurrentOffset; i < limite; i++) {
       let ipBigInt = redeBigInt + BigInt(i);
-      let ipFormatado = utils.formatIPv6Address(ipBigInt);
-      let ipEnd = utils.shortenIPv6(ipFormatado);
-      ui.appendIpToList(ipEnd, i + 1, 'mainBlockIpsList');
+      let ipFormatado = window.utils.formatIPv6Address(ipBigInt);
+      let ipEnd = window.utils.shortenIPv6(ipFormatado);
+      window.ui.appendIpToList(ipEnd, i + 1, 'mainBlockIpsList');
     }
-    appState.mainBlockCurrentOffset = limite;
-    if (appState.mainBlockCurrentOffset < fim) {
+    window.appState.mainBlockCurrentOffset = limite;
+    if (window.appState.mainBlockCurrentOffset < fim) {
       setTimeout(processarLote, 0);
     } else {
       btn.disabled = false;
@@ -309,48 +220,89 @@ function gerarMaisIPsDoBloco() {
   processarLote();
 }
 
-// Função para alternar IPs do bloco principal
-function toggleMainBlockIps() {
-  const ipsContainer = document.getElementById('mainBlockIpsContainer');
-  const toggleBtn = document.getElementById('toggleMainBlockIpsBtn');
-  if (appState.isMainBlockIpsVisible) {
-    ipsContainer.style.display = 'none';
-    toggleBtn.innerHTML = '<span class="btn-icon">⊕</span> Exibir IPs';
-    appState.isMainBlockIpsVisible = false;
-  } else {
-    ipsContainer.style.display = 'block';
-    toggleBtn.innerHTML = '<span class="btn-icon">⊖</span> Fechar IPs';
-    appState.isMainBlockIpsVisible = true;
-    if (document.getElementById('mainBlockIpsList').innerHTML === '') {
-      gerarIPsDoBloco();
-    }
-  }
-}
-
-// Função para mostrar sugestões de divisão
-function mostrarSugestoesDivisao() {
-  document.getElementById('suggestions').style.display = 'block';
-  document.getElementById('suggestions').scrollIntoView({ behavior: 'smooth' });
-}
-
-// Função para resetar IPs gerados
-function resetarIPsGerados() {
-  appState.currentIpOffset = 0;
-  document.getElementById('ipsList').innerHTML = '';
-  document.getElementById('gerarIPsButton').style.display = 'none';
-  document.getElementById('ipsResult').style.display = 'none';
-}
-
 // Função para resetar IPs do bloco principal
 function resetarIPsMainBlock() {
-  appState.mainBlockCurrentOffset = 0;
+  console.log("Resetando IPs do bloco principal");
+  window.appState.mainBlockCurrentOffset = 0;
   document.getElementById('mainBlockIpsList').innerHTML = '';
   document.getElementById('moreMainBlockIpsBtn').disabled = false;
   document.getElementById('moreMainBlockIpsBtn').innerHTML = '<span class="btn-icon">⊕</span> Gerar Mais 50 IPs';
 }
 
+// Função para gerar primeiros IPs
+function gerarPrimeirosIPs() {
+  console.log("Gerando primeiros IPs");
+  let checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
+  if (checkboxes.length !== 1) {
+    alert("Selecione exatamente um bloco para gerar os IPs.");
+    return;
+  }
+  
+  // Resetar a lista de IPs
+  resetarIPsGerados();
+  
+  let indice = parseInt(checkboxes[0].value);
+  window.appState.selectedBlock = window.appState.subRedesGeradas[indice];
+  window.appState.currentIpOffset = 0;
+  let redeCompleta = window.appState.selectedBlock.network;
+  let redeHex = redeCompleta.replace(/:/g, '');
+  let redeBigInt = BigInt("0x" + redeHex);
+  let ipsList = document.getElementById('ipsList');
+  ipsList.innerHTML = "";
+  for (let i = 0; i < 50; i++) {
+    let ipBigInt = redeBigInt + BigInt(i);
+    let ipFormatado = window.utils.formatIPv6Address(ipBigInt);
+    let ipEnd = window.utils.shortenIPv6(ipFormatado);
+    window.ui.appendIpToList(ipEnd, i + 1, 'ipsList');
+  }
+  window.appState.currentIpOffset = 50;
+  document.getElementById('ipsResult').style.display = 'block';
+  document.getElementById('gerarMaisIPsButton').style.display = 'block';
+}
+
+// Função para gerar mais IPs
+function gerarMaisIPs() {
+  console.log("Gerando mais IPs");
+  if (!window.appState.selectedBlock) return;
+  let redeCompleta = window.appState.selectedBlock.network;
+  let redeHex = redeCompleta.replace(/:/g, '');
+  let redeBigInt = BigInt("0x" + redeHex);
+  let inicio = window.appState.currentIpOffset;
+  let fim = inicio + 50;
+  
+  // Desabilitar o botão enquanto processa
+  document.getElementById('gerarMaisIPsButton').disabled = true;
+  
+  function processarLote() {
+    let limite = Math.min(window.appState.currentIpOffset + 10, fim);
+    for (let i = window.appState.currentIpOffset; i < limite; i++) {
+      let ipBigInt = redeBigInt + BigInt(i);
+      let ipFormatado = window.utils.formatIPv6Address(ipBigInt);
+      let ipEnd = window.utils.shortenIPv6(ipFormatado);
+      window.ui.appendIpToList(ipEnd, i + 1, 'ipsList');
+    }
+    window.appState.currentIpOffset = limite;
+    if (window.appState.currentIpOffset < fim) {
+      setTimeout(processarLote, 0);
+    } else {
+      document.getElementById('gerarMaisIPsButton').disabled = false;
+    }
+  }
+  processarLote();
+}
+
+// Função para resetar IPs gerados
+function resetarIPsGerados() {
+  console.log("Resetando IPs gerados");
+  window.appState.currentIpOffset = 0;
+  document.getElementById('ipsList').innerHTML = '';
+  document.getElementById('gerarIPsButton').style.display = 'none';
+  document.getElementById('ipsResult').style.display = 'none';
+}
+
 // Função para selecionar prefixo
 function selecionarPrefixo(prefix) {
+  console.log("Selecionando prefixo:", prefix);
   let ipv6Input = document.getElementById('ipv6').value.trim();
   let [endereco, prefixoInicial] = ipv6Input.split('/');
   prefixoInicial = parseInt(prefixoInicial);
@@ -362,7 +314,7 @@ function selecionarPrefixo(prefix) {
     alert("O prefixo selecionado deve ser maior que o prefixo inicial.");
     return;
   }
-  let enderecoCompleto = utils.expandIPv6Address(ipv6Input);
+  let enderecoCompleto = window.utils.expandIPv6Address(ipv6Input);
   if (enderecoCompleto.startsWith("Erro")) {
     alert(enderecoCompleto);
     return;
@@ -374,19 +326,18 @@ function selecionarPrefixo(prefix) {
   document.getElementById('loadingIndicator').style.display = 'flex';
   document.getElementById('suggestions').style.display = 'none';
   let initialMask = ((1n << BigInt(prefixoInicial)) - 1n) << (128n - BigInt(prefixoInicial));
-  appState.subRedesGeradas = [];
-  appState.subRedesExibidas = 0;
+  window.appState.subRedesGeradas = [];
+  window.appState.subRedesExibidas = 0;
   document.getElementById('subnetsTable').getElementsByTagName('tbody')[0].innerHTML = "";
-  appState.totalSubRedesGerar = Number(numSubRedes);
+  window.appState.totalSubRedesGerar = Number(numSubRedes);
   setTimeout(() => {
-    utils.gerarSubRedesAssincronamente(ipv6BigInt, initialMask, prefix, numSubRedes, () => {
-      ui.carregarMaisSubRedes();
-      document.getElementById('loadMoreContainer').style.display = appState.subRedesGeradas.length > 100 ? 'block' : 'none';
+    window.utils.gerarSubRedesAssincronamente(ipv6BigInt, initialMask, prefix, numSubRedes, () => {
+      window.ui.carregarMaisSubRedes();
+      document.getElementById('loadMoreContainer').style.display = window.appState.subRedesGeradas.length > 100 ? 'block' : 'none';
       document.getElementById('resultado').style.display = 'block';
       document.getElementById('mainBlockSection').style.display = 'none';
       document.getElementById('aggregatedSidebar').style.display = 'none';
       document.getElementById('aggregatedPrefix').innerText = "N/A";
-      ui.ajustarLayoutResponsive();
-    }, appState);
+      window.ui.ajustarLayoutResponsive();
+    }, window.appState);
   }, 50);
-}
