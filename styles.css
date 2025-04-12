@@ -1,22 +1,38 @@
-/* Variáveis CSS */
+/**************************************************************
+   IMPORTAÇÃO DE FONTES
+**************************************************************/
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/**************************************************************
+   VARIÁVEIS BÁSICAS
+**************************************************************/
 :root {
-  --primary-color: #0078d7;
-  --primary-hover: #005fa3;
-  --secondary-color: #5cb85c;
-  --secondary-hover: #4cae4c;
-  --error-color: #f44336;
-  --text-light: #333;
-  --text-dark: #e0e0e0;
-  --background-light: rgba(255, 255, 255, 0.8);
-  --sidebar-bg-light: rgba(233, 245, 233, 0.9);
-  --sidebar-border-light: rgba(178, 216, 178, 0.7);
-  --background-dark: #1e1e1e;
-  --sidebar-bg-dark: #2b2b2b;
-  --sidebar-border-dark: #444;
-  --blur-amount: 10px;
-  --container-shadow: 0 8px 32px rgba(0,0,0,0.1);
-  --border-radius: 12px;
-  --sidebar-gap: 20px; /* Espaçamento entre sidebars */
+  --font-family: 'Roboto', sans-serif;
+  --primary-color: #0078d7;       /* Cor principal (botões, destaques) */
+  --primary-hover: #005fa3;       /* Hover da cor principal */
+  --secondary-color: #5cb85c;     /* Cor secundária (botões secundários) */
+  --secondary-hover: #4cae4c;     /* Hover secundário */
+  --error-color: #f44336;         /* Cor para erros */
+  
+  --text-light: #333;            /* Texto modo claro */
+  --text-dark: #e2e2e2;           /* Texto modo escuro mais claro */
+
+  /* Tons de fundo e borda no modo claro */
+  --background-light: #fafafa;   
+  --sidebar-bg-light: #f7fdf7;   
+  --sidebar-border-light: #cbe3cb;
+
+  /* Tons de fundo e borda no modo escuro */
+  --background-dark: #1f1f1f;    
+  --sidebar-bg-dark: #2a2a2a;    
+  --sidebar-border-dark: #3a3a3a;
+
+  --blur-amount: 8px;
+  --container-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  --border-radius: 10px;
+  --sidebar-gap: 24px;
+  
+  /* Ajustes para mobile */
   --mobile-padding: 12px;
   --mobile-button-height: 44px;
   --mobile-input-height: 48px;
@@ -25,16 +41,31 @@
   --mobile-header-font-size: 1.5em;
 }
 
-/* Estilos Gerais */
+/**************************************************************
+   CONFIGURAÇÃO GLOBAL
+**************************************************************/
 body {
-  font-family: 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family);
   margin: 0;
   background: url('https://source.unsplash.com/1600x900/?cloud') no-repeat center center fixed;
   background-size: cover;
-  transition: background-color 0.3s, color 0.3s;
   color: var(--text-light);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/**************************************************************
+   FOCOS PARA ACESSIBILIDADE
+**************************************************************/
+button:focus,
+input:focus,
+a:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/**************************************************************
+   MODO CLARO
+**************************************************************/
 .container {
   max-width: 1200px;
   margin: 20px auto;
@@ -43,99 +74,79 @@ body {
   border-radius: var(--border-radius);
   padding: 20px;
   box-shadow: var(--container-shadow);
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Modo Escuro */
+/**************************************************************
+   MODO ESCURO
+**************************************************************/
 body.dark-mode {
-  background-color: #121212;
+  background-color: #171717;
   background-image: none;
   color: var(--text-dark);
 }
 
 body.dark-mode .container {
-  background: var(--background-dark);
-  border: 1px solid rgba(80,80,80,0.7);
+  background-color: var(--background-dark);
+  border: 1px solid #2b2b2b;
 }
 
-body.dark-mode .header h1,
-body.dark-mode label {
+/* Principais blocos no modo escuro */
+body.dark-mode .resultado,
+body.dark-mode .ips-container,
+body.dark-mode .sidebar,
+body.dark-mode .suggestions,
+body.dark-mode .scrollable-list,
+body.dark-mode .info-block {
+  background-color: var(--sidebar-bg-dark) !important;
+  color: var(--text-dark) !important;
+  border-color: var(--sidebar-border-dark) !important;
+}
+
+body.dark-mode table th,
+body.dark-mode table td {
+  background-color: var(--sidebar-bg-dark);
+  border-color: var(--sidebar-border-dark);
   color: var(--text-dark);
 }
 
 body.dark-mode input {
-  background-color: #333;
+  background-color: #2c2c2c;
   color: var(--text-dark);
-  border-color: #555;
+  border: 1px solid #555;
 }
 
-body.dark-mode .btn-primary {
-  background-color: var(--primary-color);
-}
-
-body.dark-mode .btn-primary:hover {
-  background-color: var(--primary-hover);
-}
-
-body.dark-mode .btn-secondary {
-  background-color: var(--secondary-color);
-}
-
-body.dark-mode .btn-secondary:hover {
-  background-color: var(--secondary-hover);
-}
-
-body.dark-mode .resultado,
-body.dark-mode .ips-container,
-body.dark-mode .sidebar,
-body.dark-mode .suggestions {
-  background-color: var(--sidebar-bg-dark);
-  border-color: var(--sidebar-border-dark);
+body.dark-mode .ips-item {
+  background-color: #2c2c2c;
   color: var(--text-dark);
+  border-color: #444;
+}
+body.dark-mode .ips-item:hover {
+  background-color: #353535;
 }
 
-body.dark-mode table th {
-  background-color: #333;
+body.dark-mode label,
+body.dark-mode .info-label {
   color: var(--text-dark);
-}
-
-body.dark-mode table td {
-  background-color: var(--background-dark);
-  color: var(--text-dark);
-  border-color: var(--sidebar-border-dark);
 }
 
 body.dark-mode .error-message {
-  background-color: #2b2b2b;
+  background-color: #2c2c2c;
   color: #ff9999;
   border-left-color: var(--error-color);
 }
 
-body.dark-mode .scrollable-list {
-  background-color: var(--sidebar-bg-dark);
-  color: var(--text-dark);
-  border-color: var(--sidebar-border-dark);
+body.dark-mode .nav-btn {
+  background-color: var(--primary-color);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+body.dark-mode .nav-btn:hover {
+  background-color: var(--primary-hover);
 }
 
-body.dark-mode .scrollable-list div:hover {
-  background-color: #3b3b3b;
-}
-
-body.dark-mode .scrollable-list div.selected {
-  background-color: #555;
-}
-
-body.dark-mode .ips-item {
-  background-color: #333;
-  color: var(--text-dark);
-  border-color: var(--sidebar-border-dark);
-}
-
-body.dark-mode .ips-item:hover {
-  background-color: #444;
-}
-
-/* Cabeçalho */
+/**************************************************************
+   CABEÇALHO (HEADER)
+**************************************************************/
 .header {
   display: flex;
   justify-content: space-between;
@@ -143,12 +154,19 @@ body.dark-mode .ips-item:hover {
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 15px;
+  transition: all 0.3s ease;
 }
 
 .header h1 {
   margin: 0;
   font-size: 2em;
+  font-weight: 600;
   color: var(--text-light);
+}
+
+body.dark-mode .header h1 {
+  color: #fafafa !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
 }
 
 .header-buttons {
@@ -165,144 +183,215 @@ body.dark-mode .ips-item:hover {
   font-size: 14px;
   cursor: pointer;
   border: none;
-  border-radius: 4px;
-  transition: background-color 0.2s;
+  border-radius: 5px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   color: #fff;
   background-color: var(--primary-color);
 }
-
 .header-buttons button:hover {
   background-color: var(--primary-hover);
+  transform: scale(1.02);
 }
 
 #resetBtn {
   background-color: var(--error-color);
 }
-
 #resetBtn:hover {
   background-color: #d32f2f;
 }
 
-/* Layout Principal */
+/**************************************************************
+   LAYOUT PRINCIPAL
+**************************************************************/
 .main-layout {
   display: grid;
   grid-template-columns: 1fr minmax(auto, 320px);
-  gap: var(--sidebar-gap);
+  gap: 32px;
 }
 
-/* Formulário e Botões */
+/**************************************************************
+   FORMULÁRIO
+**************************************************************/
 label {
   display: block;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   font-weight: bold;
-  color: var(--text-light);
 }
-
 input {
   display: block;
   width: 100%;
   padding: 10px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   font-size: 16px;
   border: 1px solid #ddd;
   border-radius: 4px;
-  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-.btn-primary, .btn-secondary {
+/**************************************************************
+   BOTÕES PRIMÁRIOS E SECUNDÁRIOS
+**************************************************************/
+.btn-primary,
+.btn-secondary {
   padding: 10px 15px;
   border: none;
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
   color: #fff;
   width: auto;
-  font-family: 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-family);
   font-size: 14px;
+  font-weight: 500;
 }
-
 .btn-primary {
   background-color: var(--primary-color);
 }
-
 .btn-primary:hover {
   background-color: var(--primary-hover);
+  transform: scale(1.02);
 }
-
 .btn-secondary {
   background-color: var(--secondary-color);
 }
-
 .btn-secondary:hover {
   background-color: var(--secondary-hover);
+  transform: scale(1.02);
 }
 
-/* Resultados, Tabelas e Listas */
-.resultado, .ips-container, .suggestions {
+/**************************************************************
+   RESULTADOS, TABELAS E LISTAS
+**************************************************************/
+.resultado,
+.ips-container,
+.suggestions {
   background-color: var(--sidebar-bg-light);
   border: 1px solid var(--sidebar-border-light);
-  border-radius: 6px;
+  border-radius: 5px;
   padding: 15px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: background-color 0.3s, color 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
-
 .resultado h3,
 .ips-container h3,
 .suggestions h3 {
   margin-top: 0;
   color: #2e7d32;
+  font-weight: 600;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 15px;
+  transition: all 0.3s ease;
 }
-
-table th, table td {
+table th,
+table td {
   border: 1px solid #ddd;
   padding: 10px;
   text-align: left;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* Load More Container */
 .load-more {
   text-align: center;
   margin-top: 15px;
 }
 
-ul#ipsList, ul#mainBlockIpsList {
+/**************************************************************
+   LISTA DE IPS
+**************************************************************/
+ul#ipsList,
+ul#mainBlockIpsList {
   list-style: none;
-  padding: 0;
   margin: 0;
+  padding: 0;
 }
-
 .ips-item {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: space-between;
+  gap: 10px;
   padding: 8px 12px;
   margin: 6px 0;
   border: 1px solid #ddd;
-  border-radius: 4px;
+  border-radius: 5px;
   background-color: #fff;
-  transition: background-color 0.2s, color 0.2s, border-color 0.2s;
-  position: relative; /* Para posicionamento do tooltip */
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  position: relative;
 }
-
+.ips-item:hover {
+  transform: scale(1.01);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.ip-number {
+  width: 30px;
+  text-align: right;
+  color: #666;
+  font-size: 13px;
+  flex-shrink: 0;
+}
 .ip-text {
+  flex: 1;
   font-family: monospace;
   font-size: 14px;
+  overflow-wrap: break-word;
 }
 
-.copy-icon {
-  font-size: 1.2em;
+/**************************************************************
+   BOTÃO DE COPIAR (COPY BUTTON)
+**************************************************************/
+/*
+   Estrutura interna do botão:
+   <button class="copy-btn" onclick="...">
+     <span class="icon">📋</span>
+     <span class="copy-text">Copiado!</span>
+   </button>
+*/
+.copy-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--primary-color);
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 5px;
+  padding: 6px 10px;
+  font-size: 14px;
   cursor: pointer;
-  margin-left: 10px;
-  user-select: none;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
+.copy-btn:hover {
+  background-color: var(--primary-hover);
+  transform: scale(1.1);
+}
+
+.copy-btn .icon {
+  display: inline-block;
+}
+
+.copy-btn .copy-text {
+  display: none;
+  font-weight: bold;
+}
+
+/* Ao clicar, o ícone some e aparece o texto "Copiado!" */
+.copy-btn.clicked .icon {
+  display: none;
+}
+
+.copy-btn.clicked .copy-text {
+  display: inline-block;
+}
+
+/**************************************************************
+   SCROLLABLE LIST & ERROS
+**************************************************************/
 .scrollable-list {
   max-height: 200px;
   overflow-y: auto;
@@ -310,17 +399,15 @@ ul#ipsList, ul#mainBlockIpsList {
   border-radius: 4px;
   padding: 10px;
   background-color: #fff;
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-
 .scrollable-list div {
   padding: 10px;
   cursor: pointer;
   border-radius: 4px;
   margin-bottom: 2px;
-  transition: background-color 0.2s, color 0.2s;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
-
 .error-message {
   color: var(--error-color);
   font-weight: bold;
@@ -329,48 +416,48 @@ ul#ipsList, ul#mainBlockIpsList {
   background-color: #ffebee;
   border-radius: 4px;
   border-left: 4px solid var(--error-color);
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
+/**************************************************************
+   LOADER CONTAINER
+**************************************************************/
 .loader-container {
   display: flex;
   justify-content: center;
   margin: 25px 0;
 }
-
 .loader {
-  border: 5px solid #f3f3f3;
+  border: 4px solid #f3f3f3;
   border-radius: 50%;
-  border-top: 5px solid var(--primary-color);
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
+  border-top: 4px solid var(--primary-color);
+  width: 32px;
+  height: 32px;
+  animation: spin 0.7s linear infinite;
 }
-
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
-
 .loading-message {
-  margin-left: 15px;
-  line-height: 40px;
+  margin-left: 12px;
+  line-height: 32px;
   color: var(--primary-color);
   font-weight: bold;
 }
 
-/* NOVO LAYOUT VERTICAL DA SIDEBAR */
+/**************************************************************
+   SIDEBAR E NAVEGAÇÃO LATERAL
+**************************************************************/
 .sidebar {
   background-color: var(--sidebar-bg-light);
   border: 1px solid var(--sidebar-border-light);
-  border-radius: 6px;
+  border-radius: 5px;
   padding: 15px;
-  box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  transition: background-color 0.3s, color 0.3s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
   min-width: 250px;
 }
-
-/* Botões de navegação lateral */
 .nav-buttons {
   position: fixed;
   right: 20px;
@@ -380,7 +467,6 @@ ul#ipsList, ul#mainBlockIpsList {
   gap: 10px;
   z-index: 1000;
 }
-
 .nav-btn {
   width: 50px;
   height: 50px;
@@ -392,250 +478,153 @@ ul#ipsList, ul#mainBlockIpsList {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s, transform 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: background-color 0.3s ease, transform 0.2s ease;
   font-size: 22px;
 }
-
 .nav-btn:hover {
   background-color: var(--primary-hover);
   transform: scale(1.1);
 }
 
-body.dark-mode .nav-btn {
-  background-color: var(--primary-color);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
-}
-
-body.dark-mode .nav-btn:hover {
-  background-color: var(--primary-hover);
-}
-
-/* Bloco de informações */
+/**************************************************************
+   BLOCOS DE INFORMAÇÃO (SIDEBAR)
+**************************************************************/
 .info-block {
-  background-color: #f0f8ff;
-  border: 1px solid #b8d0e8;
-  border-radius: 6px;
+  background-color: #f2fcff;
+  border: 1px solid #b8d7e3;
+  border-radius: 5px;
   padding: 15px;
   margin: 15px 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
-
-/* Layout vertical para os itens */
 .info-item {
   display: flex;
-  flex-direction: column; /* Alterado: elementos em coluna */
-  margin-bottom: 15px; /* Aumentado para maior separação */
-  position: relative; /* Para posicionamento relativo do botão de cópia */
+  flex-direction: column;
+  margin-bottom: 15px;
+  position: relative;
 }
-
-/* Estilo para o rótulo */
 .info-label {
   font-weight: bold;
   color: var(--text-light);
-  margin-bottom: 5px; /* Espaço abaixo do rótulo */
+  margin-bottom: 5px;
   white-space: nowrap;
-  font-size: 0.9rem; /* Tamanho mais compacto */
+  font-size: 0.9rem;
 }
-
-/* Estilo para o valor */
+.info-value-container {
+  display: flex !important;
+  align-items: center !important;
+}
 .info-value {
-  font-family: monospace;
+  margin-right: auto;
   background-color: #fff;
-  padding: 10px; /* Mais espaço interno */
+  padding: 10px;
   border-radius: 4px;
   border: 1px solid #ddd;
   font-size: 14px;
-  width: 100%; /* Ocupa toda a largura */
-  box-sizing: border-box; /* Para não extrapolar a largura */
+  width: auto;
+  box-sizing: border-box;
   color: var(--primary-color);
-  position: relative; /* Para posicionamento do botão de cópia */
-  padding-right: 35px; /* Espaço para o botão de cópia */
-  overflow-x: auto; /* Adiciona rolagem horizontal se necessário */
-  white-space: nowrap; /* Mantém em uma linha */
-  display: block;
+  overflow-x: auto;
+  white-space: nowrap;
 }
 
-/* Botão de cópia posicionado diretamente no valor */
-.copy-btn {
-  background-color: transparent;
+.info-block .copy-btn {
+  margin-left: auto;
   color: var(--primary-color);
-  border: none;
-  cursor: pointer;
   font-size: 18px;
-  transition: transform 0.2s;
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  z-index: 5;
-}
-
-.copy-btn:hover {
-  color: var(--primary-hover);
-  transform: translateY(-50%) scale(1.1);
-}
-
-/* Modo escuro */
-body.dark-mode .info-block {
-  background-color: #202327;
-  border-color: #444;
-}
-
-body.dark-mode .info-block .info-value {
-  background-color: #2c2c2c;
-  color: #80dfff;
-  border-color: #555;
-}
-
-body.dark-mode .info-label {
-  color: #e0e0e0;
-}
-
-body.dark-mode .copy-btn {
-  color: #80dfff;
-}
-
-body.dark-mode .copy-btn:hover {
-  color: #99e6ff;
-}
-
-/* Adicionando cores de título para cada seção */
-.sidebar h3 {
-  color: #2e7d32; /* Verde para o título */
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1.2rem;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  padding-bottom: 8px;
-}
-
-body.dark-mode .sidebar h3 {
-  color: #8BC34A; /* Verde mais claro no modo escuro */
-  border-bottom-color: rgba(255,255,255,0.1);
-}
-
-/* Ajustes para container de valor */
-.info-value-container {
-  position: relative;
-  width: 100%;
-}
-
-/* Tooltips - CORRIGIDOS */
-/* Sidebar tooltip */
-.sidebar-tooltip {
-  position: absolute;
-  right: 8px;
-  top: 10px;
-  color: #4CAF50;
-  font-weight: bold;
-  background-color: rgba(255, 255, 255, 0.9);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.8rem;
-  z-index: 10;
-}
-
-/* Tooltip para listas de IPs */
-.ips-tooltip {
-  display: inline-block;
-  margin-left: 8px;
-  color: #4CAF50;
-  font-weight: bold;
-  background-color: rgba(255, 255, 255, 0.7);
-  padding: 2px 6px;
-  border-radius: 3px;
-  font-size: 0.8rem;
-}
-
-/* Ajustes para modo escuro */
-body.dark-mode .sidebar-tooltip {
-  background-color: rgba(40, 40, 40, 0.9);
-}
-
-body.dark-mode .ips-tooltip {
-  background-color: rgba(40, 40, 40, 0.7);
-  color: #80ff80;
-}
-
-/* Botão de gerar mais IPs - Usando as mesmas classes dos outros botões */
-#gerarMaisIPsButton {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  font-family: 'Segoe UI', Roboto, sans-serif;
-  font-size: 14px;
-  color: #fff;
-  background-color: var(--primary-color);
+  transition: transform 0.2s ease;
   border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  background-color: transparent;
+}
+.info-block .copy-btn:hover {
+  color: var(--primary-hover);
+  transform: scale(1.1);
 }
 
-#gerarMaisIPsButton:hover {
-  background-color: var(--primary-hover);
+body.dark-mode .info-block {
+  background-color: #2a2a2a !important;
+  color: #d1d4dc !important;
+  border-color: #444 !important;
+}
+body.dark-mode .info-block .info-label {
+  color: #cccccc !important;
+}
+body.dark-mode .info-block .info-value {
+  background-color: #323232 !important;
+  color: #efefef !important;
+  border-color: #555 !important;
+}
+body.dark-mode .info-block .copy-btn {
+  color: #cccccc !important;
+}
+body.dark-mode .info-block .copy-btn:hover {
+  color: var(--primary-hover) !important;
 }
 
-/* NOVAS OTIMIZAÇÕES PARA DISPOSITIVOS MÓVEIS */
+/**************************************************************
+   BOTÕES ESPECÍFICOS (GERAR/RESETAR IPS)
+**************************************************************/
+#gerarMaisIPsButton,
+#resetIPsButton {
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 5px;
+  width: auto;
+  margin: 0;
+  flex: 0 0 auto;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+#gerarMaisIPsButton:hover,
+#resetIPsButton:hover {
+  transform: scale(1.02);
+}
 
-/* Ajustes para Dispositivos Móveis */
+/**************************************************************
+   AJUSTES PARA DISPOSITIVOS MÓVEIS (<=768px)
+**************************************************************/
 @media (max-width: 768px) {
-  /* Container principal com menos padding */
   .container {
     padding: var(--mobile-padding);
     margin: 10px;
     max-width: 100%;
   }
-  
-  /* Layout principal para uma coluna */
   .main-layout {
-    grid-template-columns: 1fr; /* Muda para uma coluna em telas pequenas */
+    grid-template-columns: 1fr;
   }
-  
-  /* Cabeçalho compacto */
   .header {
     flex-direction: column;
     align-items: flex-start;
     margin-bottom: 20px;
   }
-  
   .header h1 {
     font-size: var(--mobile-header-font-size);
     margin-bottom: 15px;
     width: 100%;
     text-align: center;
   }
-  
   .header-buttons {
     width: 100%;
     justify-content: space-between;
   }
-  
   .header-buttons button {
     flex: 1;
     height: var(--mobile-button-height);
     margin: 0 5px;
     font-size: var(--mobile-font-size);
   }
-  
-  /* Formulário otimizado */
   input {
     height: var(--mobile-input-height);
     font-size: var(--mobile-font-size);
     margin-bottom: 20px;
   }
-  
-  /* Botão principal em full-width */
   #calcularBtn {
     width: 100%;
     height: var(--mobile-button-height);
     font-size: var(--mobile-font-size);
     margin-bottom: 20px;
   }
-  
-  /* Tabelas responsivas */
   table {
     display: block;
     overflow-x: auto;
@@ -643,99 +632,77 @@ body.dark-mode .ips-tooltip {
     border-radius: var(--mobile-border-radius);
     font-size: 14px;
   }
-  
-  table th, table td {
+  table th,
+  table td {
     padding: 8px;
   }
-  
-  /* Checkbox mais fácil de tocar */
   input[type="checkbox"] {
     transform: scale(1.3);
     margin: 0 auto;
     display: block;
   }
-  
-  /* Alinhamento de botões */
   .btn-primary, .btn-secondary {
     height: var(--mobile-button-height);
     font-size: var(--mobile-font-size);
     padding-left: 15px;
     padding-right: 15px;
   }
-  
-  /* Layout de dois botões */
   .two-button-container {
     display: flex;
     gap: 10px;
     margin: 15px 0;
   }
-  
   .two-button-container button {
     flex: 1;
   }
-  
-  /* Blocos de informação vertical */
   .info-block {
     padding: 12px;
   }
-  
   .info-item {
     margin-bottom: 12px;
   }
-  
   .info-label {
     font-size: 14px;
   }
-  
   .info-value {
     font-size: 14px;
     padding: 10px 40px 10px 10px;
+    width: auto;
   }
-  
-  /* Botões de navegação */
   .nav-buttons {
     right: 10px;
     bottom: 10px;
   }
-  
   .nav-btn {
     width: 40px;
     height: 40px;
     font-size: 18px;
   }
-  
-  /* Caixas de resultado */
-  .resultado, .ips-container, .suggestions {
+  .resultado,
+  .ips-container,
+  .suggestions {
     padding: 12px;
     margin-top: 15px;
   }
-  
-  /* Lista de IPs */
   .ips-item {
     padding: 12px 40px 12px 10px;
     position: relative;
   }
-  
   .ip-text {
     font-size: 14px;
     word-break: break-all;
     white-space: normal;
   }
-  
   .copy-icon {
     position: absolute;
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
   }
-  
-  /* Botão full-width no final das seções */
   .full-width-button {
     width: 100%;
     margin-top: 15px;
   }
-  
-  /* Melhorias na rolagem horizontal para tabelas */
   .table-container {
     width: 100%;
     overflow-x: auto;
@@ -743,8 +710,6 @@ body.dark-mode .ips-tooltip {
     border-radius: var(--mobile-border-radius);
     margin-bottom: 15px;
   }
-  
-  /* Dicas visuais para tabelas roláveis */
   .table-scroll-hint {
     display: block;
     text-align: center;
@@ -753,54 +718,44 @@ body.dark-mode .ips-tooltip {
     margin-bottom: 8px;
     font-style: italic;
   }
-  
-  /* Tooltip de ação adaptado */
-  .sidebar-tooltip, .ips-tooltip {
+  .sidebar-tooltip,
+  .ips-tooltip {
     padding: 4px 8px;
     font-size: 12px;
   }
-  
-  /* Ajuste para o erro */
   .error-message {
     font-size: 14px;
     padding: 10px;
   }
-  
-  /* Sidebar móvel */
   .sidebar-container {
     margin-top: 20px;
   }
 }
 
-/* Ajustes extras para telas muito pequenas (< 480px) */
+/**************************************************************
+   AJUSTES EXTRAS PARA TELAS MUITO PEQUENAS (<480PX)
+**************************************************************/
 @media (max-width: 480px) {
   .header h1 {
     font-size: 1.3em;
   }
-  
   .header-buttons {
     flex-direction: column;
     gap: 8px;
   }
-  
   .header-buttons button {
     width: 100%;
     margin: 0;
   }
-  
-  /* Ajuste da visualização do ip para evitar quebra */
   .ip-text {
     font-size: 13px;
     white-space: normal;
     word-break: break-all;
   }
-  
-  /* Compactação de menu lateral */
   .nav-buttons {
     right: 5px;
     bottom: 5px;
   }
-  
   .nav-btn {
     width: 35px;
     height: 35px;
@@ -808,14 +763,17 @@ body.dark-mode .ips-tooltip {
   }
 }
 
-/* Classe aplicada ao body quando é um dispositivo móvel */
+/**************************************************************
+   CLASSE PARA DISPOSITIVOS MÓVEIS (<768PX)
+**************************************************************/
 body.mobile-device {
-  /* Ajuste do tamanho base da fonte para dispositivos móveis */
   font-size: 16px;
   -webkit-tap-highlight-color: rgba(0,0,0,0.1);
 }
 
-/* Banner de dica para rotação do dispositivo */
+/**************************************************************
+   BANNER DE DICA (ROTACIONAR)
+**************************************************************/
 .mobile-tip-banner {
   display: none;
   position: fixed;
@@ -830,7 +788,6 @@ body.mobile-device {
   z-index: 1000;
   box-shadow: 0 -2px 5px rgba(0,0,0,0.2);
 }
-
 .close-tip {
   position: absolute;
   right: 10px;
@@ -843,164 +800,8 @@ body.mobile-device {
   cursor: pointer;
   padding: 0 5px;
 }
-
-/* Mostrar banner apenas em dispositivos móveis em modo retrato */
 @media (max-width: 768px) and (orientation: portrait) {
   .mobile-tip-banner {
     display: block;
-  }
-}
-
-/* Botões com ícones */
-.btn-icon {
-  margin-right: 5px;
-  font-size: 1.1em;
-}
-
-/* Botões otimizados para toque */
-.mobile-friendly-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 10px 15px;
-}
-
-/* Melhoria para containers de ação */
-.action-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.action-buttons button {
-  flex: 1;
-  min-width: 120px;
-}
-
-/* Cabeçalhos de seção com indicações mobile */
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.section-header h3 {
-  margin: 0;
-}
-
-.mobile-hint {
-  font-size: 12px;
-  color: #666;
-  font-style: italic;
-  display: none;
-}
-
-/* Mostrar dicas apenas em dispositivos móveis */
-body.mobile-device .mobile-hint {
-  display: block;
-}
-
-/* Lista de IPs otimizada */
-.mobile-optimized-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.mobile-optimized-list .ips-item {
-  margin: 8px 0;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  transition: transform 0.2s, opacity 0.2s;
-}
-
-.mobile-optimized-list .ip-number {
-  min-width: 30px;
-  display: inline-block;
-  color: #666;
-  font-size: 13px;
-}
-
-/* Indicador de carregamento para mobile */
-.loader-mobile {
-  padding: 15px;
-  border-radius: 8px;
-  background-color: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
-
-.loader-mobile .loading-message {
-  font-size: 14px;
-}
-
-/* Melhorias tácteis para formulários */
-@media (max-width: 768px) {
-  /* Campos de formulário maiores para facilitar o toque */
-  input[type="text"],
-  input[type="number"],
-  select {
-    font-size: 16px; /* Evita zoom em iOS */
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 20px;
-  }
-  
-  /* Checkboxes maiores para facilitar o toque */
-  input[type="checkbox"] {
-    width: 22px;
-    height: 22px;
-    border-radius: 4px;
-  }
-  
-  /* Adicionar espaço entre linhas de tabela para facilitar o toque */
-  table td, table th {
-    padding: 12px 8px;
-  }
-  
-  /* Melhorar visibilidade dos itens selecionados */
-  tr.selected td {
-    background-color: rgba(0, 120, 215, 0.1);
-  }
-  
-  /* Animação de feedback ao tocar */
-  .ips-item:active,
-  .btn-primary:active,
-  .btn-secondary:active {
-    transform: scale(0.98);
-    opacity: 0.9;
-  }
-  
-  /* Melhorar espaçamento de listas em dispositivos móveis */
-  #possiblePrefixesList div {
-    padding: 15px 10px;
-    margin-bottom: 8px;
-  }
-}
-
-/* Otimização especial para dispositivos muito pequenos */
-@media (max-width: 320px) {
-  .header h1 {
-    font-size: 1.2em;
-  }
-  
-  .section-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  
-  .section-header h3 {
-    margin-bottom: 5px;
-  }
-  
-  .action-buttons {
-    flex-direction: column;
-  }
-  
-  .action-buttons button {
-    width: 100%;
   }
 }
