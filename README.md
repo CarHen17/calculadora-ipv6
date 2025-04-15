@@ -55,12 +55,6 @@ Projeto web que permite calcular, visualizar e explorar sub-redes a partir de um
 
 ---
 
-## 📄 Licença
-
-Este projeto está sob a licença **MIT**. Veja o arquivo [LICENSE](LICENSE) para mais detalhes.
-
----
-
 ## 🙌 Agradecimentos
 
 Projeto criado por [Carlos Henrique](https://github.com/CarHen17).  
