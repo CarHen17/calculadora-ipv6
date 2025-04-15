@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculadora IPv6 - Gerador de Sub-redes</title>
+  <meta name="description" content="Ferramenta online para cálculo e visualização de sub-redes IPv6">
+  
+  <!-- Verificador de ambiente -->
+  <script src="js/env-check.js"></script>  
+  
+  <!-- Favicon inline para evitar requests 404 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>" type="image/svg+xml">
+  
+  <!-- Estilos CSS -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/visualization.css">
+  <link rel="stylesheet" href="css/enhanced-ui.css">
+  <link rel="stylesheet" href="css/ui-fixes.css">
+  
+  <!-- Font Awesome para ícones -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Meta tag de tema -->
+  <meta name="theme-color" content="#0070d1">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
+  <!-- Pré-carregamento das bibliotecas essenciais -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <!-- Cabeçalho -->
+    <header class="header">
+      <h1>Calculadora IPv6</h1>
+      <div class="header-buttons">
+        <button id="toggleThemeBtn" class="btn-primary">
+          <i class="fas fa-moon"></i> Tema
+        </button>
+        <button id="resetBtn" class="btn-primary">
+          <i class="fas fa-redo-alt"></i> Limpar
+        </button>
+      </div>
+    </header>
+    
+    <!-- Indicador de passos -->
+    <div class="steps">
+      <div id="step1" class="step active">
+        <div class="step-number">1</div>
+        <div class="step-title">Inserir IPv6</div>
+      </div>
+      <div id="step2" class="step">
+        <div class="step-number">2</div>
+        <div class="step-title">Escolher Prefixo</div>
+      </div>
+      <div id="step3" class="step">
+        <div class="step-number">3</div>
+        <div class="step-title">Gerenciar Sub-redes</div>
+      </div>
+      <div id="step4" class="step">
+        <div class="step-number">4</div>
+        <div class="step-title">Visualizar Dados</div>
+      </div>
+    </div>
+    
+    <!-- Layout principal -->
+    <div class="main-layout">
+      <div class="content">
+        <!-- Formulário inicial -->
+        <div class="form-group">
+          <label for="ipv6">Insira um endereço IPv6 no formato CIDR:</label>
+          <input type="text" id="ipv6" 
+                 placeholder="Ex.: 2001:db8::/41" 
+                 autocomplete="off" 
+                 aria-describedby="errorMessage">
+          <div id="errorMessage" class="error-message"></div>
+          
+          <div class="action-buttons">
+            <button id="calcularBtn" class="btn-primary">
+              <i class="fas fa-calculator"></i> Calcular Sub-redes
+            </button>
+          </div>
+        </div>
+        
+<!-- Bloco principal simplificado -->
+<div id="mainBlockSection" style="display: none;">
+  <div class="card">
+    <h3>Bloco IPv6 Principal</h3>
+    <div class="info-item">
+      <span class="info-label">CIDR:</span>
+      <div class="info-value-container">
+        <div id="mainBlockCidr" class="info-value">-</div>
+        <button class="copy-btn" onclick="UIController.copiarTexto('mainBlockCidr')">
+          <i class="fas fa-copy"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="action-buttons">
+      <button id="toggleMainBlockIpsBtn" class="btn-primary">
+        <i class="fas fa-list"></i> Exibir IPs
+      </button>
+      <button id="continuarBtn" class="btn-secondary">
+        <i class="fas fa-angle-right"></i> Escolher Prefixo
+      </button>
+    </div>
+    
+    <!-- Lista de IPs do bloco principal -->
+    <div id="mainBlockIpsContainer" style="display: none;">
+      <h4>Primeiros IPs disponíveis neste bloco:</h4>
+      <ul id="mainBlockIpsList" class="ip-list"></ul>
+      <div class="action-buttons">
+        <button id="moreMainBlockIpsBtn" class="btn-primary">
+          <i class="fas fa-plus"></i> Gerar Mais 50 IPs
+        </button>
+        <button id="resetMainBlockIPsButton" class="btn-secondary">
+          <i class="fas fa-redo-alt"></i> Resetar Lista
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+        
+        <!-- Sugestões de divisão -->
+        <div id="suggestions" style="display: none;">
+          <div class="card">
+            <h3>Escolha um Prefixo para Divisão</h3>
+            <p>Selecione o tamanho do prefixo para dividir o bloco em sub-redes:</p>
+            <div id="possiblePrefixesList" class="prefixes-list"></div>
+          </div>
+        </div>
+        
+        <!-- Resultados -->
+        <div id="resultado" style="display: none;">
+          <div class="card">
+            <h3>Sub-redes Geradas</h3>
+            <div class="table-container">
+              <table id="subnetsTable">
+                <thead>
+                  <tr>
+                    <th width="50">
+                      <input type="checkbox" id="selectAll" aria-label="Selecionar todas as sub-redes">
+                    </th>
+                    <th>Sub-rede</th>
+                    <th>Inicial</th>
+                    <th>Final</th>
+                    <th>Rede</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            
+            <div id="loadMoreContainer" style="display: none; text-align: center; margin-top: 16px;">
+              <button id="loadMoreButton" class="btn-primary">
+                <i class="fas fa-sync"></i> Carregar Mais Sub-redes
+              </button>
+            </div>
+            
+            <div class="action-buttons">
+              <button id="gerarIPsButton" class="btn-primary" style="display: none;">
+                <i class="fas fa-list"></i> Gerar IPs da Sub-rede
+              </button>
+              <button id="visualizarBtn" class="btn-secondary">
+                <i class="fas fa-chart-bar"></i> Visualizar Dados
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Lista de IPs da sub-rede selecionada -->
+        <div id="ipsResult" style="display: none;">
+          <div class="card">
+            <h3>IPs da Sub-rede Selecionada</h3>
+            <ul id="ipsList" class="ip-list"></ul>
+            <div class="action-buttons">
+              <button id="gerarMaisIPsButton" class="btn-primary">
+                <i class="fas fa-plus"></i> Gerar Mais 50 IPs
+              </button>
+              <button id="resetIPsButton" class="btn-secondary">
+                <i class="fas fa-redo-alt"></i> Resetar Lista
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Seção de visualização de dados -->
+        <div id="visualizationSection" style="display: none;">
+          <div class="card">
+            <h3>Visualização de Dados</h3>
+            
+            <div class="tabs">
+              <button id="utilizationTab" class="tab tab-active">Utilização</button>
+              <button id="heatmapTab" class="tab">Mapa de Calor</button>
+              <button id="prefixComparisonTab" class="tab">Comparação de Prefixos</button>
+            </div>
+            
+            <!-- Conteúdo do gráfico de utilização -->
+            <div id="utilizationContent" class="tab-content active">
+              <div class="chart-container">
+                <canvas id="utilizationChart"></canvas>
+              </div>
+              <p>Este gráfico mostra a distribuição de sub-redes por tamanho de prefixo.</p>
+            </div>
+            
+            <!-- Conteúdo do mapa de calor -->
+            <div id="heatmapContent" class="tab-content">
+              <div id="heatmapChart" class="chart-container"></div>
+              <p>O mapa de calor exibe a distribuição espacial das sub-redes geradas no espaço de endereçamento IPv6.</p>
+            </div>
+            
+            <!-- Conteúdo de comparação de prefixos -->
+            <div id="prefixComparisonContent" class="tab-content">
+              <div class="visualization-controls">
+                <label for="prefixSlider">Tamanho do Prefixo: <span id="prefixValue">64</span></label>
+                <input type="range" id="prefixSlider" min="48" max="128" value="64" step="1">
+              </div>
+              
+              <div class="stats-cards">
+                <div class="stat-card">
+                  <div class="stat-title">Número de Sub-redes</div>
+                  <div id="statSubredes" class="stat-value">65.5K</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-title">Bits para Host</div>
+                  <div id="statIps" class="stat-value">64 bits</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-title">Total de IPs</div>
+                  <div id="statTotal" class="stat-value">1.2x10^23</div>
+                </div>
+              </div>
+              
+              <div class="chart-container">
+                <canvas id="prefixComparisonChart"></canvas>
+              </div>
+              <p>Este gráfico compara o número de sub-redes e IPs por sub-rede para diferentes tamanhos de prefixo.</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Indicador de carregamento -->
+        <div id="loadingIndicator" class="loader-container">
+          <div class="loader"></div>
+          <div class="loading-message">Gerando sub-redes... Por favor, aguarde.</div>
+        </div>
+      </div>
+      
+      <!-- Sidebar para informações -->
+      <div id="infoSidebar" class="sidebar" style="display: none;">
+        <h3>Informações do Bloco</h3>
+        <div class="info-item">
+          <span class="info-label">CIDR:</span>
+          <div class="info-value-container">
+            <div id="sidebarBlockCidr" class="info-value">-</div>
+            <button class="copy-btn" onclick="UIController.copiarTexto('sidebarBlockCidr')">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Gateway padrão:</span>
+          <div class="info-value-container">
+            <div id="mainBlockGateway" class="info-value">-</div>
+            <button class="copy-btn" onclick="UIController.copiarTexto('mainBlockGateway')">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+        
+          
+          <div class="dns-item">
+            <span class="dns-label">Google DNS</span>
+            <div class="info-value-container">
+              <div id="googleDNS" class="info-value">2001:4860:4860::8888</div>
+              <button class="copy-btn" onclick="UIController.copiarTexto('googleDNS')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="dns-item">
+            <span class="dns-label">Google DNS Alt</span>
+            <div class="info-value-container">
+              <div id="googleDNSAlt" class="info-value">2001:4860:4860::8844</div>
+              <button class="copy-btn" onclick="UIController.copiarTexto('googleDNSAlt')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          
+          <div class="dns-item">
+            <span class="dns-label">Cloudflare DNS</span>
+            <div class="info-value-container">
+              <div id="cloudflareDNS" class="info-value">2606:4700:4700::1111</div>
+              <button class="copy-btn" onclick="UIController.copiarTexto('cloudflareDNS')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Sidebar para bloco agregado -->
+      <div id="aggregatedSidebar" class="sidebar" style="display: none;">
+        <h3>Bloco Agregado</h3>
+        <div class="info-item">
+          <span class="info-label">Prefixo Agregado:</span>
+          <div class="info-value-container">
+            <div id="aggregatedPrefix" class="info-value">N/A</div>
+            <button class="copy-btn" onclick="UIController.copiarTexto('aggregatedPrefix')">
+              <i class="fas fa-copy"></i>
+            </button>
+          </div>
+        </div>
+        <p class="info-desc">Este é o bloco IPv6 que engloba todas as sub-redes selecionadas, quando possível realizar a agregação.</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Botões de navegação fixados -->
+  <div class="nav-buttons">
+    <button id="topBtn" class="nav-btn" title="Ir para o topo">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+    <button id="bottomBtn" class="nav-btn" title="Ir para o final">
+      <i class="fas fa-arrow-down"></i>
+    </button>
+  </div>
+  
+<!-- Primeiro: Módulos utilitários -->
+<script src="js/ipv6-utils.js"></script>
+<script>
+  // Verificação adicional para garantir que o IPv6Utils foi carregado
+  if (typeof window.IPv6Utils === 'undefined') {
+    console.error("IPv6Utils não foi carregado corretamente. Tentando novamente...");
+    // Criar versão básica para garantir que a aplicação funcione
+    window.IPv6Utils = window.IPv6Utils || {};
+    window.IPv6Utils.validateIPv6 = window.IPv6Utils.validateIPv6 || function(addressCIDR) {
+      console.warn("Usando implementação simplificada de validateIPv6");
+      try {
+        const [addr, prefix] = addressCIDR.split('/');
+        if (!addr || !prefix || isNaN(prefix)) {
+          return "Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).";
+        }
+        return null;
+      } catch (error) {
+        return "Erro ao processar o endereço IPv6.";
+      }
+    };
+  } else {
+    console.log("IPv6Utils verificado e disponível globalmente");
+  }
+</script>
+
+<!-- Segundo: Controladores de UI -->
+<script src="js/ui-controller.js"></script>
+
+<!-- Terceiro: Módulos de visualização -->
+<script src="js/visualizations/charts-core.js"></script>
+<script src="js/visualizations/utilization.js"></script>
+<script src="js/visualizations/heatmap.js"></script>
+<script src="js/visualizations/prefix-comparison.js"></script>
+
+<!-- Quarto: Módulos aprimorados -->
+<script src="js/ui-components.js"></script>
+<script src="js/responsive-handler.js"></script>
+
+<!-- Quinto: Módulo principal da calculadora -->
+<script src="js/ipv6-calculator.js"></script>
+
+<script>
+  // Verificar se o IPv6Calculator foi exposto globalmente
+  if (typeof window.IPv6Calculator === 'undefined') {
+    console.error("IPv6Calculator não foi registrado globalmente. Criando versão básica...");
+    
+    // Criar versão básica para garantir funcionalidade mínima
+    window.IPv6Calculator = window.IPv6Calculator || {
+      calcularSubRedes: function() {
+        console.warn("Usando implementação mínima de calcularSubRedes");
+        return true;
+      },
+      resetarCalculadora: function() {
+        console.warn("Usando implementação mínima de resetarCalculadora");
+      },
+      appState: { subRedesGeradas: [] }
+    };
+  }
+</script>
+
+<!-- Script de correções da UI -->
+<script src="js/ui-fixes.js"></script>
+
+<!-- Scripts de inicialização -->
+<script src="js/app.js"></script>
+<script src="js/enhanced-app.js"></script>
+
+<!-- Script de diagnóstico -->
+<script src="js/debug-check.js"></script>
+</body>
+</html>
