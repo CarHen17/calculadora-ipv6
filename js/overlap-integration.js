@@ -9,13 +9,16 @@
   
   // Configuração
   const config = {
-    // Prefixo WAN padrão se nenhum foi salvo
-    defaultWanPrefix: '2804:418:3000:1::190/64',
     // Habilitar verificação automática
     enableAutoCheck: true,
+    // Intervalo para verificação automática (em milissegundos)
+    autoCheckInterval: 2000,
     // Prevenir cálculo se houver sobreposição
     preventCalculationOnOverlap: true
   };
+  
+  // Estado
+  let checkingInterval = null;
   
   /**
    * Inicializa a integração
@@ -29,23 +32,22 @@
       const hasNetworkModal = typeof NetworkConfigModal !== 'undefined';
       const hasIPv6Utils = typeof IPv6Utils !== 'undefined';
       
-      if (!hasOverlapChecker || !hasNetworkModal || !hasIPv6Utils) {
-        console.error("Módulos necessários não encontrados:", {
-          "OverlapChecker": hasOverlapChecker,
-          "NetworkConfigModal": hasNetworkModal,
-          "IPv6Utils": hasIPv6Utils
-        });
-        
-        // Tentar registrar eventos mesmo assim, em caso de carregamento tardio
-        setupEvents();
-        return;
-      }
+      console.log("Módulos disponíveis:", {
+        "OverlapChecker": hasOverlapChecker,
+        "NetworkConfigModal": hasNetworkModal,
+        "IPv6Utils": hasIPv6Utils
+      });
       
       // Configurar eventos
       setupEvents();
       
-      // Verificar configuração inicial se necessário
+      // Verificar configuração inicial
       setTimeout(checkInitialConfiguration, 500);
+      
+      // Configurar verificação automática
+      if (config.enableAutoCheck) {
+        setupAutoCheck();
+      }
       
       console.log("Integração de verificação de sobreposição inicializada com sucesso");
     } catch (error) {
@@ -58,51 +60,26 @@
    */
   function setupEvents() {
     try {
-      // Integrar com o botão de configuração de rede
-      const networkConfigBtn = document.getElementById('networkConfigBtn');
-      if (networkConfigBtn) {
-        // Preservar comportamento original
-        const originalClick = networkConfigBtn.onclick;
+      // Monitorar changes no campo IPv6 principal
+      const ipv6Input = document.getElementById('ipv6');
+      if (ipv6Input) {
+        // Debounce para evitar chamadas excessivas
+        const debouncedCheck = debounce(performOverlapCheck, 300);
         
-        networkConfigBtn.onclick = function(event) {
-          // Se NetworkConfigModal existir e tiver uma função openModal, usá-la
-          if (typeof NetworkConfigModal !== 'undefined' && typeof NetworkConfigModal.openModal === 'function') {
-            NetworkConfigModal.openModal();
-            event.preventDefault();
-            return false;
-          }
-          
-          // Caso contrário, manter comportamento original
-          if (typeof originalClick === 'function') {
-            return originalClick.call(this, event);
-          }
-        };
+        ipv6Input.addEventListener('input', debouncedCheck);
+        ipv6Input.addEventListener('change', performOverlapCheck);
+        ipv6Input.addEventListener('paste', () => {
+          setTimeout(performOverlapCheck, 100);
+        });
       }
       
-      // Integrar com o botão de verificação de sobreposição no modal
+      // Integrar com o botão de configuração de rede do modal
       const resolveConflictBtn = document.getElementById('modalResolveConflictBtn');
       if (resolveConflictBtn) {
-        // Preservar comportamento original
-        const originalClick = resolveConflictBtn.onclick;
-        
         resolveConflictBtn.onclick = function(event) {
-          // Se NetworkConfigModal existir e tiver um método checkOverlap, usá-lo
           if (typeof NetworkConfigModal !== 'undefined' && typeof NetworkConfigModal.checkOverlap === 'function') {
             NetworkConfigModal.checkOverlap();
             event.preventDefault();
-            return false;
-          }
-          
-          // Caso contrário, tentar usar OverlapChecker diretamente
-          if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
-            OverlapChecker.checkPrefixOverlap();
-            event.preventDefault();
-            return false;
-          }
-          
-          // Manter comportamento original
-          if (typeof originalClick === 'function') {
-            return originalClick.call(this, event);
           }
         };
       }
@@ -110,65 +87,89 @@
       // Integrar com o botão de cálculo principal
       const calcularBtn = document.getElementById('calcularBtn');
       if (calcularBtn && config.preventCalculationOnOverlap) {
-        // Preservar comportamento original
-        const originalClick = calcularBtn.onclick;
+        const originalOnClick = calcularBtn.onclick;
         
         calcularBtn.onclick = function(event) {
-          // Verificar sobreposição antes de calcular
           if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
             const hasOverlap = OverlapChecker.checkPrefixOverlap();
             
             if (hasOverlap) {
-              // Evitar cálculo
+              console.warn("Cálculo bloqueado devido à sobreposição detectada");
               event.preventDefault();
               return false;
             }
           }
           
           // Continuar com comportamento original
-          if (typeof originalClick === 'function') {
-            return originalClick.call(this, event);
+          if (typeof originalOnClick === 'function') {
+            return originalOnClick.call(this, event);
           }
         };
       }
       
-      // Configurar evento para o campo de entrada IPv6
-      const ipv6Input = document.getElementById('ipv6');
-      if (ipv6Input && config.enableAutoCheck) {
-        // Debounce para evitar chamadas frequentes
-        const debounceCheck = debounce(function() {
-          if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
-            OverlapChecker.checkPrefixOverlap();
-          }
-        }, 500);
-        
-        // Adicionar eventos
-        ipv6Input.addEventListener('input', debounceCheck);
-        ipv6Input.addEventListener('change', function() {
-          if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
-            OverlapChecker.checkPrefixOverlap();
-          }
-        });
-      }
+      // Monitorar alterações no localStorage (quando a configuração de rede é salva)
+      window.addEventListener('storage', function(e) {
+        if (e.key === 'networkConfig.wanPrefix' || e.key === 'networkConfig.lanPrefix') {
+          performOverlapCheck();
+        }
+      });
+      
     } catch (error) {
       console.error("Erro ao configurar eventos de integração:", error);
     }
   }
   
   /**
-   * Verifica a configuração inicial e revela alertas se necessário
+   * Verifica a configuração inicial
    */
   function checkInitialConfiguration() {
     try {
-      const ipv6Input = document.getElementById('ipv6');
-      if (!ipv6Input || !ipv6Input.value) return;
-      
-      // Verificar se há sobreposição inicial
-      if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
-        OverlapChecker.checkPrefixOverlap();
-      }
+      performOverlapCheck();
     } catch (error) {
       console.error("Erro ao verificar configuração inicial:", error);
+    }
+  }
+  
+  /**
+   * Configura verificação automática periódica
+   */
+  function setupAutoCheck() {
+    try {
+      // Limpar qualquer interval existente
+      if (checkingInterval) {
+        clearInterval(checkingInterval);
+      }
+      
+      // Configurar novo interval
+      checkingInterval = setInterval(performOverlapCheck, config.autoCheckInterval);
+      
+      console.log(`Verificação automática configurada para cada ${config.autoCheckInterval}ms`);
+    } catch (error) {
+      console.error("Erro ao configurar verificação automática:", error);
+    }
+  }
+  
+  /**
+   * Executa a verificação de sobreposição
+   */
+  function performOverlapCheck() {
+    try {
+      if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
+        const hasOverlap = OverlapChecker.checkPrefixOverlap();
+        
+        // Atualizar indicação visual no botão de configuração
+        const networkConfigBtn = document.getElementById('networkConfigBtn');
+        if (networkConfigBtn) {
+          networkConfigBtn.classList.toggle('has-issue', hasOverlap);
+        }
+        
+        return hasOverlap;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Erro ao executar verificação de sobreposição:", error);
+      return false;
     }
   }
   
@@ -190,10 +191,35 @@
     };
   }
   
+  /**
+   * Limpa recursos quando necessário
+   */
+  function cleanup() {
+    try {
+      if (checkingInterval) {
+        clearInterval(checkingInterval);
+        checkingInterval = null;
+      }
+    } catch (error) {
+      console.error("Erro ao limpar recursos:", error);
+    }
+  }
+  
   // Inicializar quando o DOM estiver pronto
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
     initialize();
   }
+  
+  // Limpar ao descarregar a página
+  window.addEventListener('beforeunload', cleanup);
+  
+  // Expor API para debug
+  window.OverlapIntegration = {
+    performOverlapCheck,
+    setupAutoCheck,
+    cleanup,
+    config
+  };
 })();
