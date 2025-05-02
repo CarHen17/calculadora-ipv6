@@ -61,18 +61,18 @@ const NetworkConfigModal = (function() {
    * Mapeia os elementos do DOM necessários
    */
   function mapDOMElements() {
-      modalOverlay = document.getElementById('networkConfigModalOverlay');
-      modalElement = document.getElementById('networkConfigModal');
-      openBtn = document.getElementById('networkConfigBtn'); // Botão no header
-      closeBtn = document.getElementById('closeNetworkConfigModalBtn');
-      cancelBtn = document.getElementById('cancelNetworkConfigBtn');
-      saveBtn = document.getElementById('saveNetworkConfigBtn');
-      wanInput = document.getElementById('modalWanPrefix');
-      lanInput = document.getElementById('modalLanPrefix');
-      checkOverlapBtn = document.getElementById('modalResolveConflictBtn');
-      overlapWarningSection = document.getElementById('modalOverlapWarning');
-      suggestedPrefixCode = document.getElementById('modalSuggestedPrefix');
-      applySuggestionBtn = document.getElementById('modalApplyPrefixBtn');
+    modalOverlay = document.getElementById('networkConfigModalOverlay');
+    modalElement = document.getElementById('networkConfigModal');
+    openBtn = document.getElementById('networkConfigBtn'); // Botão no header
+    closeBtn = document.getElementById('closeNetworkConfigModalBtn');
+    cancelBtn = document.getElementById('cancelNetworkConfigBtn');
+    saveBtn = document.getElementById('saveNetworkConfigBtn');
+    wanInput = document.getElementById('modalWanPrefix');
+    lanInput = document.getElementById('modalLanPrefix');
+    checkOverlapBtn = document.getElementById('modalResolveConflictBtn');
+    overlapWarningSection = document.getElementById('modalOverlapWarning');
+    suggestedPrefixCode = document.getElementById('modalSuggestedPrefix');
+    applySuggestionBtn = document.getElementById('modalApplyPrefixBtn');
   }
   
   /**
@@ -88,112 +88,38 @@ const NetworkConfigModal = (function() {
     const style = document.createElement('style');
     style.id = 'network-modal-feedback-styles';
     style.textContent = `
-      @keyframes pulse-button {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); box-shadow: 0 0 15px rgba(224, 79, 79, 0.7); }
-        100% { transform: scale(1); }
-      }
-      
-      @keyframes pulse-success {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); box-shadow: 0 0 15px rgba(76, 175, 80, 0.7); }
-        100% { transform: scale(1); }
-      }
-      
-      @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
-      }
-      
-      @keyframes slide-in {
-        0% { opacity: 0; transform: translateY(-20px); }
-        100% { opacity: 1; transform: translateY(0); }
-      }
-      
       .has-overlap {
         background-color: #e74c3c !important;
         color: white !important;
-        animation: pulse-button 1.5s ease 3;
       }
       
       .no-overlap {
         background-color: #2ecc71 !important;
         color: white !important;
-        animation: pulse-success 1.5s ease 2;
       }
       
       .checking {
         background-color: #3498db !important;
         color: white !important;
-        position: relative;
-      }
-      
-      .checking::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-        animation: shimmer 1.5s infinite;
-      }
-      
-      @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
       }
       
       .overlap-warning {
-        animation: slide-in 0.5s ease forwards;
+        animation: slideIn 0.3s ease forwards;
+      }
+      
+      @keyframes slideIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
       
       .warning-shake {
         animation: shake 0.5s ease-in-out;
       }
       
-      /* Estilos para notificações */
-      .network-notify {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 12px 20px;
-        border-radius: 6px;
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        font-size: 14px;
-        z-index: 9999;
-        transform: translateY(-20px);
-        opacity: 0;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-      }
-      
-      .network-notify.show {
-        transform: translateY(0);
-        opacity: 1;
-      }
-      
-      .network-notify.success {
-        background-color: #2ecc71;
-        color: white;
-      }
-      
-      .network-notify.error {
-        background-color: #e74c3c;
-        color: white;
-      }
-      
-      .network-notify.warning {
-        background-color: #f39c12;
-        color: white;
-      }
-      
-      .network-notify.info {
-        background-color: #3498db;
-        color: white;
+      @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
       }
     `;
     
@@ -251,10 +177,10 @@ const NetworkConfigModal = (function() {
         }
       });
       if (checkOverlapBtn) {
-        console.log("Adding click listener to modalResolveConflictBtn"); // Log para depuração
+        console.log("Adding click listener to modalResolveConflictBtn");
         checkOverlapBtn.addEventListener("click", checkOverlapInModal);
       } else {
-        console.error("Button modalResolveConflictBtn not found!"); // Log de erro
+        console.error("Button modalResolveConflictBtn not found!");
       }
       if (applySuggestionBtn) {
         applySuggestionBtn.addEventListener('click', applySuggestedPrefixToMainInput);
@@ -325,15 +251,11 @@ const NetworkConfigModal = (function() {
           const currentWan = wanInput ? wanInput.value.trim() : state.wanPrefix;
           const currentLanRef = lanInput ? lanInput.value.trim() : state.lanPrefix;
 
-          // Validar antes de salvar?
+          // Validar antes de salvar
           if (!isValidPrefix(currentWan)) {
               showNotification("Prefixo WAN inválido. Não salvo.", "error");
               return;
           }
-          // LAN de referência não precisa ser estritamente validado para salvar, mas pode ser útil
-          // if (!isValidPrefix(currentLanRef)) {
-          //     showNotification("Prefixo LAN de referência inválido.", "warning");
-          // }
 
           localStorage.setItem('networkConfig.wanPrefix', currentWan);
           localStorage.setItem('networkConfig.lanPrefix', currentLanRef); // Salva LAN de referência
@@ -355,6 +277,13 @@ const NetworkConfigModal = (function() {
           // Remover indicador de problema do botão principal, se houver
           if (openBtn) openBtn.classList.remove('has-issue');
 
+          // Verificar sobreposição após salvar
+          setTimeout(() => {
+            if (typeof OverlapChecker !== 'undefined' && typeof OverlapChecker.checkPrefixOverlap === 'function') {
+              OverlapChecker.checkPrefixOverlap();
+            }
+          }, 100);
+
       } catch (error) {
           console.error("Erro ao salvar configuração:", error);
           showNotification("Erro ao salvar configuração.", "error");
@@ -370,7 +299,7 @@ const NetworkConfigModal = (function() {
       // Adicionar classe "checking" ao botão para feedback visual
       if (checkOverlapBtn) {
         checkOverlapBtn.classList.add('checking');
-        checkOverlapBtn.innerText = 'Verificando...';
+        checkOverlapBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
       }
       
       if (typeof IPv6Utils === 'undefined' || typeof IPv6Utils.checkIPv6Overlap !== 'function') {
@@ -393,7 +322,7 @@ const NetworkConfigModal = (function() {
         return;
       }
       if (!isValidPrefix(mainLanPrefix)) {
-        showNotification("Prefixo LAN principal (fora do modal) está vazio ou é inválido. Preencha-o primeiro.", "warning");
+        showNotification("Prefixo LAN principal (campo IPv6) está vazio ou é inválido. Preencha-o primeiro.", "warning");
         hideOverlapWarningInModal();
         resetCheckButtonState(true);
         return;
@@ -530,9 +459,6 @@ const NetworkConfigModal = (function() {
   function hideOverlapWarningInModal() {
     if (!overlapWarningSection) return;
     overlapWarningSection.style.display = 'none';
-    // Remove classe de problema do botão principal SE não houver mais overlap
-    // (Idealmente, revalidar antes de remover)
-    // if (openBtn && !state.hasOverlap) openBtn.classList.remove('has-issue');
   }
 
   /**
@@ -597,22 +523,61 @@ const NetworkConfigModal = (function() {
           }
           
           notification.innerHTML = `${icon} <span>${message}</span>`;
+          
+          // Estilizar notificação
+          notification.style.position = 'fixed';
+          notification.style.top = '20px';
+          notification.style.right = '20px';
+          notification.style.padding = '10px 16px';
+          notification.style.borderRadius = '6px';
+          notification.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+          notification.style.display = 'flex';
+          notification.style.alignItems = 'center';
+          notification.style.gap = '8px';
+          notification.style.fontSize = '14px';
+          notification.style.zIndex = '9999';
+          notification.style.transform = 'translateY(-20px)';
+          notification.style.opacity = '0';
+          notification.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+          
+          // Cores para cada tipo
+          switch(type) {
+              case 'success':
+                  notification.style.backgroundColor = '#2ecc71';
+                  notification.style.color = 'white';
+                  break;
+              case 'error':
+                  notification.style.backgroundColor = '#e74c3c';
+                  notification.style.color = 'white';
+                  break;
+              case 'warning':
+                  notification.style.backgroundColor = '#f39c12';
+                  notification.style.color = 'white';
+                  break;
+              default:
+                  notification.style.backgroundColor = '#3498db';
+                  notification.style.color = 'white';
+          }
+          
           document.body.appendChild(notification);
           
-          // Animar a entrada
+          // Animar entrada
           setTimeout(() => {
-              notification.classList.add('show');
-          }, 10);
-          
-          // Remover após a duração
-          setTimeout(() => {
-              notification.classList.remove('show');
+              notification.style.transform = 'translateY(0)';
+              notification.style.opacity = '1';
+              
+              // Remover após duração
               setTimeout(() => {
-                  if (notification.parentNode) {
-                      notification.parentNode.removeChild(notification);
-                  }
-              }, 300);
-          }, duration);
+                  notification.style.transform = 'translateY(-20px)';
+                  notification.style.opacity = '0';
+                  
+                  setTimeout(() => {
+                      if (notification.parentNode) {
+                          document.body.removeChild(notification);
+                      }
+                  }, 300);
+              }, duration);
+          }, 10);
       } catch (error) {
           console.error("Erro ao mostrar notificação:", error);
           // Fallback: Log no console
@@ -631,10 +596,9 @@ const NetworkConfigModal = (function() {
   return {
     openModal: openModal,
     closeModal: closeModal,
-    // Expor outras funções se necessário
-    checkOverlap: checkOverlapInModal // Para ser chamado externamente se preciso
+    checkOverlap: checkOverlapInModal
   };
 })();
 
-// Exportar globalmente (opcional)
+// Exportar globalmente
 window.NetworkConfigModal = NetworkConfigModal;
