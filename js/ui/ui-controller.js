@@ -15,6 +15,9 @@ const UIController = (function() {
     THEME_STORAGE_KEY: 'themePreference'
   };
   
+  // Flag para evitar inicialização dupla
+  let initialized = false;
+  
   /**
    * Obtém elemento de forma segura
    */
@@ -259,7 +262,10 @@ const UIController = (function() {
         if (typeof source === 'string') {
           text = source;
         } else if (source instanceof HTMLElement) {
-          text = source.getAttribute('data-value') || source.textContent || source.innerText;
+          text = source.getAttribute('data-value') || 
+                source.getAttribute('data-ip') ||
+                source.textContent || 
+                source.innerText;
         } else {
           throw new Error('Fonte inválida para cópia');
         }
@@ -302,12 +308,22 @@ const UIController = (function() {
   /**
    * Função legada para compatibilidade
    */
-  function copiarTexto(elementId, feedback = true) {
-    const element = getElement(elementId);
-    if (element) {
-      clipboardManager.copy(element, feedback);
+  function copiarTexto(elementIdOrValue, feedback = true) {
+    // Se for string e parecer um ID (sem espaços, menor que 50 chars)
+    if (typeof elementIdOrValue === 'string' && 
+        elementIdOrValue.length < 50 && 
+        !elementIdOrValue.includes(' ')) {
+      
+      const element = getElement(elementIdOrValue);
+      if (element) {
+        clipboardManager.copy(element, feedback);
+      } else {
+        // Tratar como texto se elemento não existir
+        clipboardManager.copy(elementIdOrValue, feedback);
+      }
     } else {
-      console.error(`[UIController] Elemento "${elementId}" não encontrado para cópia`);
+      // Tratar como elemento ou texto
+      clipboardManager.copy(elementIdOrValue, feedback);
     }
   }
   
@@ -478,16 +494,16 @@ const UIController = (function() {
   };
   
   /**
-   * Configuração de eventos globais
+   * Configuração segura de event listeners
    */
   function setupEventListeners() {
-    // Tema - usando addEventListener para evitar sobrescrever
+    console.log('[UIController] Configurando event listeners...');
+    
+    // Botão de tema - configurar apenas uma vez
     const themeBtn = getElement('toggleThemeBtn');
-    if (themeBtn) {
-      // Remover listeners existentes e adicionar novo
-      const newThemeBtn = themeBtn.cloneNode(true);
-      themeBtn.parentNode.replaceChild(newThemeBtn, themeBtn);
-      newThemeBtn.addEventListener('click', themeManager.toggle.bind(themeManager));
+    if (themeBtn && !themeBtn.hasAttribute('data-ui-controller-ready')) {
+      themeBtn.addEventListener('click', themeManager.toggle.bind(themeManager));
+      themeBtn.setAttribute('data-ui-controller-ready', 'true');
       console.log('[UIController] Event listener do tema configurado');
     }
     
@@ -495,16 +511,14 @@ const UIController = (function() {
     const topBtn = getElement('topBtn');
     const bottomBtn = getElement('bottomBtn');
     
-    if (topBtn) {
-      const newTopBtn = topBtn.cloneNode(true);
-      topBtn.parentNode.replaceChild(newTopBtn, topBtn);
-      newTopBtn.addEventListener('click', navigation.scrollToTop);
+    if (topBtn && !topBtn.hasAttribute('data-ui-controller-ready')) {
+      topBtn.addEventListener('click', navigation.scrollToTop);
+      topBtn.setAttribute('data-ui-controller-ready', 'true');
     }
     
-    if (bottomBtn) {
-      const newBottomBtn = bottomBtn.cloneNode(true);
-      bottomBtn.parentNode.replaceChild(newBottomBtn, bottomBtn);
-      newBottomBtn.addEventListener('click', navigation.scrollToBottom);
+    if (bottomBtn && !bottomBtn.hasAttribute('data-ui-controller-ready')) {
+      bottomBtn.addEventListener('click', navigation.scrollToBottom);
+      bottomBtn.setAttribute('data-ui-controller-ready', 'true');
     }
     
     // Responsividade
@@ -518,21 +532,49 @@ const UIController = (function() {
    * Configura todos os botões de cópia
    */
   function setupCopyButtons() {
-    // Configurar botões de cópia existentes
-    document.querySelectorAll('.copy-btn').forEach(btn => {
-      // Remover listeners existentes
-      const newBtn = btn.cloneNode(true);
-      btn.parentNode.replaceChild(newBtn, btn);
-      
-      newBtn.addEventListener('click', function() {
+    // Configurar botões de cópia existentes que ainda não foram configurados
+    document.querySelectorAll('.copy-btn:not([data-ui-controller-ready])').forEach(btn => {
+      btn.addEventListener('click', function() {
         const text = this.getAttribute('data-ip') || 
                     this.getAttribute('data-value') ||
-                    this.closest('.ip-item, .info-value-container').querySelector('.ip-text, .info-value').textContent;
+                    this.closest('.ip-item, .info-value-container')?.querySelector('.ip-text, .info-value')?.textContent;
         
         if (text) {
           clipboardManager.copy(text, true);
         }
       });
+      
+      // Marcar como configurado
+      btn.setAttribute('data-ui-controller-ready', 'true');
+    });
+  }
+  
+  /**
+   * Observador para novos elementos
+   */
+  function setupDOMObserver() {
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'childList') {
+          // Quando novos elementos são adicionados, configurar botões de cópia
+          mutation.addedNodes.forEach(function(node) {
+            if (node.nodeType === 1) { // Element node
+              // Configurar botões de cópia nos novos elementos
+              const copyButtons = node.querySelectorAll ? node.querySelectorAll('.copy-btn:not([data-ui-controller-ready])') : [];
+              if (copyButtons.length > 0) {
+                setTimeout(() => {
+                  setupCopyButtons();
+                }, 100);
+              }
+            }
+          });
+        }
+      });
+    });
+    
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
     });
   }
   
@@ -540,6 +582,11 @@ const UIController = (function() {
    * Inicialização do módulo
    */
   function initialize() {
+    if (initialized) {
+      console.log('[UIController] Já inicializado, ignorando chamada dupla');
+      return;
+    }
+    
     console.log('[UIController] Inicializando UI Controller...');
     
     try {
@@ -552,12 +599,21 @@ const UIController = (function() {
       // Configurar eventos
       setupEventListeners();
       
+      // Configurar observador DOM
+      setupDOMObserver();
+      
+      // Marcar como inicializado
+      initialized = true;
+      
       console.log('[UIController] UI Controller inicializado com sucesso');
       
     } catch (error) {
       console.error('[UIController] Erro na inicialização:', error);
     }
   }
+  
+  // Função global para compatibilidade
+  window.copiarTexto = copiarTexto;
   
   // API pública
   const publicAPI = {
@@ -582,14 +638,18 @@ const UIController = (function() {
     // Utilitários
     getElement,
     safeDOMOperation,
-    setupCopyButtons
+    setupCopyButtons,
+    
+    // Informações de estado
+    isInitialized: () => initialized
   };
   
   // Inicializar quando DOM estiver pronto
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
-    initialize();
+    // Aguardar um pouco para evitar conflitos
+    setTimeout(initialize, 100);
   }
   
   return publicAPI;
