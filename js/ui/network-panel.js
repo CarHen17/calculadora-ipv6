@@ -306,7 +306,136 @@ const NetworkConfigModal = (function() {
 
       showNotification("Configuração de rede salva!", "success");
       
-      // Feedback visual no botão
+      // Feedback visual
+      if (applySuggestionBtn) {
+        applySuggestionBtn.classList.add('no-overlap');
+        setTimeout(() => {
+          applySuggestionBtn.classList.remove('no-overlap');
+        }, 1500);
+      }
+      
+      showNotification(`✅ Prefixo ${state.suggestedPrefix} aplicado ao campo principal.`, "success");
+      
+      // Re-verificar overlap após aplicar
+      setTimeout(checkOverlapInModal, 500);
+    } else {
+      showNotification("Erro: Campo principal não encontrado.", "error");
+    }
+  }
+
+  /**
+   * Valida se um prefixo está no formato CIDR básico
+   */
+  function isValidPrefix(prefix) {
+    if (!prefix || typeof prefix !== 'string') return false;
+    return prefix.includes('/') && prefix.split('/').length === 2 && parseInt(prefix.split('/')[1]) > 0;
+  }
+
+  /**
+   * Mostra uma notificação temporária
+   */
+  function showNotification(message, type = 'info', duration = 3000) {
+    try {
+      // Remover notificações anteriores
+      const oldNotifications = document.querySelectorAll('.network-notify');
+      oldNotifications.forEach(el => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+      
+      // Criar elemento de notificação
+      const notification = document.createElement('div');
+      notification.className = `network-notify ${type}`;
+      
+      // Ícone baseado no tipo
+      let icon = '';
+      switch(type) {
+        case 'success': icon = '<i class="fas fa-check-circle"></i>'; break;
+        case 'error': icon = '<i class="fas fa-exclamation-circle"></i>'; break;
+        case 'warning': icon = '<i class="fas fa-exclamation-triangle"></i>'; break;
+        default: icon = '<i class="fas fa-info-circle"></i>';
+      }
+      
+      notification.innerHTML = `${icon} <span>${message}</span>`;
+      
+      // Estilizar notificação - SEMPRE acima do modal
+      notification.style.position = 'fixed';
+      notification.style.top = '20px';
+      notification.style.right = '20px';
+      notification.style.padding = '10px 16px';
+      notification.style.borderRadius = '6px';
+      notification.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+      notification.style.display = 'flex';
+      notification.style.alignItems = 'center';
+      notification.style.gap = '8px';
+      notification.style.fontSize = '14px';
+      notification.style.zIndex = '10000'; // Acima do modal
+      notification.style.transform = 'translateY(-20px)';
+      notification.style.opacity = '0';
+      notification.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+      
+      // Cores para cada tipo
+      switch(type) {
+        case 'success':
+          notification.style.backgroundColor = '#2ecc71';
+          notification.style.color = 'white';
+          break;
+        case 'error':
+          notification.style.backgroundColor = '#e74c3c';
+          notification.style.color = 'white';
+          break;
+        case 'warning':
+          notification.style.backgroundColor = '#f39c12';
+          notification.style.color = 'white';
+          break;
+        default:
+          notification.style.backgroundColor = '#3498db';
+          notification.style.color = 'white';
+      }
+      
+      document.body.appendChild(notification);
+      
+      // Animar entrada
+      setTimeout(() => {
+        notification.style.transform = 'translateY(0)';
+        notification.style.opacity = '1';
+        
+        // Remover após duração
+        setTimeout(() => {
+          notification.style.transform = 'translateY(-20px)';
+          notification.style.opacity = '0';
+          
+          setTimeout(() => {
+            if (notification.parentNode) {
+              document.body.removeChild(notification);
+            }
+          }, 300);
+        }, duration);
+      }, 10);
+    } catch (error) {
+      console.error("Erro ao mostrar notificação:", error);
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+  }
+
+  // Inicializar o modal quando o DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+  
+  // API Pública do Módulo
+  return {
+    openModal: openModal,
+    closeModal: closeModal,
+    checkOverlap: checkOverlapInModal
+  };
+})();
+
+// Exportar globalmente
+window.NetworkConfigModal = NetworkConfigModal; no botão
       if (saveBtn) {
         saveBtn.classList.add('no-overlap');
         setTimeout(() => {
@@ -526,3 +655,132 @@ const NetworkConfigModal = (function() {
       mainLanPrefixInput.dispatchEvent(event);
       
       // Feedback visual
+      if (applySuggestionBtn) {
+        applySuggestionBtn.classList.add('no-overlap');
+        setTimeout(() => {
+          applySuggestionBtn.classList.remove('no-overlap');
+        }, 1500);
+      }
+      
+      showNotification(`✅ Prefixo ${state.suggestedPrefix} aplicado ao campo principal.`, "success");
+      
+      // Re-verificar overlap após aplicar
+      setTimeout(checkOverlapInModal, 500);
+    } else {
+      showNotification("Erro: Campo principal não encontrado.", "error");
+    }
+  }
+
+  /**
+   * Valida se um prefixo está no formato CIDR básico
+   */
+  function isValidPrefix(prefix) {
+    if (!prefix || typeof prefix !== 'string') return false;
+    return prefix.includes('/') && prefix.split('/').length === 2 && parseInt(prefix.split('/')[1]) > 0;
+  }
+
+  /**
+   * Mostra uma notificação temporária
+   */
+  function showNotification(message, type = 'info', duration = 3000) {
+    try {
+      // Remover notificações anteriores
+      const oldNotifications = document.querySelectorAll('.network-notify');
+      oldNotifications.forEach(el => {
+        if (el.parentNode) {
+          el.parentNode.removeChild(el);
+        }
+      });
+      
+      // Criar elemento de notificação
+      const notification = document.createElement('div');
+      notification.className = `network-notify ${type}`;
+      
+      // Ícone baseado no tipo
+      let icon = '';
+      switch(type) {
+        case 'success': icon = '<i class="fas fa-check-circle"></i>'; break;
+        case 'error': icon = '<i class="fas fa-exclamation-circle"></i>'; break;
+        case 'warning': icon = '<i class="fas fa-exclamation-triangle"></i>'; break;
+        default: icon = '<i class="fas fa-info-circle"></i>';
+      }
+      
+      notification.innerHTML = `${icon} <span>${message}</span>`;
+      
+      // Estilizar notificação - SEMPRE acima do modal
+      notification.style.position = 'fixed';
+      notification.style.top = '20px';
+      notification.style.right = '20px';
+      notification.style.padding = '10px 16px';
+      notification.style.borderRadius = '6px';
+      notification.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.2)';
+      notification.style.display = 'flex';
+      notification.style.alignItems = 'center';
+      notification.style.gap = '8px';
+      notification.style.fontSize = '14px';
+      notification.style.zIndex = '10000'; // Acima do modal
+      notification.style.transform = 'translateY(-20px)';
+      notification.style.opacity = '0';
+      notification.style.transition = 'transform 0.3s ease, opacity 0.3s ease';
+      
+      // Cores para cada tipo
+      switch(type) {
+        case 'success':
+          notification.style.backgroundColor = '#2ecc71';
+          notification.style.color = 'white';
+          break;
+        case 'error':
+          notification.style.backgroundColor = '#e74c3c';
+          notification.style.color = 'white';
+          break;
+        case 'warning':
+          notification.style.backgroundColor = '#f39c12';
+          notification.style.color = 'white';
+          break;
+        default:
+          notification.style.backgroundColor = '#3498db';
+          notification.style.color = 'white';
+      }
+      
+      document.body.appendChild(notification);
+      
+      // Animar entrada
+      setTimeout(() => {
+        notification.style.transform = 'translateY(0)';
+        notification.style.opacity = '1';
+        
+        // Remover após duração
+        setTimeout(() => {
+          notification.style.transform = 'translateY(-20px)';
+          notification.style.opacity = '0';
+          
+          setTimeout(() => {
+            if (notification.parentNode) {
+              document.body.removeChild(notification);
+            }
+          }, 300);
+        }, duration);
+      }, 10);
+    } catch (error) {
+      console.error("Erro ao mostrar notificação:", error);
+      console.log(`[${type.toUpperCase()}] ${message}`);
+    }
+  }
+
+  // Inicializar o modal quando o DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+  
+  // API Pública do Módulo
+  return {
+    openModal: openModal,
+    closeModal: closeModal,
+    checkOverlap: checkOverlapInModal
+  };
+})();
+
+// Exportar globalmente
+window.NetworkConfigModal = NetworkConfigModal;
