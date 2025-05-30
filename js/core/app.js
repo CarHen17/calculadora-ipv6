@@ -1,402 +1,253 @@
 /**
- * Aplicação Principal da Calculadora IPv6
+ * Aplicação Principal da Calculadora IPv6 - Versão Simplificada
  * 
- * Este arquivo inicializa todos os módulos e garante
- * que as dependências sejam carregadas na ordem correta.
+ * Este arquivo coordena a inicialização da aplicação de forma limpa e eficiente.
  */
 
 (function() {
   'use strict';
   
-  // Estado para rastrear recursos carregados
-  let resourcesLoaded = {
-    ipv6Utils: false,
-    uiController: false,
-    ipv6Calculator: false
-  };
-  
   /**
-   * Verifica se todos os módulos necessários estão carregados
-   * @returns {boolean} - Verdadeiro se todos os módulos estão carregados
+   * Verifica se todos os módulos essenciais estão carregados
    */
-  function checkModulesLoaded() {
-    return (
-      typeof window.IPv6Utils !== 'undefined' &&
-      typeof window.UIController !== 'undefined' &&
-      typeof window.IPv6Calculator !== 'undefined'
-    );
+  function checkEssentialModules() {
+    const essentialModules = {
+      'IPv6Utils': window.IPv6Utils,
+      'UIController': window.UIController,
+      'IPv6Calculator': window.IPv6Calculator
+    };
+    
+    const missing = [];
+    const loaded = [];
+    
+    for (const [name, module] of Object.entries(essentialModules)) {
+      if (module && typeof module === 'object') {
+        loaded.push(name);
+      } else {
+        missing.push(name);
+      }
+    }
+    
+    return { loaded, missing, allLoaded: missing.length === 0 };
   }
   
   /**
-   * Registra manualmente o módulo IPv6Utils se não estiver disponível
+   * Configura event listeners básicos da aplicação
    */
-  function ensureIPv6Utils() {
-    if (typeof window.IPv6Utils === 'undefined') {
-      console.warn("IPv6Utils não encontrado, criando versão simplificada");
-      
-      // Implementação básica de fallback
-      window.IPv6Utils = {
-        validateIPv6: function(addressCIDR) {
-          console.warn("Usando implementação simplificada de validateIPv6");
-          try {
-            const [addr, prefix] = addressCIDR.split('/');
-            if (!addr || !prefix || isNaN(prefix)) {
-              return "Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).";
-            }
-            return null;
-          } catch (error) {
-            return "Erro ao processar o endereço IPv6.";
-          }
-        },
-        
-        expandIPv6Address: function(addressCIDR) {
-          try {
-            let [addr, prefix] = addressCIDR.split('/');
-            // Implementação simplificada para garantir compatibilidade básica
-            return addr;
-          } catch (error) {
-            return "Erro: Falha ao processar o endereço.";
-          }
-        },
-        
-        shortenIPv6: function(address) {
-          return address; // Versão básica apenas retorna o mesmo endereço
-        },
-        
-        formatIPv6Address: function(ipv6BigInt) {
-          try {
-            let hexStr = ipv6BigInt.toString(16).padStart(32, '0');
-            return hexStr.match(/.{1,4}/g).join(':');
-          } catch (error) {
-            return "0000:0000:0000:0000:0000:0000:0000:0000";
-          }
-        },
-        
-        calcularBlocoAgregado: function() {
-          return null; // Versão simplificada retorna null
-        },
-        
-        gerarSubRedesAssincronamente: function(ipv6BigInt, initialMask, prefix, numSubRedes, callback, appState) {
-          console.warn("Usando implementação simplificada de gerarSubRedesAssincronamente");
-          // Implementação básica que gera apenas algumas sub-redes de exemplo
-          appState = appState || { subRedesGeradas: [] };
-          
-          setTimeout(() => {
-            for (let i = 0; i < 10; i++) {
-              appState.subRedesGeradas.push({
-                subnet: `2001:db8::${i}/${prefix}`,
-                initial: `2001:db8::${i}`,
-                final: `2001:db8::${i}:ffff`,
-                network: `2001:db8::${i}`
-              });
-            }
-            
-            if (typeof callback === 'function') {
-              callback(appState.subRedesGeradas);
-            }
-          }, 500);
+  function setupApplicationEvents() {
+    // Configurar evento do botão calcular
+    const calcularBtn = document.getElementById('calcularBtn');
+    if (calcularBtn && window.IPv6Calculator) {
+      calcularBtn.addEventListener('click', window.IPv6Calculator.calcularSubRedes);
+    }
+    
+    // Configurar evento do botão reset
+    const resetBtn = document.getElementById('resetBtn');
+    if (resetBtn && window.IPv6Calculator) {
+      resetBtn.addEventListener('click', window.IPv6Calculator.resetarCalculadora);
+    }
+    
+    // Configurar evento do botão de tema
+    const themeBtn = document.getElementById('toggleThemeBtn');
+    if (themeBtn && window.UIController) {
+      themeBtn.addEventListener('click', window.UIController.theme.toggle);
+    }
+    
+    // Configurar botão continuar
+    const continuarBtn = document.getElementById('continuarBtn');
+    if (continuarBtn && window.IPv6Calculator) {
+      continuarBtn.addEventListener('click', window.IPv6Calculator.mostrarSugestoesDivisao);
+    }
+    
+    // Configurar checkbox "Selecionar Todos"
+    const selectAllBtn = document.getElementById('selectAll');
+    if (selectAllBtn && window.UIController) {
+      selectAllBtn.addEventListener('change', window.UIController.toggleSelectAll);
+    }
+    
+    // Configurar botão "Carregar Mais"
+    const loadMoreBtn = document.getElementById('loadMoreButton');
+    if (loadMoreBtn && window.UIController && window.appState) {
+      loadMoreBtn.addEventListener('click', () => {
+        window.UIController.carregarMaisSubRedes(window.appState.subRedesExibidas || 0, 100);
+      });
+    }
+    
+    // Configurar botões de navegação
+    const topBtn = document.getElementById('topBtn');
+    const bottomBtn = document.getElementById('bottomBtn');
+    
+    if (topBtn && window.UIController) {
+      topBtn.addEventListener('click', window.UIController.navigation.scrollToTop);
+    }
+    
+    if (bottomBtn && window.UIController) {
+      bottomBtn.addEventListener('click', window.UIController.navigation.scrollToBottom);
+    }
+    
+    // Configurar botões de IPs do bloco principal
+    const toggleMainBlockIpsBtn = document.getElementById('toggleMainBlockIpsBtn');
+    if (toggleMainBlockIpsBtn && window.IPv6Calculator) {
+      toggleMainBlockIpsBtn.addEventListener('click', window.IPv6Calculator.toggleMainBlockIps);
+    }
+    
+    const moreMainBlockIpsBtn = document.getElementById('moreMainBlockIpsBtn');
+    if (moreMainBlockIpsBtn && window.IPv6Calculator) {
+      moreMainBlockIpsBtn.addEventListener('click', window.IPv6Calculator.gerarMaisIPsDoBloco);
+    }
+    
+    const resetMainBlockIPsBtn = document.getElementById('resetMainBlockIPsButton');
+    if (resetMainBlockIPsBtn && window.IPv6Calculator) {
+      resetMainBlockIPsBtn.addEventListener('click', window.IPv6Calculator.resetarIPsMainBlock);
+    }
+    
+    // Configurar botões de IPs da sub-rede
+    const gerarIPsBtn = document.getElementById('gerarIPsButton');
+    if (gerarIPsBtn && window.IPv6Calculator) {
+      gerarIPsBtn.addEventListener('click', window.IPv6Calculator.gerarPrimeirosIPs);
+    }
+    
+    const gerarMaisIPsBtn = document.getElementById('gerarMaisIPsButton');
+    if (gerarMaisIPsBtn && window.IPv6Calculator) {
+      gerarMaisIPsBtn.addEventListener('click', window.IPv6Calculator.gerarMaisIPs);
+    }
+    
+    const resetIPsBtn = document.getElementById('resetIPsButton');
+    if (resetIPsBtn && window.IPv6Calculator) {
+      resetIPsBtn.addEventListener('click', window.IPv6Calculator.resetarIPsGerados);
+    }
+  }
+  
+  /**
+   * Configura funcionalidades de cópia
+   */
+  function setupCopyFunctionality() {
+    // Garantir que a função global copiarTexto está disponível
+    if (!window.copiarTexto && window.UIController && window.UIController.clipboard) {
+      window.copiarTexto = function(elementId) {
+        const element = document.getElementById(elementId);
+        if (element) {
+          window.UIController.clipboard.copy(element);
         }
       };
-      
-      console.log("Versão simplificada de IPv6Utils criada com sucesso");
-      resourcesLoaded.ipv6Utils = true;
-      return true;
     }
-    
-    resourcesLoaded.ipv6Utils = true;
-    return true;
   }
   
   /**
-   * Registra manualmente o módulo UIController se não estiver disponível
+   * Inicializa o estado global da aplicação
    */
-  function ensureUIController() {
-    if (typeof window.UIController === 'undefined') {
-      console.warn("UIController não encontrado, criando versão simplificada");
-      
-      // Implementação básica de fallback
-      window.UIController = {
-        updateStep: function(step) {
-          console.warn("Usando função de fallback para updateStep");
-          const stepElements = document.querySelectorAll('.step');
-          if (stepElements.length > 0) {
-            stepElements.forEach(el => el.classList.remove('active'));
-            const currentStep = document.getElementById(`step${step}`);
-            if (currentStep) {
-              currentStep.classList.add('active');
-            }
-          }
-        },
-        
-        toggleTheme: function() {
-          document.body.classList.toggle('dark-mode');
-        },
-        
-        copiarTexto: function(elementId) {
-          const element = document.getElementById(elementId);
-          if (element) {
-            const text = element.innerText;
-            if (navigator.clipboard) {
-              navigator.clipboard.writeText(text);
-            }
-          }
-        },
-        
-        appendIpToList: function(ip, number, listId) {
-          const list = document.getElementById(listId);
-          if (list) {
-            const li = document.createElement('li');
-            li.textContent = `${number}. ${ip}`;
-            list.appendChild(li);
-          }
-        },
-        
-        carregarMaisSubRedes: function(startIndex, limit) {
-          console.warn("Usando implementação simplificada de carregarMaisSubRedes");
-        },
-        
-        toggleSelectAll: function() {
-          const selectAll = document.getElementById('selectAll');
-          if (selectAll) {
-            const checked = selectAll.checked;
-            document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]').forEach(cb => {
-              cb.checked = checked;
-            });
-          }
-        },
-        
-        ajustarLayoutResponsivo: function() {
-          // Versão simplificada não faz nada
-        },
-        
-        navigation: {
-          scrollToTop: function() {
-            window.scrollTo(0, 0);
-          },
-          
-          scrollToBottom: function() {
-            window.scrollTo(0, document.body.scrollHeight);
-          }
-        }
+  function initializeAppState() {
+    if (!window.appState) {
+      window.appState = {
+        subRedesGeradas: [],
+        subRedesExibidas: 0,
+        selectedBlock: null,
+        currentIpOffset: 0,
+        mainBlock: null,
+        mainBlockCurrentOffset: 0,
+        isMainBlockIpsVisible: false,
+        currentStep: 1
       };
-      
-      console.log("Versão simplificada de UIController criada com sucesso");
-      resourcesLoaded.uiController = true;
-      return true;
-    }
-    
-    resourcesLoaded.uiController = true;
-    return true;
-  }
-  
-  /**
-   * Carrega um script dinamicamente
-   * @param {string} url - URL do script a ser carregado
-   * @returns {Promise} - Promise que resolve quando o script for carregado
-   */
-  function loadScript(url) {
-    return new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = url;
-      script.async = true;
-      
-      script.onload = () => {
-        console.log(`Script carregado: ${url}`);
-        resolve();
-      };
-      
-      script.onerror = () => {
-        console.error(`Erro ao carregar script: ${url}`);
-        reject(new Error(`Erro ao carregar script: ${url}`));
-      };
-      
-      document.head.appendChild(script);
-    });
-  }
-  
-  /**
-   * Carrega scripts na ordem correta
-   */
-  async function loadScriptsInOrder() {
-    try {
-      const scripts = [
-        { url: 'js/core/ipv6-utils.js', key: 'ipv6Utils' },
-        { url: 'js/ui/ui-controller.js', key: 'uiController' },
-        { url: 'js/core/ipv6-calculator.js', key: 'ipv6Calculator' }
-      ];
-      
-      for (const script of scripts) {
-        try {
-          await loadScript(script.url);
-          resourcesLoaded[script.key] = true;
-        } catch (error) {
-          console.error(`Erro ao carregar ${script.url}:`, error);
-          
-          // Usar fallback para scripts críticos
-          if (script.key === 'ipv6Utils') {
-            ensureIPv6Utils();
-          } else if (script.key === 'uiController') {
-            ensureUIController();
-          }
-        }
-      }
-      
-      // Garantir que todos os módulos principais estão disponíveis
-      ensureIPv6Utils();
-      ensureUIController();
-      
-      // Inicializar aplicação
-      initializeApp();
-    } catch (error) {
-      console.error("Erro ao carregar scripts:", error);
-      showLoadingError();
     }
   }
   
   /**
-   * Inicializa a aplicação quando todos os módulos estiverem carregados
+   * Mostra notificação de sucesso na inicialização
    */
-  function initializeApp() {
-    console.log("Inicializando aplicação Calculadora IPv6...");
-    
-    try {
-      // Verificar compatibilidade com BigInt
-      if (typeof BigInt === 'undefined') {
-        showCompatibilityWarning();
-        return;
-      }
-      
-      // Verificar se todos os módulos foram carregados
-      if (!checkModulesLoaded()) {
-        console.error("Nem todos os módulos foram carregados corretamente");
-        showLoadingError();
-        return;
-      }
-      
-      // Configurar chamadas globais para maior compatibilidade
-      window.copiarTexto = window.UIController.copiarTexto;
-      
-      // Remover mensagens de erro de carregamento
-      removeLoadingError();
-      
-      // Mostrar mensagem de sucesso no console
-      console.log("Aplicação Calculadora IPv6 inicializada com sucesso");
-      
-      // Mostrar notificação de inicialização se o usuário estiver em ambiente de desenvolvimento
-      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        showInitializationNotice();
-      }
-    } catch (error) {
-      console.error("Erro ao inicializar aplicação:", error);
-      showLoadingError();
-    }
-  }
-  
-  /**
-   * Exibe aviso de compatibilidade para navegadores sem suporte a BigInt
-   */
-  function showCompatibilityWarning() {
-    const container = document.querySelector('.container');
-    if (!container) return;
-    
-    const warningEl = document.createElement('div');
-    warningEl.className = 'compatibility-warning';
-    warningEl.innerHTML = `
-      <h3>⚠️ Navegador não compatível</h3>
-      <p>
-        Seu navegador não suporta funcionalidades necessárias para a Calculadora IPv6.
-        Para melhor experiência, utilize uma versão mais recente do Chrome, Firefox, Edge ou Safari.
-      </p>
-    `;
-    
-    warningEl.style.backgroundColor = '#fef8e3';
-    warningEl.style.border = '1px solid #f0c674';
-    warningEl.style.borderRadius = '8px';
-    warningEl.style.padding = '16px';
-    warningEl.style.marginBottom = '20px';
-    
-    container.insertBefore(warningEl, container.firstChild);
-  }
-  
-  /**
-   * Exibe erro de carregamento
-   */
-  function showLoadingError() {
-    // Verificar se já existe um erro de carregamento
-    if (document.querySelector('.error-message')) return;
-    
-    const warningEl = document.createElement('div');
-    warningEl.className = 'error-message';
-    warningEl.style.display = 'block';
-    warningEl.innerHTML = `
-      <strong>Erro ao carregar a aplicação</strong>
-      <p>Ocorreu um problema ao inicializar a calculadora. Tente recarregar a página.</p>
-      <button id="reloadBtn" style="margin-top:10px;">Recarregar</button>
-    `;
-    
-    const container = document.querySelector('.container');
-    if (container) {
-      container.insertBefore(warningEl, container.firstChild);
-      
-      const reloadBtn = document.getElementById('reloadBtn');
-      if (reloadBtn) {
-        reloadBtn.addEventListener('click', () => window.location.reload());
-      }
-    }
-  }
-  
-  /**
-   * Remove mensagens de erro de carregamento
-   */
-  function removeLoadingError() {
-    const errorMessage = document.querySelector('.error-message');
-    if (errorMessage && errorMessage.parentNode) {
-      errorMessage.parentNode.removeChild(errorMessage);
-    }
-  }
-  
-  /**
-   * Exibe notificação de inicialização bem-sucedida
-   */
-  function showInitializationNotice() {
-    const notice = document.createElement('div');
-    notice.style.position = 'fixed';
-    notice.style.bottom = '20px';
-    notice.style.right = '20px';
-    notice.style.backgroundColor = '#4caf50';
-    notice.style.color = 'white';
-    notice.style.padding = '10px 20px';
-    notice.style.borderRadius = '4px';
-    notice.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-    notice.style.zIndex = '9999';
-    notice.style.opacity = '0';
-    notice.style.transition = 'opacity 0.3s ease-in-out';
-    
-    notice.textContent = '✓ Calculadora IPv6 inicializada com sucesso';
-    
-    document.body.appendChild(notice);
-    
-    // Animar
-    setTimeout(() => {
-      notice.style.opacity = '1';
-      
-      // Remover após alguns segundos
+  function showInitializationSuccess() {
+    if (window.UIController && window.UIController.notifications) {
       setTimeout(() => {
-        notice.style.opacity = '0';
-        setTimeout(() => {
-          if (notice.parentNode) {
-            document.body.removeChild(notice);
-          }
-        }, 300);
-      }, 3000);
-    }, 300);
+        window.UIController.notifications.show(
+          'Calculadora IPv6 inicializada com sucesso!', 
+          'success', 
+          2000
+        );
+      }, 1000);
+    }
   }
   
-  // Iniciar o carregamento dos scripts quando o DOM estiver pronto
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadScriptsInOrder);
-  } else {
-    // Se o DOM já estiver pronto, iniciar carregamento imediatamente
-    loadScriptsInOrder();
+  /**
+   * Função principal de inicialização
+   */
+  function initializeApplication() {
+    console.log('🚀 Inicializando Calculadora IPv6...');
+    
+    try {
+      // Verificar módulos essenciais
+      const moduleCheck = checkEssentialModules();
+      
+      if (!moduleCheck.allLoaded) {
+        console.error('❌ Módulos essenciais não carregados:', moduleCheck.missing);
+        
+        // Mostrar erro na interface
+        const errorAlert = document.getElementById('initErrorAlert');
+        const errorMessage = document.getElementById('initErrorMessage');
+        
+        if (errorAlert && errorMessage) {
+          errorMessage.textContent = `Módulos não carregados: ${moduleCheck.missing.join(', ')}`;
+          errorAlert.style.display = 'block';
+        }
+        
+        return false;
+      }
+      
+      console.log('✅ Módulos essenciais carregados:', moduleCheck.loaded);
+      
+      // Inicializar estado da aplicação
+      initializeAppState();
+      
+      // Configurar funcionalidades
+      setupCopyFunctionality();
+      setupApplicationEvents();
+      
+      // Carregar preferências de tema
+      if (window.UIController && window.UIController.theme) {
+        window.UIController.theme.loadPreference();
+      }
+      
+      // Ajustar layout responsivo inicial
+      if (window.UIController && window.UIController.responsive) {
+        window.UIController.responsive.adjust();
+      }
+      
+      // Registrar módulos no ModuleManager se disponível
+      if (window.ModuleManager) {
+        window.ModuleManager.autoRegister.all();
+      }
+      
+      // Mostrar notificação de sucesso apenas em desenvolvimento
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        showInitializationSuccess();
+      }
+      
+      console.log('🎉 Calculadora IPv6 inicializada com sucesso!');
+      return true;
+      
+    } catch (error) {
+      console.error('❌ Erro na inicialização da aplicação:', error);
+      
+      // Mostrar erro na interface
+      const errorAlert = document.getElementById('initErrorAlert');
+      const errorMessage = document.getElementById('initErrorMessage');
+      
+      if (errorAlert && errorMessage) {
+        errorMessage.textContent = 'Erro na inicialização: ' + error.message;
+        errorAlert.style.display = 'block';
+      }
+      
+      return false;
+    }
   }
+  
+  // Aguardar carregamento completo do DOM
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApplication);
+  } else {
+    // Se o DOM já estiver carregado, inicializar imediatamente
+    initializeApplication();
+  }
+  
+  // Expor função de inicialização para debug
+  window.debugInitApp = initializeApplication;
+  
 })();
