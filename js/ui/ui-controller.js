@@ -1,8 +1,8 @@
 /**
- * UI Controller - Versão Refatorada
+ * UI Controller - Versão Corrigida
  * 
- * Controlador de interface otimizado que usa DOMCache e
- * o sistema de módulos para melhor performance.
+ * Controlador de interface que gerencia todas as funcionalidades de UI
+ * incluindo tema, navegação, notificações e interações.
  */
 
 const UIController = (function() {
@@ -15,39 +15,18 @@ const UIController = (function() {
     THEME_STORAGE_KEY: 'themePreference'
   };
   
-  // Cache para elementos acessados com frequência
-  let domElements = {};
-  
   /**
-   * Inicializa cache de elementos DOM usando DOMCache
-   */
-  function initDOMCache() {
-    if (!window.DOMCache) {
-      console.warn('[UIController] DOMCache não disponível, usando fallback');
-      return;
-    }
-    
-    // Usar o cache de elementos comuns do DOMCache
-    domElements = window.DOMCache.elements;
-  }
-  
-  /**
-   * Obtém elemento de forma segura (com fallback)
-   * @param {string} id - ID do elemento
-   * @returns {HTMLElement|null} - Elemento encontrado
+   * Obtém elemento de forma segura
    */
   function getElement(id) {
-    if (window.DOMCache) {
-      return window.DOMCache.get(id);
+    if (typeof id === 'string') {
+      return document.getElementById(id);
     }
-    // Fallback para getElementById tradicional
-    return document.getElementById(id);
+    return id; // Já é um elemento
   }
   
   /**
    * Executa operação DOM de forma segura
-   * @param {Function} operation - Operação a ser executada
-   * @param {string} context - Contexto para debug
    */
   function safeDOMOperation(operation, context = 'Operação DOM') {
     try {
@@ -60,7 +39,6 @@ const UIController = (function() {
   
   /**
    * Atualiza o passo atual no indicador de progresso
-   * @param {number} step - Número do passo a ser ativado
    */
   function updateStep(step) {
     safeDOMOperation(() => {
@@ -101,7 +79,7 @@ const UIController = (function() {
         const isDark = document.body.classList.toggle('dark-mode');
         
         // Atualizar botão
-        const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
+        const themeBtn = getElement('toggleThemeBtn');
         if (themeBtn) {
           const icon = isDark ? 'fa-sun' : 'fa-moon';
           themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
@@ -112,6 +90,8 @@ const UIController = (function() {
         
         // Notificar outros módulos sobre mudança de tema
         this.notifyThemeChange(isDark);
+        
+        console.log(`[UIController] Tema alterado para: ${isDark ? 'escuro' : 'claro'}`);
       }, 'toggle theme');
     },
     
@@ -138,7 +118,7 @@ const UIController = (function() {
         document.body.classList.toggle('dark-mode', shouldUseDark);
         
         // Atualizar botão
-        const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
+        const themeBtn = getElement('toggleThemeBtn');
         if (themeBtn) {
           const icon = shouldUseDark ? 'fa-sun' : 'fa-moon';
           themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
@@ -148,69 +128,26 @@ const UIController = (function() {
     
     /**
      * Notifica outros módulos sobre mudança de tema
-     * @param {boolean} isDark - Se o tema escuro está ativo
      */
     notifyThemeChange(isDark) {
-      // Notificar visualizações se disponíveis
-      if (window.VisualizationModule && typeof window.VisualizationModule.updateChartsForTheme === 'function') {
-        window.VisualizationModule.updateChartsForTheme();
-      }
-      
       // Disparar evento customizado
       const event = new CustomEvent('themeChanged', { 
         detail: { isDark } 
       });
       document.dispatchEvent(event);
-    },
-    
-    /**
-     * Monitora mudanças na preferência do sistema
-     */
-    setupSystemPreferenceMonitor() {
-      const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-      
-      darkModeMediaQuery.addEventListener('change', (e) => {
-        const themePreference = localStorage.getItem(CONFIG.THEME_STORAGE_KEY);
-        
-        // Aplicar apenas se estiver usando o tema do sistema
-        if (themePreference === 'system' || !themePreference) {
-          document.body.classList.toggle('dark-mode', e.matches);
-          
-          const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
-          if (themeBtn) {
-            const icon = e.matches ? 'fa-sun' : 'fa-moon';
-            themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
-          }
-          
-          this.notifyThemeChange(e.matches);
-        }
-      });
     }
   };
   
   /**
-   * Sistema de notificações melhorado
+   * Sistema de notificações
    */
   const notificationSystem = {
-    // Queue de notificações
-    queue: [],
-    active: [],
-    maxActive: 3,
-    
     /**
      * Mostra uma notificação
-     * @param {string} message - Mensagem a exibir
-     * @param {string} type - Tipo de notificação
-     * @param {number} duration - Duração em milissegundos
      */
     show(message, type = 'success', duration = CONFIG.NOTIFICATION_DURATION) {
       const notification = this.create(message, type, duration);
-      
-      if (this.active.length < this.maxActive) {
-        this.display(notification);
-      } else {
-        this.queue.push(notification);
-      }
+      this.display(notification);
     },
     
     /**
@@ -278,10 +215,6 @@ const UIController = (function() {
      */
     display(notification) {
       document.body.appendChild(notification.element);
-      this.active.push(notification);
-      
-      // Posicionar baseado nas notificações ativas
-      this.repositionAll();
       
       // Animar entrada
       requestAnimationFrame(() => {
@@ -308,32 +241,7 @@ const UIController = (function() {
         if (element.parentNode) {
           element.parentNode.removeChild(element);
         }
-        
-        // Remover da lista ativa
-        const index = this.active.findIndex(n => n.element === element);
-        if (index > -1) {
-          this.active.splice(index, 1);
-        }
-        
-        // Reposicionar outras notificações
-        this.repositionAll();
-        
-        // Mostrar próxima da queue
-        if (this.queue.length > 0) {
-          const next = this.queue.shift();
-          this.display(next);
-        }
       }, CONFIG.ANIMATION_DURATION);
-    },
-    
-    /**
-     * Reposiciona todas as notificações ativas
-     */
-    repositionAll() {
-      this.active.forEach((notification, index) => {
-        const offset = (index * 80) + 20; // 80px de espaçamento entre notificações
-        notification.element.style.bottom = `${offset}px`;
-      });
     }
   };
   
@@ -343,8 +251,6 @@ const UIController = (function() {
   const clipboardManager = {
     /**
      * Copia texto para área de transferência
-     * @param {string|HTMLElement} source - Texto ou elemento
-     * @param {boolean} showFeedback - Mostrar feedback visual
      */
     async copy(source, showFeedback = true) {
       try {
@@ -381,7 +287,7 @@ const UIController = (function() {
         }
         
         if (showFeedback) {
-          this.showFeedback(source);
+          notificationSystem.show('Texto copiado!', 'success', 1500);
         }
         
         return true;
@@ -390,79 +296,11 @@ const UIController = (function() {
         notificationSystem.show('Falha ao copiar o texto', 'error');
         return false;
       }
-    },
-    
-    /**
-     * Mostra feedback visual após cópia
-     * @param {HTMLElement} element - Elemento que foi copiado
-     */
-    showFeedback(element) {
-      if (typeof element === 'string') return;
-      
-      safeDOMOperation(() => {
-        const isButton = element.classList && element.classList.contains('copy-btn');
-        
-        if (isButton) {
-          // Feedback no botão
-          const originalHTML = element.innerHTML;
-          element.innerHTML = '<i class="fas fa-check"></i>';
-          element.style.transform = 'scale(1.1)';
-          
-          setTimeout(() => {
-            element.innerHTML = originalHTML;
-            element.style.transform = '';
-          }, 1500);
-        } else {
-          // Criar tooltip flutuante
-          const tooltip = document.createElement('div');
-          tooltip.className = 'copy-tooltip';
-          tooltip.textContent = "Copiado!";
-          
-          // Posicionar tooltip
-          const rect = element.getBoundingClientRect();
-          Object.assign(tooltip.style, {
-            position: 'fixed',
-            left: `${rect.left + (rect.width / 2) - 30}px`,
-            top: `${rect.top - 40}px`,
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            fontSize: '12px',
-            zIndex: '10000',
-            pointerEvents: 'none',
-            opacity: '0',
-            transform: 'translateY(10px)',
-            transition: 'all 0.3s ease'
-          });
-          
-          document.body.appendChild(tooltip);
-          
-          // Animar
-          requestAnimationFrame(() => {
-            tooltip.style.opacity = '1';
-            tooltip.style.transform = 'translateY(0)';
-            
-            setTimeout(() => {
-              tooltip.style.opacity = '0';
-              tooltip.style.transform = 'translateY(-10px)';
-              
-              setTimeout(() => {
-                if (tooltip.parentNode) {
-                  document.body.removeChild(tooltip);
-                }
-              }, CONFIG.ANIMATION_DURATION);
-            }, 1500);
-          });
-        }
-      }, 'copy feedback');
     }
   };
   
   /**
    * Função legada para compatibilidade
-   * @param {string} elementId - ID do elemento
-   * @param {boolean} feedback - Mostrar feedback
    */
   function copiarTexto(elementId, feedback = true) {
     const element = getElement(elementId);
@@ -474,10 +312,7 @@ const UIController = (function() {
   }
   
   /**
-   * Adiciona um item à lista de IPs de forma otimizada
-   * @param {string} ip - Endereço IP
-   * @param {number} number - Número do IP na lista
-   * @param {string} listId - ID da lista
+   * Adiciona um item à lista de IPs
    */
   function appendIpToList(ip, number, listId) {
     safeDOMOperation(() => {
@@ -487,7 +322,7 @@ const UIController = (function() {
         return;
       }
       
-      // Criar elementos de forma otimizada
+      // Criar elementos
       const li = document.createElement('li');
       li.className = 'ip-item';
       li.innerHTML = `
@@ -515,19 +350,11 @@ const UIController = (function() {
         li.style.transform = 'translateY(0)';
       });
       
-      // Atualizar botões de exportação se disponível
-      if (window.ExportController && window.ExportController.toggleExportButtonVisibility) {
-        const exportBtnId = listId === 'mainBlockIpsList' ? 'exportMainBlockIpsBtn' : 'exportSubnetIpsBtn';
-        window.ExportController.toggleExportButtonVisibility(exportBtnId, true);
-      }
-      
     }, 'appendIpToList');
   }
   
   /**
-   * Carrega mais sub-redes na tabela de forma otimizada
-   * @param {number} startIndex - Índice inicial
-   * @param {number} limit - Quantidade a carregar
+   * Carrega mais sub-redes na tabela
    */
   function carregarMaisSubRedes(startIndex, limit) {
     safeDOMOperation(() => {
@@ -575,21 +402,6 @@ const UIController = (function() {
         const checkbox = row.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', function() {
           row.classList.toggle('selected', this.checked);
-          
-          // Usar ModuleManager para chamar funções de forma segura
-          if (window.ModuleManager) {
-            const ipv6Calc = window.ModuleManager.createSafeAccessor('IPv6Calculator');
-            ipv6Calc.callMethod('atualizarBlocoAgregado');
-            ipv6Calc.callMethod('atualizarGerarIPsButton');
-            ipv6Calc.callMethod('atualizarInformacoesDoBloco');
-          } else {
-            // Fallback direto
-            if (window.IPv6Calculator) {
-              if (window.IPv6Calculator.atualizarBlocoAgregado) window.IPv6Calculator.atualizarBlocoAgregado();
-              if (window.IPv6Calculator.atualizarGerarIPsButton) window.IPv6Calculator.atualizarGerarIPsButton();
-              if (window.IPv6Calculator.atualizarInformacoesDoBloco) window.IPv6Calculator.atualizarInformacoesDoBloco();
-            }
-          }
         });
         
         fragment.appendChild(row);
@@ -606,11 +418,6 @@ const UIController = (function() {
       if (loadMoreContainer) {
         const shouldShow = window.appState.subRedesExibidas < window.appState.subRedesGeradas.length;
         loadMoreContainer.style.display = shouldShow ? 'block' : 'none';
-      }
-      
-      // Mostrar botão de exportação se disponível
-      if (tbody.rows.length > 0 && window.ExportController && window.ExportController.toggleExportButtonVisibility) {
-        window.ExportController.toggleExportButtonVisibility('exportSubnetsTableBtn', true);
       }
       
     }, 'carregarMaisSubRedes');
@@ -630,262 +437,43 @@ const UIController = (function() {
       const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]');
       const isChecked = selectAll.checked;
       
-      // Usar requestAnimationFrame para melhor performance
-      requestAnimationFrame(() => {
-        checkboxes.forEach(checkbox => {
-          checkbox.checked = isChecked;
-          
-          // Atualizar linha visualmente
-          const row = checkbox.closest('tr');
-          if (row) {
-            row.classList.toggle('selected', isChecked);
-          }
-          
-          // Disparar evento change
-          const changeEvent = new Event('change', { bubbles: true });
-          checkbox.dispatchEvent(changeEvent);
-        });
+      checkboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+        
+        // Atualizar linha visualmente
+        const row = checkbox.closest('tr');
+        if (row) {
+          row.classList.toggle('selected', isChecked);
+        }
+        
+        // Disparar evento change
+        const changeEvent = new Event('change', { bubbles: true });
+        checkbox.dispatchEvent(changeEvent);
       });
       
     }, 'toggleSelectAll');
   }
   
   /**
-   * Gerenciador de layout responsivo otimizado
-   */
-  const responsiveManager = {
-    /**
-     * Verifica se é dispositivo móvel
-     */
-    isMobile() {
-      return window.innerWidth <= 768 || 
-             (navigator.maxTouchPoints > 0 && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    },
-    
-    /**
-     * Ajusta layout para dispositivos móveis
-     */
-    adjust() {
-      safeDOMOperation(() => {
-        const isMobile = this.isMobile();
-        document.body.classList.toggle('mobile-device', isMobile);
-        
-        if (isMobile) {
-          this.optimizeForMobile();
-        } else {
-          this.restoreDesktop();
-        }
-      }, 'responsive adjustment');
-    },
-    
-    /**
-     * Otimizações específicas para mobile
-     */
-    optimizeForMobile() {
-      // Reordenar layout principal
-      const mainLayout = document.querySelector('.main-layout');
-      const sidebar = domElements.infoSidebar || getElement('infoSidebar');
-      const content = document.querySelector('.content');
-      
-      if (mainLayout && sidebar && content && !mainLayout.classList.contains('mobile-optimized')) {
-        mainLayout.classList.add('mobile-optimized');
-        mainLayout.insertBefore(sidebar, content);
-      }
-      
-      // Otimizar botões de ação
-      document.querySelectorAll('.action-buttons').forEach(container => {
-        if (!container.classList.contains('mobile-optimized')) {
-          container.classList.add('mobile-optimized');
-          container.style.flexDirection = 'column';
-          
-          container.querySelectorAll('button').forEach(btn => {
-            btn.style.width = '100%';
-          });
-        }
-      });
-      
-      // Ajustar input para evitar zoom no iOS
-      const ipv6Input = domElements.ipv6Input || getElement('ipv6');
-      if (ipv6Input) {
-        ipv6Input.style.fontSize = '16px';
-      }
-      
-      // Adicionar indicadores de scroll para tabelas
-      this.addTableScrollIndicators();
-    },
-    
-    /**
-     * Restaura layout desktop
-     */
-    restoreDesktop() {
-      const mainLayout = document.querySelector('.main-layout');
-      const sidebar = domElements.infoSidebar || getElement('infoSidebar');
-      
-      if (mainLayout && sidebar && mainLayout.classList.contains('mobile-optimized')) {
-        mainLayout.classList.remove('mobile-optimized');
-        mainLayout.appendChild(sidebar);
-      }
-      
-      // Restaurar botões
-      document.querySelectorAll('.action-buttons.mobile-optimized').forEach(container => {
-        container.classList.remove('mobile-optimized');
-        container.style.flexDirection = '';
-        
-        container.querySelectorAll('button').forEach(btn => {
-          btn.style.width = '';
-        });
-      });
-    },
-    
-    /**
-     * Adiciona indicadores de scroll para tabelas em mobile
-     */
-    addTableScrollIndicators() {
-      document.querySelectorAll('.table-container').forEach(container => {
-        if (!container.querySelector('.table-scroll-indicator')) {
-          const indicator = document.createElement('div');
-          indicator.className = 'table-scroll-indicator';
-          indicator.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Deslize para visualizar todos os dados';
-          
-          container.style.position = 'relative';
-          container.appendChild(indicator);
-          
-          // Monitorar scroll para esconder indicador
-          container.addEventListener('scroll', function() {
-            const maxScroll = this.scrollWidth - this.clientWidth;
-            const scrollPosition = this.scrollLeft;
-            
-            if (scrollPosition > maxScroll * 0.7) {
-              indicator.style.opacity = '0';
-              setTimeout(() => {
-                if (indicator.parentNode === container) {
-                  container.removeChild(indicator);
-                }
-              }, CONFIG.ANIMATION_DURATION);
-            }
-          });
-        }
-      });
-    }
-  };
-  
-  /**
    * Utilitários de navegação
    */
   const navigation = {
-    /**
-     * Rola para o topo da página
-     */
     scrollToTop() {
-      safeDOMOperation(() => {
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }, 'scroll to top');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     },
     
-    /**
-     * Rola para o final da página
-     */
     scrollToBottom() {
-      safeDOMOperation(() => {
-        window.scrollTo({
-          top: document.body.scrollHeight,
-          behavior: 'smooth'
-        });
-      }, 'scroll to bottom');
-    },
-    
-    /**
-     * Rola até um elemento específico
-     * @param {string|HTMLElement} target - ID ou elemento
-     * @param {Object} options - Opções de scroll
-     */
-    scrollToElement(target, options = { behavior: 'smooth', offset: 0 }) {
-      safeDOMOperation(() => {
-        const element = typeof target === 'string' ? getElement(target) : target;
-        
-        if (!element) {
-          console.error(`[UIController] Elemento "${target}" não encontrado para scroll`);
-          return;
-        }
-        
-        const rect = element.getBoundingClientRect();
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        
-        window.scrollTo({
-          top: rect.top + scrollTop - (options.offset || 0),
-          behavior: options.behavior || 'smooth'
-        });
-      }, 'scroll to element');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
   };
   
   /**
-   * Gerenciador de elementos visuais (mostrar/ocultar)
+   * Gerenciador de layout responsivo
    */
-  const displayManager = {
-    /**
-     * Mostra um elemento com animação
-     * @param {string|HTMLElement} element - ID ou elemento
-     * @param {string} display - Tipo de display
-     */
-    show(element, display = 'block') {
-      safeDOMOperation(() => {
-        const el = typeof element === 'string' ? getElement(element) : element;
-        if (!el) return;
-        
-        el.style.display = display;
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(10px)';
-        
-        requestAnimationFrame(() => {
-          el.style.transition = `opacity ${CONFIG.ANIMATION_DURATION}ms ease, transform ${CONFIG.ANIMATION_DURATION}ms ease`;
-          el.style.opacity = '1';
-          el.style.transform = 'translateY(0)';
-        });
-      }, 'show element');
-    },
-    
-    /**
-     * Oculta um elemento com animação
-     * @param {string|HTMLElement} element - ID ou elemento
-     */
-    hide(element) {
-      safeDOMOperation(() => {
-        const el = typeof element === 'string' ? getElement(element) : element;
-        if (!el) return;
-        
-        el.style.transition = `opacity ${CONFIG.ANIMATION_DURATION}ms ease, transform ${CONFIG.ANIMATION_DURATION}ms ease`;
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(-10px)';
-        
-        setTimeout(() => {
-          el.style.display = 'none';
-          el.style.transform = '';
-          el.style.transition = '';
-        }, CONFIG.ANIMATION_DURATION);
-      }, 'hide element');
-    },
-    
-    /**
-     * Alterna visibilidade de um elemento
-     * @param {string|HTMLElement} element - ID ou elemento
-     * @param {string} display - Tipo de display quando visível
-     */
-    toggle(element, display = 'block') {
-      const el = typeof element === 'string' ? getElement(element) : element;
-      if (!el) return;
-      
-      const isVisible = el.style.display !== 'none' && 
-                       getComputedStyle(el).display !== 'none';
-      
-      if (isVisible) {
-        this.hide(el);
-      } else {
-        this.show(el, display);
-      }
+  const responsiveManager = {
+    adjust() {
+      const isMobile = window.innerWidth <= 768;
+      document.body.classList.toggle('mobile-device', isMobile);
     }
   };
   
@@ -893,10 +481,14 @@ const UIController = (function() {
    * Configuração de eventos globais
    */
   function setupEventListeners() {
-    // Tema
-    const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
+    // Tema - usando addEventListener para evitar sobrescrever
+    const themeBtn = getElement('toggleThemeBtn');
     if (themeBtn) {
-      themeBtn.addEventListener('click', themeManager.toggle.bind(themeManager));
+      // Remover listeners existentes e adicionar novo
+      const newThemeBtn = themeBtn.cloneNode(true);
+      themeBtn.parentNode.replaceChild(newThemeBtn, themeBtn);
+      newThemeBtn.addEventListener('click', themeManager.toggle.bind(themeManager));
+      console.log('[UIController] Event listener do tema configurado');
     }
     
     // Navegação
@@ -904,37 +496,53 @@ const UIController = (function() {
     const bottomBtn = getElement('bottomBtn');
     
     if (topBtn) {
-      topBtn.addEventListener('click', navigation.scrollToTop);
+      const newTopBtn = topBtn.cloneNode(true);
+      topBtn.parentNode.replaceChild(newTopBtn, topBtn);
+      newTopBtn.addEventListener('click', navigation.scrollToTop);
     }
     
     if (bottomBtn) {
-      bottomBtn.addEventListener('click', navigation.scrollToBottom);
+      const newBottomBtn = bottomBtn.cloneNode(true);
+      bottomBtn.parentNode.replaceChild(newBottomBtn, bottomBtn);
+      newBottomBtn.addEventListener('click', navigation.scrollToBottom);
     }
     
     // Responsividade
-    window.addEventListener('resize', responsiveManager.adjust.bind(responsiveManager));
-    window.addEventListener('orientationchange', responsiveManager.adjust.bind(responsiveManager));
+    window.addEventListener('resize', responsiveManager.adjust);
     
-    // Monitorar mudanças de tema do sistema
-    themeManager.setupSystemPreferenceMonitor();
+    // Configurar todos os botões de cópia da página
+    setupCopyButtons();
+  }
+  
+  /**
+   * Configura todos os botões de cópia
+   */
+  function setupCopyButtons() {
+    // Configurar botões de cópia existentes
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      // Remover listeners existentes
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+      
+      newBtn.addEventListener('click', function() {
+        const text = this.getAttribute('data-ip') || 
+                    this.getAttribute('data-value') ||
+                    this.closest('.ip-item, .info-value-container').querySelector('.ip-text, .info-value').textContent;
+        
+        if (text) {
+          clipboardManager.copy(text, true);
+        }
+      });
+    });
   }
   
   /**
    * Inicialização do módulo
    */
   function initialize() {
-    console.log('[UIController] Inicializando UI Controller refatorado...');
+    console.log('[UIController] Inicializando UI Controller...');
     
     try {
-      // Aguardar DOMCache se disponível
-      if (window.ModuleManager) {
-        window.ModuleManager.whenReady('DOMCache', () => {
-          initDOMCache();
-        }, 5000);
-      } else {
-        initDOMCache();
-      }
-      
       // Configurar sistema de temas
       themeManager.loadPreference();
       
@@ -943,11 +551,6 @@ const UIController = (function() {
       
       // Configurar eventos
       setupEventListeners();
-      
-      // Registrar no sistema de módulos
-      if (window.ModuleManager) {
-        window.ModuleManager.register('UIController', publicAPI, ['DOMCache']);
-      }
       
       console.log('[UIController] UI Controller inicializado com sucesso');
       
@@ -960,7 +563,7 @@ const UIController = (function() {
   const publicAPI = {
     // Funções principais
     updateStep,
-    copiarTexto, // Manter para compatibilidade
+    copiarTexto,
     appendIpToList,
     carregarMaisSubRedes,
     toggleSelectAll,
@@ -969,19 +572,17 @@ const UIController = (function() {
     theme: themeManager,
     notifications: notificationSystem,
     clipboard: clipboardManager,
-    responsive: responsiveManager,
     navigation,
-    display: displayManager,
+    responsive: responsiveManager,
     
-    // Alias para notificações (compatibilidade)
+    // Alias para compatibilidade
     showNotification: notificationSystem.show.bind(notificationSystem),
-    
-    // Funções legadas mantidas para compatibilidade
     ajustarLayoutResponsivo: responsiveManager.adjust.bind(responsiveManager),
     
     // Utilitários
     getElement,
-    safeDOMOperation
+    safeDOMOperation,
+    setupCopyButtons
   };
   
   // Inicializar quando DOM estiver pronto
