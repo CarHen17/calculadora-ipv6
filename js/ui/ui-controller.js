@@ -1,54 +1,61 @@
 /**
- * UI Controller Module for IPv6 Calculator
+ * UI Controller - Versão Refatorada
  * 
- * Este módulo gerencia todos os aspectos da interface do usuário,
- * incluindo renderização, atualização de elementos DOM e interações.
+ * Controlador de interface otimizado que usa DOMCache e
+ * o sistema de módulos para melhor performance.
  */
 
 const UIController = (function() {
   'use strict';
   
-  /**
-   * Referências aos elementos principais da UI
-   * @private
-   */
-  const elements = {
-    // Inicializa vazios e os preenche posteriormente para evitar erros
-    header: null,
-    steps: [],
-    table: null,
-    tableBody: null,
-    ipsList: null,
-    mainBlockIpsList: null,
-    loadMoreButton: null,
-    loadMoreContainer: null,
-    toggleThemeBtn: null,
-    mainBlockSection: null,
-    resultado: null,
-    ipsResult: null,
-    visualizationSection: null,
-    tooltips: []
+  // Configurações
+  const CONFIG = {
+    ANIMATION_DURATION: 300,
+    NOTIFICATION_DURATION: 3000,
+    THEME_STORAGE_KEY: 'themePreference'
   };
   
+  // Cache para elementos acessados com frequência
+  let domElements = {};
+  
   /**
-   * Inicializa as referências aos elementos DOM
+   * Inicializa cache de elementos DOM usando DOMCache
    */
-  function initElements() {
-    // Inicializar com segurança - verificando existência
-    elements.header = document.querySelector('.header');
-    elements.steps = document.querySelectorAll('.step');
-    elements.table = document.getElementById('subnetsTable');
-    elements.tableBody = document.querySelector('#subnetsTable tbody');
-    elements.ipsList = document.getElementById('ipsList');
-    elements.mainBlockIpsList = document.getElementById('mainBlockIpsList');
-    elements.loadMoreButton = document.getElementById('loadMoreButton');
-    elements.loadMoreContainer = document.getElementById('loadMoreContainer');
-    elements.toggleThemeBtn = document.getElementById('toggleThemeBtn');
-    elements.mainBlockSection = document.getElementById('mainBlockSection');
-    elements.resultado = document.getElementById('resultado');
-    elements.ipsResult = document.getElementById('ipsResult');
-    elements.visualizationSection = document.getElementById('visualizationSection');
-    elements.tooltips = document.querySelectorAll('.tooltip');
+  function initDOMCache() {
+    if (!window.DOMCache) {
+      console.warn('[UIController] DOMCache não disponível, usando fallback');
+      return;
+    }
+    
+    // Usar o cache de elementos comuns do DOMCache
+    domElements = window.DOMCache.elements;
+  }
+  
+  /**
+   * Obtém elemento de forma segura (com fallback)
+   * @param {string} id - ID do elemento
+   * @returns {HTMLElement|null} - Elemento encontrado
+   */
+  function getElement(id) {
+    if (window.DOMCache) {
+      return window.DOMCache.get(id);
+    }
+    // Fallback para getElementById tradicional
+    return document.getElementById(id);
+  }
+  
+  /**
+   * Executa operação DOM de forma segura
+   * @param {Function} operation - Operação a ser executada
+   * @param {string} context - Contexto para debug
+   */
+  function safeDOMOperation(operation, context = 'Operação DOM') {
+    try {
+      return operation();
+    } catch (error) {
+      console.error(`[UIController] Erro em ${context}:`, error);
+      return null;
+    }
   }
   
   /**
@@ -56,775 +63,751 @@ const UIController = (function() {
    * @param {number} step - Número do passo a ser ativado
    */
   function updateStep(step) {
-    try {
+    safeDOMOperation(() => {
       const steps = document.querySelectorAll('.step');
-      if (steps && steps.length > 0) {
-        steps.forEach(el => el.classList.remove('active'));
+      if (steps.length === 0) return;
+      
+      // Remover classe ativa de todos os passos
+      steps.forEach(el => el.classList.remove('active'));
+      
+      // Ativar passo atual
+      const currentStep = getElement(`step${step}`);
+      if (currentStep) {
+        currentStep.classList.add('active');
         
-        const currentStep = document.getElementById(`step${step}`);
-        if (currentStep) {
-          currentStep.classList.add('active');
-        }
+        // Animação suave
+        currentStep.style.transform = 'scale(1.05)';
+        setTimeout(() => {
+          currentStep.style.transform = '';
+        }, CONFIG.ANIMATION_DURATION);
       }
       
-      // Atualizar o estado global para compatibilidade
+      // Atualizar estado global
       if (window.appState) {
         window.appState.currentStep = step;
       }
-    } catch (error) {
-      console.error("Erro ao atualizar passo:", error);
-    }
+    }, 'updateStep');
   }
   
   /**
-   * Alterna o tema entre claro e escuro
+   * Gerencia o tema da aplicação
    */
-  function toggleTheme() {
-    try {
-      document.body.classList.toggle('dark-mode');
-      
-      // Atualizar ícone do botão
-      const themeBtn = document.getElementById('toggleThemeBtn');
-      if (themeBtn) {
-        if (document.body.classList.contains('dark-mode')) {
-          themeBtn.innerHTML = '<i class="fas fa-sun"></i> Tema';
-          // Salvar preferência
-          localStorage.setItem('themePreference', 'dark');
-        } else {
-          themeBtn.innerHTML = '<i class="fas fa-moon"></i> Tema';
-          // Salvar preferência
-          localStorage.setItem('themePreference', 'light');
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao alternar tema:", error);
-    }
-  }
-  
-  /**
-   * Carrega a preferência de tema do localStorage
-   */
-  function loadThemePreference() {
-    try {
-      const themePreference = localStorage.getItem('themePreference');
-      
-      if (themePreference === 'dark') {
-        document.body.classList.add('dark-mode');
-        const themeBtn = document.getElementById('toggleThemeBtn');
+  const themeManager = {
+    /**
+     * Alterna entre tema claro e escuro
+     */
+    toggle() {
+      safeDOMOperation(() => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        
+        // Atualizar botão
+        const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
         if (themeBtn) {
-          themeBtn.innerHTML = '<i class="fas fa-sun"></i> Tema';
+          const icon = isDark ? 'fa-sun' : 'fa-moon';
+          themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
         }
-      } else if (themePreference === 'light') {
-        document.body.classList.remove('dark-mode');
-        const themeBtn = document.getElementById('toggleThemeBtn');
-        if (themeBtn) {
-          themeBtn.innerHTML = '<i class="fas fa-moon"></i> Tema';
-        }
-      } else {
-        // Usar preferência do sistema
+        
+        // Salvar preferência
+        localStorage.setItem(CONFIG.THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
+        
+        // Notificar outros módulos sobre mudança de tema
+        this.notifyThemeChange(isDark);
+      }, 'toggle theme');
+    },
+    
+    /**
+     * Carrega preferência de tema salva
+     */
+    loadPreference() {
+      safeDOMOperation(() => {
+        const saved = localStorage.getItem(CONFIG.THEME_STORAGE_KEY);
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.body.classList.toggle('dark-mode', prefersDark);
-        const themeBtn = document.getElementById('toggleThemeBtn');
+        
+        let shouldUseDark = false;
+        
+        if (saved === 'dark') {
+          shouldUseDark = true;
+        } else if (saved === 'light') {
+          shouldUseDark = false;
+        } else {
+          // Usar preferência do sistema
+          shouldUseDark = prefersDark;
+        }
+        
+        // Aplicar tema
+        document.body.classList.toggle('dark-mode', shouldUseDark);
+        
+        // Atualizar botão
+        const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
         if (themeBtn) {
-          if (prefersDark) {
-            themeBtn.innerHTML = '<i class="fas fa-sun"></i> Tema';
-          } else {
-            themeBtn.innerHTML = '<i class="fas fa-moon"></i> Tema';
-          }
+          const icon = shouldUseDark ? 'fa-sun' : 'fa-moon';
+          themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
         }
-      }
-    } catch (error) {
-      console.error("Erro ao carregar preferência de tema:", error);
-    }
-  }
-  
-  /**
-   * Copia texto para a área de transferência
-   * @param {string} elementId - ID do elemento contendo o texto
-   * @param {boolean} feedback - Se deve mostrar feedback visual
-   */
-  function copiarTexto(elementId, feedback = true) {
-    try {
-      let text;
-      const element = document.getElementById(elementId);
-      
-      if (!element) {
-        console.error(`Elemento "${elementId}" não encontrado`);
-        return;
+      }, 'load theme preference');
+    },
+    
+    /**
+     * Notifica outros módulos sobre mudança de tema
+     * @param {boolean} isDark - Se o tema escuro está ativo
+     */
+    notifyThemeChange(isDark) {
+      // Notificar visualizações se disponíveis
+      if (window.VisualizationModule && typeof window.VisualizationModule.updateChartsForTheme === 'function') {
+        window.VisualizationModule.updateChartsForTheme();
       }
       
-      if (element.hasAttribute('data-value')) {
-        text = element.getAttribute('data-value');
-      } else {
-        text = element.innerText;
-      }
+      // Disparar evento customizado
+      const event = new CustomEvent('themeChanged', { 
+        detail: { isDark } 
+      });
+      document.dispatchEvent(event);
+    },
+    
+    /**
+     * Monitora mudanças na preferência do sistema
+     */
+    setupSystemPreferenceMonitor() {
+      const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
       
-      // Usar API moderna para clipboard
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(text)
-          .then(() => {
-            if (feedback) {
-              showCopyFeedback(element);
-            }
-          })
-          .catch(error => {
-            console.error("Erro ao copiar para clipboard:", error);
-            alert("Falha ao copiar o texto.");
-          });
-      } else {
-        // Fallback para método mais antigo
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
+      darkModeMediaQuery.addEventListener('change', (e) => {
+        const themePreference = localStorage.getItem(CONFIG.THEME_STORAGE_KEY);
         
-        try {
-          const successful = document.execCommand('copy');
-          if (successful) {
-            if (feedback) {
-              showCopyFeedback(element);
-            }
-          } else {
-            alert("Falha ao copiar o texto.");
-          }
-        } catch (err) {
-          console.error("Erro ao copiar:", err);
-          alert("Falha ao copiar o texto.");
-        }
-        
-        document.body.removeChild(textArea);
-      }
-    } catch (error) {
-      console.error("Erro ao copiar texto:", error);
-    }
-  }
-  
-  /**
-   * Mostra feedback visual após cópia bem-sucedida
-   * @param {HTMLElement} element - Elemento que contém o texto copiado
-   */
-  function showCopyFeedback(element) {
-    try {
-      // Verificar se é um botão ou outro elemento
-      const isButton = element.classList.contains('copy-btn');
-      
-      if (isButton) {
-        // Feedback no botão
-        const originalHTML = element.innerHTML;
-        element.innerHTML = '<i class="fas fa-check"></i>';
-        
-        setTimeout(() => {
-          element.innerHTML = originalHTML;
-        }, 1500);
-      } else {
-        // Cria tooltip flutuante
-        const tooltip = document.createElement('div');
-        tooltip.className = 'copy-tooltip';
-        tooltip.textContent = "Copiado!";
-        
-        // Posicionar o tooltip
-        const rect = element.getBoundingClientRect();
-        
-        tooltip.style.position = 'absolute';
-        tooltip.style.left = `${rect.left + (rect.width / 2) - 30}px`;
-        tooltip.style.top = `${rect.top - 30}px`;
-        
-        document.body.appendChild(tooltip);
-        
-        // Iniciar animação
-        tooltip.style.opacity = '0';
-        tooltip.style.transform = 'translateY(10px)';
-        
-        setTimeout(() => {
-          tooltip.style.opacity = '1';
-          tooltip.style.transform = 'translateY(0)';
+        // Aplicar apenas se estiver usando o tema do sistema
+        if (themePreference === 'system' || !themePreference) {
+          document.body.classList.toggle('dark-mode', e.matches);
           
-          // Remover após alguns segundos
-          setTimeout(() => {
-            tooltip.style.opacity = '0';
-            tooltip.style.transform = 'translateY(-10px)';
-            
-            setTimeout(() => {
-              if (tooltip.parentNode) {
-                document.body.removeChild(tooltip);
-              }
-            }, 200);
-          }, 1500);
-        }, 10);
-      }
-    } catch (error) {
-      console.error("Erro ao mostrar feedback de cópia:", error);
+          const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
+          if (themeBtn) {
+            const icon = e.matches ? 'fa-sun' : 'fa-moon';
+            themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
+          }
+          
+          this.notifyThemeChange(e.matches);
+        }
+      });
     }
-  }
+  };
   
   /**
-   * Adiciona um novo IP à lista de IPs
-   * @param {string} ip - Endereço IP a ser adicionado
-   * @param {number} number - Número do IP na lista
-   * @param {string} listId - ID da lista onde o IP será adicionado
+   * Sistema de notificações melhorado
    */
-  function appendIpToList(ip, number, listId) {
-    try {
-      const ipsList = document.getElementById(listId);
-      if (!ipsList) {
-        console.error(`Lista de IPs "${listId}" não encontrada`);
-        return;
+  const notificationSystem = {
+    // Queue de notificações
+    queue: [],
+    active: [],
+    maxActive: 3,
+    
+    /**
+     * Mostra uma notificação
+     * @param {string} message - Mensagem a exibir
+     * @param {string} type - Tipo de notificação
+     * @param {number} duration - Duração em milissegundos
+     */
+    show(message, type = 'success', duration = CONFIG.NOTIFICATION_DURATION) {
+      const notification = this.create(message, type, duration);
+      
+      if (this.active.length < this.maxActive) {
+        this.display(notification);
+      } else {
+        this.queue.push(notification);
       }
+    },
+    
+    /**
+     * Cria elemento de notificação
+     */
+    create(message, type, duration) {
+      const notification = document.createElement('div');
+      notification.className = `notification notification-${type}`;
       
-      // Criar elementos do item
-      const li = document.createElement('li');
-      li.className = 'ip-item';
+      // Ícones por tipo
+      const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+      };
       
-      const numberSpan = document.createElement('span');
-      numberSpan.className = 'ip-number';
-      numberSpan.textContent = `${number}.`;
+      // Cores por tipo
+      const colors = {
+        success: '#4caf50',
+        error: '#e53935',
+        warning: '#ffa000',
+        info: '#0070d1'
+      };
       
-      const ipSpan = document.createElement('span');
-      ipSpan.className = 'ip-text';
-      ipSpan.textContent = ip;
+      notification.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <i class="fas ${icons[type] || icons.info}" style="font-size: 20px;"></i>
+          <span style="flex: 1;">${message}</span>
+          <button class="notification-close" style="background: none; border: none; color: inherit; cursor: pointer; padding: 4px;">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
       
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'copy-btn';
-      copyBtn.innerHTML = '<i class="fas fa-copy"></i>';
-      copyBtn.title = "Copiar IP";
-      copyBtn.setAttribute('type', 'button');
-      copyBtn.addEventListener('click', function() {
-        navigator.clipboard.writeText(ip)
-          .then(() => {
-            this.innerHTML = '<i class="fas fa-check"></i>';
-            setTimeout(() => {
-              this.innerHTML = '<i class="fas fa-copy"></i>';
-            }, 1500);
-          })
-          .catch(() => alert("Falha ao copiar IP."));
+      // Estilizar
+      Object.assign(notification.style, {
+        position: 'fixed',
+        bottom: '20px',
+        right: '20px',
+        minWidth: '300px',
+        maxWidth: '500px',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        backgroundColor: colors[type] || colors.info,
+        color: 'white',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+        zIndex: '10000',
+        fontSize: '14px',
+        fontWeight: '500',
+        transform: 'translateX(100%)',
+        opacity: '0',
+        transition: 'all 0.3s ease'
       });
       
-      // Montar o item na lista
-      li.appendChild(numberSpan);
-      li.appendChild(ipSpan);
-      li.appendChild(copyBtn);
-      ipsList.appendChild(li);
-
-      // Exibir botão de exportação correspondente se houver itens na lista
-      if (typeof ExportController !== 'undefined' && ExportController.toggleExportButtonVisibility) {
-          if (listId === 'mainBlockIpsList') {
-              ExportController.toggleExportButtonVisibility('exportMainBlockIpsBtn', true);
-          } else if (listId === 'ipsList') {
-              ExportController.toggleExportButtonVisibility('exportSubnetIpsBtn', true);
+      // Configurar botão de fechar
+      const closeBtn = notification.querySelector('.notification-close');
+      closeBtn.addEventListener('click', () => this.hide(notification));
+      
+      return { element: notification, duration, type };
+    },
+    
+    /**
+     * Exibe notificação na tela
+     */
+    display(notification) {
+      document.body.appendChild(notification.element);
+      this.active.push(notification);
+      
+      // Posicionar baseado nas notificações ativas
+      this.repositionAll();
+      
+      // Animar entrada
+      requestAnimationFrame(() => {
+        notification.element.style.transform = 'translateX(0)';
+        notification.element.style.opacity = '1';
+      });
+      
+      // Auto-remover
+      setTimeout(() => {
+        this.hide(notification);
+      }, notification.duration);
+    },
+    
+    /**
+     * Oculta notificação
+     */
+    hide(notification) {
+      const element = notification.element || notification;
+      
+      element.style.transform = 'translateX(100%)';
+      element.style.opacity = '0';
+      
+      setTimeout(() => {
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
+        }
+        
+        // Remover da lista ativa
+        const index = this.active.findIndex(n => n.element === element);
+        if (index > -1) {
+          this.active.splice(index, 1);
+        }
+        
+        // Reposicionar outras notificações
+        this.repositionAll();
+        
+        // Mostrar próxima da queue
+        if (this.queue.length > 0) {
+          const next = this.queue.shift();
+          this.display(next);
+        }
+      }, CONFIG.ANIMATION_DURATION);
+    },
+    
+    /**
+     * Reposiciona todas as notificações ativas
+     */
+    repositionAll() {
+      this.active.forEach((notification, index) => {
+        const offset = (index * 80) + 20; // 80px de espaçamento entre notificações
+        notification.element.style.bottom = `${offset}px`;
+      });
+    }
+  };
+  
+  /**
+   * Gerenciador de cópia para área de transferência
+   */
+  const clipboardManager = {
+    /**
+     * Copia texto para área de transferência
+     * @param {string|HTMLElement} source - Texto ou elemento
+     * @param {boolean} showFeedback - Mostrar feedback visual
+     */
+    async copy(source, showFeedback = true) {
+      try {
+        let text;
+        
+        if (typeof source === 'string') {
+          text = source;
+        } else if (source instanceof HTMLElement) {
+          text = source.getAttribute('data-value') || source.textContent || source.innerText;
+        } else {
+          throw new Error('Fonte inválida para cópia');
+        }
+        
+        // Usar API moderna se disponível
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(text);
+        } else {
+          // Fallback para método mais antigo
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          
+          const successful = document.execCommand('copy');
+          document.body.removeChild(textArea);
+          
+          if (!successful) {
+            throw new Error('Falha ao copiar usando método fallback');
           }
+        }
+        
+        if (showFeedback) {
+          this.showFeedback(source);
+        }
+        
+        return true;
+      } catch (error) {
+        console.error('[UIController] Erro ao copiar:', error);
+        notificationSystem.show('Falha ao copiar o texto', 'error');
+        return false;
       }
-    } catch (error) {
-      console.error("Erro ao adicionar IP à lista:", error);
+    },
+    
+    /**
+     * Mostra feedback visual após cópia
+     * @param {HTMLElement} element - Elemento que foi copiado
+     */
+    showFeedback(element) {
+      if (typeof element === 'string') return;
+      
+      safeDOMOperation(() => {
+        const isButton = element.classList && element.classList.contains('copy-btn');
+        
+        if (isButton) {
+          // Feedback no botão
+          const originalHTML = element.innerHTML;
+          element.innerHTML = '<i class="fas fa-check"></i>';
+          element.style.transform = 'scale(1.1)';
+          
+          setTimeout(() => {
+            element.innerHTML = originalHTML;
+            element.style.transform = '';
+          }, 1500);
+        } else {
+          // Criar tooltip flutuante
+          const tooltip = document.createElement('div');
+          tooltip.className = 'copy-tooltip';
+          tooltip.textContent = "Copiado!";
+          
+          // Posicionar tooltip
+          const rect = element.getBoundingClientRect();
+          Object.assign(tooltip.style, {
+            position: 'fixed',
+            left: `${rect.left + (rect.width / 2) - 30}px`,
+            top: `${rect.top - 40}px`,
+            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            zIndex: '10000',
+            pointerEvents: 'none',
+            opacity: '0',
+            transform: 'translateY(10px)',
+            transition: 'all 0.3s ease'
+          });
+          
+          document.body.appendChild(tooltip);
+          
+          // Animar
+          requestAnimationFrame(() => {
+            tooltip.style.opacity = '1';
+            tooltip.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+              tooltip.style.opacity = '0';
+              tooltip.style.transform = 'translateY(-10px)';
+              
+              setTimeout(() => {
+                if (tooltip.parentNode) {
+                  document.body.removeChild(tooltip);
+                }
+              }, CONFIG.ANIMATION_DURATION);
+            }, 1500);
+          });
+        }
+      }, 'copy feedback');
+    }
+  };
+  
+  /**
+   * Função legada para compatibilidade
+   * @param {string} elementId - ID do elemento
+   * @param {boolean} feedback - Mostrar feedback
+   */
+  function copiarTexto(elementId, feedback = true) {
+    const element = getElement(elementId);
+    if (element) {
+      clipboardManager.copy(element, feedback);
+    } else {
+      console.error(`[UIController] Elemento "${elementId}" não encontrado para cópia`);
     }
   }
   
   /**
-   * Carrega mais sub-redes na tabela
-   * @param {number} startIndex - Índice inicial para carregar
-   * @param {number} limit - Quantidade a ser carregada
+   * Adiciona um item à lista de IPs de forma otimizada
+   * @param {string} ip - Endereço IP
+   * @param {number} number - Número do IP na lista
+   * @param {string} listId - ID da lista
+   */
+  function appendIpToList(ip, number, listId) {
+    safeDOMOperation(() => {
+      const ipsList = getElement(listId);
+      if (!ipsList) {
+        console.error(`[UIController] Lista "${listId}" não encontrada`);
+        return;
+      }
+      
+      // Criar elementos de forma otimizada
+      const li = document.createElement('li');
+      li.className = 'ip-item';
+      li.innerHTML = `
+        <span class="ip-number">${number}.</span>
+        <span class="ip-text" title="${ip}">${ip}</span>
+        <button class="copy-btn" type="button" title="Copiar IP" data-ip="${ip}">
+          <i class="fas fa-copy"></i>
+        </button>
+      `;
+      
+      // Configurar botão de cópia
+      const copyBtn = li.querySelector('.copy-btn');
+      copyBtn.addEventListener('click', () => {
+        clipboardManager.copy(ip, true);
+      });
+      
+      // Adicionar com animação
+      li.style.opacity = '0';
+      li.style.transform = 'translateY(10px)';
+      ipsList.appendChild(li);
+      
+      requestAnimationFrame(() => {
+        li.style.transition = 'all 0.3s ease';
+        li.style.opacity = '1';
+        li.style.transform = 'translateY(0)';
+      });
+      
+      // Atualizar botões de exportação se disponível
+      if (window.ExportController && window.ExportController.toggleExportButtonVisibility) {
+        const exportBtnId = listId === 'mainBlockIpsList' ? 'exportMainBlockIpsBtn' : 'exportSubnetIpsBtn';
+        window.ExportController.toggleExportButtonVisibility(exportBtnId, true);
+      }
+      
+    }, 'appendIpToList');
+  }
+  
+  /**
+   * Carrega mais sub-redes na tabela de forma otimizada
+   * @param {number} startIndex - Índice inicial
+   * @param {number} limit - Quantidade a carregar
    */
   function carregarMaisSubRedes(startIndex, limit) {
-    try {
+    safeDOMOperation(() => {
       if (!window.appState || !window.appState.subRedesGeradas) {
-        console.error("Estado da aplicação não inicializado");
+        console.error('[UIController] Estado da aplicação não inicializado');
         return;
       }
       
       const tbody = document.querySelector('#subnetsTable tbody');
       if (!tbody) {
-        console.error("Tabela de sub-redes não encontrada");
+        console.error('[UIController] Tabela de sub-redes não encontrada');
         return;
       }
       
       const endIndex = Math.min(startIndex + limit, window.appState.subRedesGeradas.length);
+      const fragment = document.createDocumentFragment();
       
+      // Usar DocumentFragment para melhor performance
       for (let i = startIndex; i < endIndex; i++) {
         const subnet = window.appState.subRedesGeradas[i];
         
-        // Verificar se a sub-rede é válida
         if (!subnet || !subnet.subnet || !subnet.initial || !subnet.final || !subnet.network) {
-          console.warn(`Sub-rede inválida no índice ${i}:`, subnet);
+          console.warn(`[UIController] Sub-rede inválida no índice ${i}:`, subnet);
           continue;
         }
         
-        const row = tbody.insertRow();
+        const row = document.createElement('tr');
         
-        // Célula para checkbox
-        const checkboxCell = row.insertCell(0);
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.value = i;
+        // Função para encurtar IPv6 se disponível
+        const shortenIPv6 = window.IPv6Utils && window.IPv6Utils.shortenIPv6 
+          ? window.IPv6Utils.shortenIPv6 
+          : (addr) => addr;
         
-        // Segurança para o caso de IPv6Utils não estar disponível
-        const shortenedSubnet = typeof IPv6Utils !== 'undefined' && typeof IPv6Utils.shortenIPv6 === 'function'
-          ? IPv6Utils.shortenIPv6(subnet.subnet)
-          : subnet.subnet;
+        row.innerHTML = `
+          <td>
+            <input type="checkbox" value="${i}" aria-label="Selecionar sub-rede ${shortenIPv6(subnet.subnet)}">
+          </td>
+          <td>${shortenIPv6(subnet.subnet)}</td>
+          <td>${shortenIPv6(subnet.initial)}</td>
+          <td>${shortenIPv6(subnet.final)}</td>
+          <td>${shortenIPv6(subnet.network)}</td>
+        `;
         
-        checkbox.setAttribute('aria-label', `Selecionar sub-rede ${shortenedSubnet}`);
-        
+        // Configurar checkbox
+        const checkbox = row.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', function() {
-          // Atualizar bloco agregado e UI
-          atualizarBlocoAgregado();
-          atualizarGerarIPsButton();
-          atualizarInformacoesDoBloco();
+          row.classList.toggle('selected', this.checked);
           
-          // Adicionar efeito visual para linha selecionada
-          row.classList.toggle('selected', checkbox.checked);
+          // Usar ModuleManager para chamar funções de forma segura
+          if (window.ModuleManager) {
+            const ipv6Calc = window.ModuleManager.createSafeAccessor('IPv6Calculator');
+            ipv6Calc.callMethod('atualizarBlocoAgregado');
+            ipv6Calc.callMethod('atualizarGerarIPsButton');
+            ipv6Calc.callMethod('atualizarInformacoesDoBloco');
+          } else {
+            // Fallback direto
+            if (window.IPv6Calculator) {
+              if (window.IPv6Calculator.atualizarBlocoAgregado) window.IPv6Calculator.atualizarBlocoAgregado();
+              if (window.IPv6Calculator.atualizarGerarIPsButton) window.IPv6Calculator.atualizarGerarIPsButton();
+              if (window.IPv6Calculator.atualizarInformacoesDoBloco) window.IPv6Calculator.atualizarInformacoesDoBloco();
+            }
+          }
         });
         
-        checkboxCell.appendChild(checkbox);
-        
-        // Células de dados - usando IPv6Utils se disponível
-        if (typeof IPv6Utils !== 'undefined' && typeof IPv6Utils.shortenIPv6 === 'function') {
-          row.insertCell(1).innerText = IPv6Utils.shortenIPv6(subnet.subnet);
-          row.insertCell(2).innerText = IPv6Utils.shortenIPv6(subnet.initial);
-          row.insertCell(3).innerText = IPv6Utils.shortenIPv6(subnet.final);
-          row.insertCell(4).innerText = IPv6Utils.shortenIPv6(subnet.network);
-        } else {
-          // Fallback se IPv6Utils não estiver disponível
-          row.insertCell(1).innerText = subnet.subnet;
-          row.insertCell(2).innerText = subnet.initial;
-          row.insertCell(3).innerText = subnet.final;
-          row.insertCell(4).innerText = subnet.network;
-        }
+        fragment.appendChild(row);
       }
       
-      // Atualizar estado e controles
+      // Adicionar todas as linhas de uma vez
+      tbody.appendChild(fragment);
+      
+      // Atualizar estado
       window.appState.subRedesExibidas = endIndex;
       
-      const loadMoreContainer = document.getElementById('loadMoreContainer');
+      // Atualizar controles
+      const loadMoreContainer = getElement('loadMoreContainer');
       if (loadMoreContainer) {
-        loadMoreContainer.style.display = 
-          window.appState.subRedesExibidas < window.appState.subRedesGeradas.length ? 'block' : 'none';
+        const shouldShow = window.appState.subRedesExibidas < window.appState.subRedesGeradas.length;
+        loadMoreContainer.style.display = shouldShow ? 'block' : 'none';
       }
-
-      // Exibir botão de exportação da tabela se houver linhas
-      if (tbody.rows.length > 0 && typeof ExportController !== 'undefined' && ExportController.toggleExportButtonVisibility) {
-          ExportController.toggleExportButtonVisibility('exportSubnetsTableBtn', true);
+      
+      // Mostrar botão de exportação se disponível
+      if (tbody.rows.length > 0 && window.ExportController && window.ExportController.toggleExportButtonVisibility) {
+        window.ExportController.toggleExportButtonVisibility('exportSubnetsTableBtn', true);
       }
-    } catch (error) {
-      console.error("Erro ao carregar mais sub-redes:", error);
-    }
+      
+    }, 'carregarMaisSubRedes');
   }
   
   /**
-   * Atualiza as informações do bloco selecionado na sidebar
-   */
-  function atualizarInformacoesDoBloco() {
-    try {
-      const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-      
-      // Verificar se temos elementos-alvo na sidebar
-      const sidebarBlockCidr = document.getElementById('sidebarBlockCidr');
-      const mainBlockGateway = document.getElementById('mainBlockGateway');
-      
-      if (!sidebarBlockCidr || !mainBlockGateway) {
-        console.warn("Elementos da sidebar não encontrados");
-        return;
-      }
-      
-      if (checkboxes.length === 1) {
-        const indice = parseInt(checkboxes[0].value);
-        
-        if (isNaN(indice) || !window.appState.subRedesGeradas[indice]) {
-          console.warn("Índice inválido ou sub-rede não encontrada");
-          return;
-        }
-        
-        const blocoSelecionado = window.appState.subRedesGeradas[indice];
-        
-        // Verificar se a sub-rede tem propriedades necessárias
-        if (!blocoSelecionado.subnet || !blocoSelecionado.network) {
-          console.warn("Sub-rede selecionada não tem propriedades necessárias");
-          return;
-        }
-        
-        // Usar shortenIPv6 se disponível
-        if (typeof IPv6Utils !== 'undefined' && typeof IPv6Utils.shortenIPv6 === 'function') {
-          sidebarBlockCidr.innerText = IPv6Utils.shortenIPv6(blocoSelecionado.subnet);
-        } else {
-          sidebarBlockCidr.innerText = blocoSelecionado.subnet;
-        }
-        
-        // Calcular gateway - verificar se IPv6Utils está disponível
-        if (typeof IPv6Utils !== 'undefined' && 
-            typeof IPv6Utils.formatIPv6Address === 'function' && 
-            typeof IPv6Utils.shortenIPv6 === 'function') {
-          
-          try {
-            const redeHex = blocoSelecionado.network.replace(/:/g, '');
-            const redeBigInt = BigInt("0x" + redeHex);
-            const gatewayIpBigInt = redeBigInt + 1n; 
-            const gatewayIpFormatado = IPv6Utils.formatIPv6Address(gatewayIpBigInt);
-            const gatewayIpShort = IPv6Utils.shortenIPv6(gatewayIpFormatado);
-            
-            mainBlockGateway.innerText = gatewayIpShort;
-          } catch (error) {
-            console.error("Erro ao calcular gateway:", error);
-            mainBlockGateway.innerText = "-";
-          }
-        } else {
-          // Fallback sem IPv6Utils
-          mainBlockGateway.innerText = "-";
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar informações do bloco:", error);
-    }
-  }
-  
-  /**
-   * Atualiza o bloco agregado na sidebar
-   */
-  function atualizarBlocoAgregado() {
-    try {
-      const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-      const aggregatedPrefix = document.getElementById('aggregatedPrefix');
-      const aggregatedContent = document.getElementById('aggregatedContent');
-      
-      if (!aggregatedPrefix || !aggregatedContent) {
-        console.warn("Elementos do bloco agregado não encontrados");
-        return;
-      }
-      
-      if (checkboxes.length === 0) {
-        aggregatedPrefix.innerText = "N/A";
-        aggregatedContent.style.display = "none";
-        return;
-      }
-      
-      aggregatedContent.style.display = "block";
-      
-      // Verificar se IPv6Utils está disponível
-      if (typeof IPv6Utils === 'undefined' || typeof IPv6Utils.calcularBlocoAgregado !== 'function') {
-        console.warn("Função IPv6Utils.calcularBlocoAgregado não disponível");
-        aggregatedPrefix.innerText = "N/A";
-        return;
-      }
-      
-      const selectedSubnets = Array.from(checkboxes).map(checkbox => {
-        const index = parseInt(checkbox.value);
-        return window.appState.subRedesGeradas[index];
-      });
-      
-      const aggregate = IPv6Utils.calcularBlocoAgregado(selectedSubnets);
-      
-      if (aggregate === null) {
-        aggregatedPrefix.innerText = "Bloco inválido";
-      } else {
-        // Usar shortenIPv6 se disponível
-        if (typeof IPv6Utils.shortenIPv6 === 'function') {
-          aggregatedPrefix.innerText = IPv6Utils.shortenIPv6(aggregate.network) + "/" + aggregate.prefix;
-        } else {
-          aggregatedPrefix.innerText = aggregate.network + "/" + aggregate.prefix;
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar bloco agregado:", error);
-    }
-  }
-  
-  /**
-   * Atualiza a visibilidade do botão de gerar IPs
-   */
-  function atualizarGerarIPsButton() {
-    try {
-      const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
-      const btn = document.getElementById('gerarIPsButton');
-      
-      if (btn) {
-        btn.style.display = (checkboxes.length === 1) ? 'inline-block' : 'none';
-      }
-    } catch (error) {
-      console.error("Erro ao atualizar botão de gerar IPs:", error);
-    }
-  }
-  
-  /**
-   * Seleciona ou desmarca todas as sub-redes na tabela
+   * Seleciona/desmarca todas as sub-redes
    */
   function toggleSelectAll() {
-    try {
-      const selectAll = document.getElementById('selectAll');
+    safeDOMOperation(() => {
+      const selectAll = getElement('selectAll');
       if (!selectAll) {
-        console.warn("Checkbox 'selectAll' não encontrado");
+        console.warn('[UIController] Checkbox "selectAll" não encontrado');
         return;
       }
       
       const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]');
       const isChecked = selectAll.checked;
       
-      checkboxes.forEach(checkbox => {
-        checkbox.checked = isChecked;
-        
-        // Disparar evento change para atualizar linhas selecionadas
-        const changeEvent = new Event('change');
-        checkbox.dispatchEvent(changeEvent);
-      });
-    } catch (error) {
-      console.error("Erro ao alternar seleção de todas as sub-redes:", error);
-    }
-  }
-  
-  /**
-   * Ajusta o layout para dispositivos móveis
-   */
-  function ajustarLayoutResponsivo() {
-    try {
-      const isMobile = window.innerWidth <= 992;
-      
-      if (isMobile) {
-        // Duplicar sidebars para o layout móvel
-        duplicarSidebarParaMobile("infoSidebar", "infoSidebarMobile");
-      } else {
-        // Remover duplicatas em layouts desktop
-        removerElemento("infoSidebarMobile");
-      }
-    } catch (error) {
-      console.error("Erro ao ajustar layout responsivo:", error);
-    }
-  }
-  
-  /**
-   * Duplica uma sidebar para visualização móvel
-   * @param {string} originalId - ID da sidebar original
-   * @param {string} mobileId - ID para a versão móvel
-   */
-  function duplicarSidebarParaMobile(originalId, mobileId) {
-    try {
-      const original = document.getElementById(originalId);
-      const container = document.querySelector('.container');
-      
-      if (!original || !container || original.style.display === 'none') return;
-      
-      // Verificar se já existe uma versão móvel
-      if (!document.getElementById(mobileId)) {
-        const clone = original.cloneNode(true);
-        clone.id = mobileId;
-        clone.classList.remove('sidebar');
-        clone.style.marginBottom = '20px';
-        
-        // Determinar posição de inserção
-        if (originalId === 'infoSidebar') {
-          const firstChild = container.firstChild;
-          if (firstChild && firstChild.nextSibling) {
-            container.insertBefore(clone, firstChild.nextSibling);
-          } else {
-            container.appendChild(clone);
-          }
-        }
-      }
-    } catch (error) {
-      console.error("Erro ao duplicar sidebar para mobile:", error);
-    }
-  }
-  
-  /**
-   * Remove um elemento do DOM pelo ID
-   * @param {string} elementId - ID do elemento a remover
-   */
-  function removerElemento(elementId) {
-    try {
-      const elemento = document.getElementById(elementId);
-      if (elemento && elemento.parentNode) {
-        elemento.parentNode.removeChild(elemento);
-      }
-    } catch (error) {
-      console.error("Erro ao remover elemento:", error);
-    }
-  }
-  
-  /**
-   * Exibe uma notificação temporária
-   * @param {string} message - Mensagem a ser exibida
-   * @param {string} type - Tipo de notificação ('success', 'error', 'warning')
-   * @param {number} duration - Duração em milissegundos
-   */
-  function showNotification(message, type = 'success', duration = 3000) {
-    try {
-      // Criar elemento de notificação
-      const notification = document.createElement('div');
-      notification.className = `notification notification-${type}`;
-      
-      // Configurar estilos base
-      notification.style.position = 'fixed';
-      notification.style.bottom = '20px';
-      notification.style.right = '20px';
-      notification.style.padding = '12px 20px';
-      notification.style.borderRadius = '4px';
-      notification.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
-      notification.style.zIndex = '9999';
-      notification.style.opacity = '0';
-      notification.style.transform = 'translateY(20px)';
-      notification.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-      
-      // Configurar cores com base no tipo
-      switch (type) {
-        case 'success':
-          notification.style.backgroundColor = '#4caf50';
-          notification.style.color = 'white';
-          message = `✓ ${message}`;
-          break;
-        case 'error':
-          notification.style.backgroundColor = '#e53935';
-          notification.style.color = 'white';
-          message = `⚠ ${message}`;
-          break;
-        case 'warning':
-          notification.style.backgroundColor = '#ffa000';
-          notification.style.color = 'white';
-          message = `! ${message}`;
-          break;
-        default:
-          notification.style.backgroundColor = '#0070d1';
-          notification.style.color = 'white';
-      }
-      
-      notification.textContent = message;
-      document.body.appendChild(notification);
-      
-      // Animar entrada
-      setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateY(0)';
-        
-        // Remover após duração especificada
-        setTimeout(() => {
-          notification.style.opacity = '0';
-          notification.style.transform = 'translateY(20px)';
+      // Usar requestAnimationFrame para melhor performance
+      requestAnimationFrame(() => {
+        checkboxes.forEach(checkbox => {
+          checkbox.checked = isChecked;
           
-          setTimeout(() => {
-            if (notification.parentNode) {
-              document.body.removeChild(notification);
-            }
-          }, 300);
-        }, duration);
-      }, 10);
-    } catch (error) {
-      console.error("Erro ao mostrar notificação:", error);
-    }
+          // Atualizar linha visualmente
+          const row = checkbox.closest('tr');
+          if (row) {
+            row.classList.toggle('selected', isChecked);
+          }
+          
+          // Disparar evento change
+          const changeEvent = new Event('change', { bubbles: true });
+          checkbox.dispatchEvent(changeEvent);
+        });
+      });
+      
+    }, 'toggleSelectAll');
   }
   
   /**
-   * Funções de detecção e otimização para dispositivos móveis
+   * Gerenciador de layout responsivo otimizado
    */
-  const mobileUtils = {
+  const responsiveManager = {
     /**
-     * Detecta se é um dispositivo móvel
-     * @returns {boolean} - True se for dispositivo móvel
+     * Verifica se é dispositivo móvel
      */
-    isMobileDevice: function() {
-      try {
-        return (window.innerWidth <= 768) || 
-                (navigator.maxTouchPoints > 0 && 
-                 /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-      } catch (error) {
-        console.error("Erro ao detectar dispositivo móvel:", error);
-        return false;
-      }
+    isMobile() {
+      return window.innerWidth <= 768 || 
+             (navigator.maxTouchPoints > 0 && /iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
     },
     
     /**
-     * Otimiza a interface para dispositivos móveis
+     * Ajusta layout para dispositivos móveis
      */
-    optimizeForMobile: function() {
-      try {
-        const isMobile = this.isMobileDevice();
-        
-        // Adicionar classe para estilos específicos de mobile
+    adjust() {
+      safeDOMOperation(() => {
+        const isMobile = this.isMobile();
         document.body.classList.toggle('mobile-device', isMobile);
         
-        // Adicionar dica de rolagem para tabelas em dispositivos móveis
         if (isMobile) {
-          document.querySelectorAll('.table-container').forEach(container => {
-            // Verificar se já tem a dica
-            if (!container.querySelector('.table-scroll-hint')) {
-              const scrollHint = document.createElement('div');
-              scrollHint.className = 'table-scroll-hint';
-              scrollHint.textContent = 'Deslize para ver mais →';
-              scrollHint.style.fontSize = '12px';
-              scrollHint.style.color = 'rgba(0, 0, 0, 0.5)';
-              scrollHint.style.padding = '8px';
-              scrollHint.style.textAlign = 'center';
-              
-              container.appendChild(scrollHint);
-              
-              // Ocultar a dica quando chegar ao final da tabela
-              container.addEventListener('scroll', function() {
-                if (this.scrollLeft + this.clientWidth >= this.scrollWidth - 10) {
-                  scrollHint.style.opacity = '0';
-                } else {
-                  scrollHint.style.opacity = '1';
+          this.optimizeForMobile();
+        } else {
+          this.restoreDesktop();
+        }
+      }, 'responsive adjustment');
+    },
+    
+    /**
+     * Otimizações específicas para mobile
+     */
+    optimizeForMobile() {
+      // Reordenar layout principal
+      const mainLayout = document.querySelector('.main-layout');
+      const sidebar = domElements.infoSidebar || getElement('infoSidebar');
+      const content = document.querySelector('.content');
+      
+      if (mainLayout && sidebar && content && !mainLayout.classList.contains('mobile-optimized')) {
+        mainLayout.classList.add('mobile-optimized');
+        mainLayout.insertBefore(sidebar, content);
+      }
+      
+      // Otimizar botões de ação
+      document.querySelectorAll('.action-buttons').forEach(container => {
+        if (!container.classList.contains('mobile-optimized')) {
+          container.classList.add('mobile-optimized');
+          container.style.flexDirection = 'column';
+          
+          container.querySelectorAll('button').forEach(btn => {
+            btn.style.width = '100%';
+          });
+        }
+      });
+      
+      // Ajustar input para evitar zoom no iOS
+      const ipv6Input = domElements.ipv6Input || getElement('ipv6');
+      if (ipv6Input) {
+        ipv6Input.style.fontSize = '16px';
+      }
+      
+      // Adicionar indicadores de scroll para tabelas
+      this.addTableScrollIndicators();
+    },
+    
+    /**
+     * Restaura layout desktop
+     */
+    restoreDesktop() {
+      const mainLayout = document.querySelector('.main-layout');
+      const sidebar = domElements.infoSidebar || getElement('infoSidebar');
+      
+      if (mainLayout && sidebar && mainLayout.classList.contains('mobile-optimized')) {
+        mainLayout.classList.remove('mobile-optimized');
+        mainLayout.appendChild(sidebar);
+      }
+      
+      // Restaurar botões
+      document.querySelectorAll('.action-buttons.mobile-optimized').forEach(container => {
+        container.classList.remove('mobile-optimized');
+        container.style.flexDirection = '';
+        
+        container.querySelectorAll('button').forEach(btn => {
+          btn.style.width = '';
+        });
+      });
+    },
+    
+    /**
+     * Adiciona indicadores de scroll para tabelas em mobile
+     */
+    addTableScrollIndicators() {
+      document.querySelectorAll('.table-container').forEach(container => {
+        if (!container.querySelector('.table-scroll-indicator')) {
+          const indicator = document.createElement('div');
+          indicator.className = 'table-scroll-indicator';
+          indicator.innerHTML = '<i class="fas fa-arrows-alt-h"></i> Deslize para visualizar todos os dados';
+          
+          container.style.position = 'relative';
+          container.appendChild(indicator);
+          
+          // Monitorar scroll para esconder indicador
+          container.addEventListener('scroll', function() {
+            const maxScroll = this.scrollWidth - this.clientWidth;
+            const scrollPosition = this.scrollLeft;
+            
+            if (scrollPosition > maxScroll * 0.7) {
+              indicator.style.opacity = '0';
+              setTimeout(() => {
+                if (indicator.parentNode === container) {
+                  container.removeChild(indicator);
                 }
-              });
+              }, CONFIG.ANIMATION_DURATION);
             }
           });
         }
-      } catch (error) {
-        console.error("Erro ao otimizar para dispositivos móveis:", error);
-      }
-    },
-    
-    /**
-     * Inicializa otimizações para dispositivos móveis
-     */
-    initMobileOptimizations: function() {
-      try {
-        this.optimizeForMobile();
-        
-        // Reajustar quando a tela for redimensionada
-        window.addEventListener('resize', () => this.optimizeForMobile());
-      } catch (error) {
-        console.error("Erro ao inicializar otimizações móveis:", error);
-      }
+      });
     }
   };
   
   /**
-   * Funções de navegação e scrolling
+   * Utilitários de navegação
    */
   const navigation = {
     /**
      * Rola para o topo da página
      */
-    scrollToTop: function() {
-      try {
+    scrollToTop() {
+      safeDOMOperation(() => {
         window.scrollTo({
           top: 0,
           behavior: 'smooth'
         });
-      } catch (error) {
-        // Fallback para navegadores que não suportam comportamento smooth
-        window.scrollTo(0, 0);
-      }
+      }, 'scroll to top');
     },
     
     /**
      * Rola para o final da página
      */
-    scrollToBottom: function() {
-      try {
+    scrollToBottom() {
+      safeDOMOperation(() => {
         window.scrollTo({
           top: document.body.scrollHeight,
           behavior: 'smooth'
         });
-      } catch (error) {
-        // Fallback para navegadores que não suportam comportamento smooth
-        window.scrollTo(0, document.body.scrollHeight);
-      }
+      }, 'scroll to bottom');
     },
     
     /**
      * Rola até um elemento específico
-     * @param {string|HTMLElement} target - ID do elemento ou o próprio elemento
-     * @param {Object} options - Opções de scrolling
+     * @param {string|HTMLElement} target - ID ou elemento
+     * @param {Object} options - Opções de scroll
      */
-    scrollToElement: function(target, options = { behavior: 'smooth', offset: 0 }) {
-      try {
-        const element = typeof target === 'string' ? document.getElementById(target) : target;
+    scrollToElement(target, options = { behavior: 'smooth', offset: 0 }) {
+      safeDOMOperation(() => {
+        const element = typeof target === 'string' ? getElement(target) : target;
         
         if (!element) {
-          console.error(`Elemento "${target}" não encontrado para scroll`);
+          console.error(`[UIController] Elemento "${target}" não encontrado para scroll`);
           return;
         }
         
@@ -835,74 +818,181 @@ const UIController = (function() {
           top: rect.top + scrollTop - (options.offset || 0),
           behavior: options.behavior || 'smooth'
         });
-      } catch (error) {
-        console.error("Erro ao rolar para elemento:", error);
+      }, 'scroll to element');
+    }
+  };
+  
+  /**
+   * Gerenciador de elementos visuais (mostrar/ocultar)
+   */
+  const displayManager = {
+    /**
+     * Mostra um elemento com animação
+     * @param {string|HTMLElement} element - ID ou elemento
+     * @param {string} display - Tipo de display
+     */
+    show(element, display = 'block') {
+      safeDOMOperation(() => {
+        const el = typeof element === 'string' ? getElement(element) : element;
+        if (!el) return;
+        
+        el.style.display = display;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(10px)';
+        
+        requestAnimationFrame(() => {
+          el.style.transition = `opacity ${CONFIG.ANIMATION_DURATION}ms ease, transform ${CONFIG.ANIMATION_DURATION}ms ease`;
+          el.style.opacity = '1';
+          el.style.transform = 'translateY(0)';
+        });
+      }, 'show element');
+    },
+    
+    /**
+     * Oculta um elemento com animação
+     * @param {string|HTMLElement} element - ID ou elemento
+     */
+    hide(element) {
+      safeDOMOperation(() => {
+        const el = typeof element === 'string' ? getElement(element) : element;
+        if (!el) return;
+        
+        el.style.transition = `opacity ${CONFIG.ANIMATION_DURATION}ms ease, transform ${CONFIG.ANIMATION_DURATION}ms ease`;
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(-10px)';
+        
+        setTimeout(() => {
+          el.style.display = 'none';
+          el.style.transform = '';
+          el.style.transition = '';
+        }, CONFIG.ANIMATION_DURATION);
+      }, 'hide element');
+    },
+    
+    /**
+     * Alterna visibilidade de um elemento
+     * @param {string|HTMLElement} element - ID ou elemento
+     * @param {string} display - Tipo de display quando visível
+     */
+    toggle(element, display = 'block') {
+      const el = typeof element === 'string' ? getElement(element) : element;
+      if (!el) return;
+      
+      const isVisible = el.style.display !== 'none' && 
+                       getComputedStyle(el).display !== 'none';
+      
+      if (isVisible) {
+        this.hide(el);
+      } else {
+        this.show(el, display);
       }
     }
   };
   
   /**
-   * Inicializa o módulo UI
+   * Configuração de eventos globais
+   */
+  function setupEventListeners() {
+    // Tema
+    const themeBtn = domElements.toggleThemeBtn || getElement('toggleThemeBtn');
+    if (themeBtn) {
+      themeBtn.addEventListener('click', themeManager.toggle.bind(themeManager));
+    }
+    
+    // Navegação
+    const topBtn = getElement('topBtn');
+    const bottomBtn = getElement('bottomBtn');
+    
+    if (topBtn) {
+      topBtn.addEventListener('click', navigation.scrollToTop);
+    }
+    
+    if (bottomBtn) {
+      bottomBtn.addEventListener('click', navigation.scrollToBottom);
+    }
+    
+    // Responsividade
+    window.addEventListener('resize', responsiveManager.adjust.bind(responsiveManager));
+    window.addEventListener('orientationchange', responsiveManager.adjust.bind(responsiveManager));
+    
+    // Monitorar mudanças de tema do sistema
+    themeManager.setupSystemPreferenceMonitor();
+  }
+  
+  /**
+   * Inicialização do módulo
    */
   function initialize() {
+    console.log('[UIController] Inicializando UI Controller refatorado...');
+    
     try {
-      console.log("Inicializando módulo UIController...");
-      
-      // Inicializar referências aos elementos DOM
-      initElements();
-      
-      // Inicializar otimizações para dispositivos móveis
-      mobileUtils.initMobileOptimizations();
-      
-      // Ajustar layout responsivo
-      ajustarLayoutResponsivo();
-      
-      // Adicionar listener para redimensionamento da janela
-      window.addEventListener('resize', ajustarLayoutResponsivo);
-      
-      // Carregar preferência de tema
-      loadThemePreference();
-      
-      // Configurar o botão de tema corretamente
-      const themeBtn = document.getElementById('toggleThemeBtn');
-      if (themeBtn) {
-        // Garantir que o botão de tema use nossa função toggleTheme
-        themeBtn.onclick = toggleTheme;
+      // Aguardar DOMCache se disponível
+      if (window.ModuleManager) {
+        window.ModuleManager.whenReady('DOMCache', () => {
+          initDOMCache();
+        }, 5000);
+      } else {
+        initDOMCache();
       }
       
-      console.log("Módulo UIController inicializado com sucesso");
+      // Configurar sistema de temas
+      themeManager.loadPreference();
       
-      return true;
+      // Configurar layout responsivo
+      responsiveManager.adjust();
+      
+      // Configurar eventos
+      setupEventListeners();
+      
+      // Registrar no sistema de módulos
+      if (window.ModuleManager) {
+        window.ModuleManager.register('UIController', publicAPI, ['DOMCache']);
+      }
+      
+      console.log('[UIController] UI Controller inicializado com sucesso');
+      
     } catch (error) {
-      console.error("Erro ao inicializar UIController:", error);
-      return false;
+      console.error('[UIController] Erro na inicialização:', error);
     }
   }
   
-  // Executar inicialização quando o DOM estiver pronto
+  // API pública
+  const publicAPI = {
+    // Funções principais
+    updateStep,
+    copiarTexto, // Manter para compatibilidade
+    appendIpToList,
+    carregarMaisSubRedes,
+    toggleSelectAll,
+    
+    // Sistemas especializados
+    theme: themeManager,
+    notifications: notificationSystem,
+    clipboard: clipboardManager,
+    responsive: responsiveManager,
+    navigation,
+    display: displayManager,
+    
+    // Alias para notificações (compatibilidade)
+    showNotification: notificationSystem.show.bind(notificationSystem),
+    
+    // Funções legadas mantidas para compatibilidade
+    ajustarLayoutResponsivo: responsiveManager.adjust.bind(responsiveManager),
+    
+    // Utilitários
+    getElement,
+    safeDOMOperation
+  };
+  
+  // Inicializar quando DOM estiver pronto
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
     initialize();
   }
   
-  // API pública
-  return {
-    updateStep,
-    toggleTheme,
-    copiarTexto,
-    appendIpToList,
-    carregarMaisSubRedes,
-    toggleSelectAll,
-    ajustarLayoutResponsivo,
-    atualizarInformacoesDoBloco,
-    atualizarBlocoAgregado,
-    atualizarGerarIPsButton,
-    showNotification,
-    mobileUtils,
-    navigation
-  };
+  return publicAPI;
 })();
 
-// Exportar globalmente para compatibilidade com código existente
+// Exportar globalmente
 window.UIController = UIController;
