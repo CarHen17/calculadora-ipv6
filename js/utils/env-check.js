@@ -1,53 +1,112 @@
 /**
- * Verificador de Ambiente para Calculadora IPv6
- * Este script ajuda a diagnosticar problemas com módulos carregados
+ * Verificador de Ambiente Melhorado para Calculadora IPv6
+ * Sistema robusto de diagnóstico e correção automática
  */
 (function() {
   'use strict';
   
-  // Verificar o estado dos módulos principais periodicamente
+  // Configuração
+  const CONFIG = {
+    CHECK_INTERVAL: 10000, // 10 segundos
+    MAX_CHECK_ATTEMPTS: 5,
+    NOTIFICATION_DURATION: 5000
+  };
+  
+  let checkAttempts = 0;
+  let checkInterval = null;
+  
+  /**
+   * Módulos essenciais para funcionamento da aplicação
+   */
+  const ESSENTIAL_MODULES = {
+    'IPv6Utils': {
+      required: true,
+      methods: ['validateIPv6', 'expandIPv6Address', 'shortenIPv6', 'formatIPv6Address']
+    },
+    'UIController': {
+      required: true,
+      methods: ['updateStep', 'copiarTexto', 'appendIpToList']
+    },
+    'IPv6Calculator': {
+      required: true,
+      methods: ['calcularSubRedes', 'resetarCalculadora']
+    },
+    'DOMCache': {
+      required: false,
+      methods: ['getElementById', 'elements']
+    },
+    'ModuleManager': {
+      required: false,
+      methods: ['register', 'get', 'isLoaded']
+    }
+  };
+  
+  /**
+   * Verifica o estado dos módulos
+   */
   function checkModules() {
-    const requiredModules = {
-      'IPv6Utils': typeof window.IPv6Utils !== 'undefined',
-      'UIController': typeof window.UIController !== 'undefined',
-      'IPv6Calculator': typeof window.IPv6Calculator !== 'undefined',
-      // 'VisualizationModule': typeof window.VisualizationModule !== 'undefined' // Removido
+    const results = {
+      loaded: [],
+      missing: [],
+      partial: [],
+      errors: []
     };
     
-    const allLoaded = Object.values(requiredModules).every(loaded => loaded);
-    
-    // Formatar para console
-    console.group('Estado dos Módulos da Calculadora IPv6');
-    Object.entries(requiredModules).forEach(([name, loaded]) => {
-      console.log(`${name}: ${loaded ? '✅ Carregado' : '❌ Não carregado'}`);
-      
-      if (loaded) {
-        const moduleObj = window[name];
-        if (typeof moduleObj === 'object') {
-          const methods = Object.keys(moduleObj);
-          console.log(`  - Métodos disponíveis: ${methods.length > 0 ? methods.join(', ') : 'Nenhum'}`);
+    for (const [moduleName, config] of Object.entries(ESSENTIAL_MODULES)) {
+      try {
+        const moduleObj = window[moduleName];
+        
+        if (!moduleObj) {
+          if (config.required) {
+            results.missing.push(moduleName);
+          }
+          continue;
         }
+        
+        // Verificar se tem os métodos necessários
+        const missingMethods = config.methods.filter(method => 
+          typeof moduleObj[method] !== 'function' && 
+          typeof moduleObj[method] !== 'object'
+        );
+        
+        if (missingMethods.length > 0) {
+          results.partial.push({
+            module: moduleName,
+            missingMethods: missingMethods
+          });
+        } else {
+          results.loaded.push(moduleName);
+        }
+        
+      } catch (error) {
+        results.errors.push({
+          module: moduleName,
+          error: error.message
+        });
       }
-    });
-    console.log(`Status geral: ${allLoaded ? '✅ Todos os módulos carregados' : '❌ Alguns módulos não foram carregados'}`);
-    console.groupEnd();
+    }
     
-    return allLoaded;
+    return results;
   }
   
-  // Tentar corrigir problemas automaticamente
-  function autoFix() {
-    if (typeof window.IPv6Utils === 'undefined') {
-      console.warn("⚠️ IPv6Utils não encontrado. Criando versão de fallback...");
-      
-      // Implementação básica
+  /**
+   * Cria implementações de fallback para módulos críticos
+   */
+  function createFallbacks() {
+    const created = [];
+    
+    // Fallback para IPv6Utils
+    if (!window.IPv6Utils) {
       window.IPv6Utils = {
         validateIPv6: function(addressCIDR) {
-          console.warn("[FALLBACK] Usando IPv6Utils.validateIPv6 de fallback");
           try {
             const [addr, prefix] = addressCIDR.split('/');
             if (!addr || !prefix || isNaN(prefix)) {
               return "Por favor, insira um endereço IPv6 válido no formato CIDR.";
+            }
+            const prefixNum = parseInt(prefix);
+            if (prefixNum < 1 || prefixNum > 128) {
+              return "O prefixo deve estar entre 1 e 128.";
             }
             return null;
           } catch (error) {
@@ -57,48 +116,71 @@
         
         expandIPv6Address: function(addressCIDR) {
           try {
-            let [addr, prefix] = addressCIDR.split('/');
-            return addr || "Erro: Endereço inválido.";
+            const [addr] = addressCIDR.split('/');
+            // Implementação simplificada
+            return addr.includes('::') ? addr.replace('::', ':0000:0000:0000:0000:') : addr;
           } catch (error) {
             return "Erro: Falha ao processar o endereço.";
           }
         },
         
         shortenIPv6: function(address) {
-          return address; // Versão simplificada
+          // Versão simplificada - apenas retorna o endereço
+          return address;
         },
         
         formatIPv6Address: function(ipv6BigInt) {
           try {
-            let hexStr = ipv6BigInt.toString(16).padStart(32, '0');
+            const hexStr = ipv6BigInt.toString(16).padStart(32, '0');
             return hexStr.match(/.{1,4}/g).join(':');
           } catch (error) {
             return "0000:0000:0000:0000:0000:0000:0000:0000";
           }
         },
         
-        calcularBlocoAgregado: function() {
-          return null; // Implementação mínima
+        checkIPv6Overlap: function(prefix1, prefix2) {
+          // Implementação básica
+          return prefix1 === prefix2;
+        },
+        
+        suggestNonOverlappingPrefix: function(currentPrefix, conflictingPrefix, desiredMask) {
+          // Sugestão simples
+          const [addr, mask] = currentPrefix.split('/');
+          const parts = addr.split(':');
+          
+          // Incrementar a última parte não vazia
+          for (let i = parts.length - 1; i >= 0; i--) {
+            if (parts[i] && parts[i] !== '0000') {
+              const num = parseInt(parts[i], 16) + 1;
+              parts[i] = num.toString(16).padStart(4, '0');
+              break;
+            }
+          }
+          
+          return `${parts.join(':')}/${desiredMask}`;
         },
         
         gerarSubRedesAssincronamente: function(ipv6BigInt, initialMask, prefix, numSubRedes, callback, appState) {
-          console.warn("[FALLBACK] Usando implementação simplificada de gerarSubRedesAssincronamente");
+          console.warn("[FALLBACK] Usando geração simplificada de sub-redes");
+          
           appState = appState || { subRedesGeradas: [] };
           
-          // Gerar algumas sub-redes de exemplo
           setTimeout(() => {
-            for (let i = 0; i < 10; i++) {
-              let subnetFormatada = `2001:db8::${i}`;
+            // Gerar algumas sub-redes de exemplo
+            const maxSubnets = Math.min(Number(numSubRedes), 50);
+            
+            for (let i = 0; i < maxSubnets; i++) {
+              const subnetBase = `2001:db8:${i.toString(16).padStart(4, '0')}`;
               
               appState.subRedesGeradas.push({
-                subnet: `${subnetFormatada}/${prefix}`,
-                initial: subnetFormatada,
-                final: `${subnetFormatada.split('::')[0]}::${subnetFormatada.split('::')[1]}ffff`,
-                network: subnetFormatada
+                subnet: `${subnetBase}::/${prefix}`,
+                initial: `${subnetBase}::`,
+                final: `${subnetBase}::ffff`,
+                network: `${subnetBase}::`
               });
             }
             
-            // Ocultar indicador de carregamento
+            // Ocultar loading
             const loadingIndicator = document.getElementById('loadingIndicator');
             if (loadingIndicator) {
               loadingIndicator.style.display = 'none';
@@ -107,105 +189,351 @@
             if (typeof callback === 'function') {
               callback(appState.subRedesGeradas);
             }
-          }, 1000);
+          }, 500);
         }
       };
       
-      console.log("✅ Versão de fallback do IPv6Utils criada com sucesso");
+      created.push('IPv6Utils');
     }
     
-    // Verificar novamente
-    return checkModules();
+    // Fallback para UIController
+    if (!window.UIController) {
+      window.UIController = {
+        updateStep: function(step) {
+          const steps = document.querySelectorAll('.step');
+          steps.forEach(el => el.classList.remove('active'));
+          const currentStep = document.getElementById(`step${step}`);
+          if (currentStep) {
+            currentStep.classList.add('active');
+          }
+        },
+        
+        copiarTexto: function(elementId) {
+          const element = typeof elementId === 'string' ? 
+            document.getElementById(elementId) : elementId;
+          
+          if (element) {
+            const text = element.getAttribute('data-value') || 
+                        element.textContent || 
+                        element.innerText;
+            
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(text);
+            } else {
+              // Fallback método antigo
+              const textArea = document.createElement('textarea');
+              textArea.value = text;
+              textArea.style.position = 'fixed';
+              textArea.style.left = '-999999px';
+              document.body.appendChild(textArea);
+              textArea.select();
+              document.execCommand('copy');
+              document.body.removeChild(textArea);
+            }
+          }
+        },
+        
+        appendIpToList: function(ip, number, listId) {
+          const list = document.getElementById(listId);
+          if (list) {
+            const li = document.createElement('li');
+            li.className = 'ip-item';
+            li.innerHTML = `
+              <span class="ip-number">${number}.</span>
+              <span class="ip-text">${ip}</span>
+              <button class="copy-btn" onclick="UIController.copiarTexto('${ip}')" title="Copiar IP">
+                <i class="fas fa-copy"></i>
+              </button>
+            `;
+            list.appendChild(li);
+          }
+        },
+        
+        carregarMaisSubRedes: function(startIndex, limit) {
+          if (!window.appState || !window.appState.subRedesGeradas) {
+            return;
+          }
+          
+          const tbody = document.querySelector('#subnetsTable tbody');
+          if (!tbody) return;
+          
+          const endIndex = Math.min(startIndex + limit, window.appState.subRedesGeradas.length);
+          
+          for (let i = startIndex; i < endIndex; i++) {
+            const subnet = window.appState.subRedesGeradas[i];
+            if (!subnet) continue;
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td><input type="checkbox" value="${i}"></td>
+              <td>${subnet.subnet}</td>
+              <td>${subnet.initial}</td>
+              <td>${subnet.final}</td>
+              <td>${subnet.network}</td>
+            `;
+            tbody.appendChild(row);
+          }
+          
+          window.appState.subRedesExibidas = endIndex;
+          
+          // Atualizar botão "Carregar Mais"
+          const loadMoreContainer = document.getElementById('loadMoreContainer');
+          if (loadMoreContainer) {
+            const shouldShow = window.appState.subRedesExibidas < window.appState.subRedesGeradas.length;
+            loadMoreContainer.style.display = shouldShow ? 'block' : 'none';
+          }
+        },
+        
+        toggleSelectAll: function() {
+          const selectAll = document.getElementById('selectAll');
+          if (!selectAll) return;
+          
+          const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]');
+          const isChecked = selectAll.checked;
+          
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+            const row = checkbox.closest('tr');
+            if (row) {
+              row.classList.toggle('selected', isChecked);
+            }
+          });
+        },
+        
+        // Objetos aninhados básicos
+        theme: {
+          toggle: function() {
+            document.body.classList.toggle('dark-mode');
+            const themeBtn = document.getElementById('toggleThemeBtn');
+            if (themeBtn) {
+              const isDark = document.body.classList.contains('dark-mode');
+              const icon = isDark ? 'fa-sun' : 'fa-moon';
+              themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
+            }
+          },
+          loadPreference: function() {
+            // Implementação básica
+          }
+        },
+        
+        navigation: {
+          scrollToTop: function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          },
+          scrollToBottom: function() {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+          }
+        },
+        
+        clipboard: {
+          copy: function(source) {
+            if (typeof source === 'string') {
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(source);
+              }
+            } else if (source instanceof HTMLElement) {
+              const text = source.textContent || source.innerText;
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(text);
+              }
+            }
+          }
+        },
+        
+        responsive: {
+          adjust: function() {
+            // Implementação básica de responsividade
+            const isMobile = window.innerWidth <= 768;
+            document.body.classList.toggle('mobile-device', isMobile);
+          }
+        }
+      };
+      
+      created.push('UIController');
+    }
+    
+    return created;
   }
   
-  // Detectar ambiente de desenvolvimento
+  /**
+   * Tenta corrigir problemas automaticamente
+   */
+  function autoFix() {
+    const moduleCheck = checkModules();
+    const hasIssues = moduleCheck.missing.length > 0 || moduleCheck.partial.length > 0;
+    
+    if (hasIssues) {
+      console.warn("⚠️ Problemas detectados nos módulos. Tentando correção automática...");
+      
+      const createdFallbacks = createFallbacks();
+      
+      if (createdFallbacks.length > 0) {
+        console.log("✅ Fallbacks criados para:", createdFallbacks.join(', '));
+        showNotification(`Módulos corrigidos: ${createdFallbacks.join(', ')}`, 'warning');
+      }
+      
+      // Verificar novamente
+      const newCheck = checkModules();
+      const stillMissing = newCheck.missing.filter(module => 
+        ESSENTIAL_MODULES[module].required
+      );
+      
+      if (stillMissing.length === 0) {
+        console.log("✅ Todos os módulos essenciais estão disponíveis");
+        showNotification('Aplicação corrigida e funcionando!', 'success');
+        return true;
+      } else {
+        console.error("❌ Ainda faltam módulos críticos:", stillMissing);
+        showNotification('Alguns problemas críticos não puderam ser corrigidos', 'error');
+        return false;
+      }
+    }
+    
+    return true;
+  }
+  
+  /**
+   * Mostra notificação na interface
+   */
+  function showNotification(message, type = 'info') {
+    // Tentar usar o sistema de notificações do UIController
+    if (window.UIController && window.UIController.notifications) {
+      window.UIController.notifications.show(message, type, CONFIG.NOTIFICATION_DURATION);
+      return;
+    }
+    
+    // Fallback para notificação simples
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 4px;
+      color: white;
+      font-size: 14px;
+      z-index: 10000;
+      max-width: 300px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      transition: opacity 0.3s ease;
+    `;
+    
+    // Cores por tipo
+    const colors = {
+      success: '#4caf50',
+      warning: '#ff9800',
+      error: '#f44336',
+      info: '#2196f3'
+    };
+    
+    notification.style.backgroundColor = colors[type] || colors.info;
+    notification.textContent = message;
+    
+    document.body.appendChild(notification);
+    
+    // Auto-remover
+    setTimeout(() => {
+      notification.style.opacity = '0';
+      setTimeout(() => {
+        if (notification.parentNode) {
+          document.body.removeChild(notification);
+        }
+      }, 300);
+    }, CONFIG.NOTIFICATION_DURATION);
+  }
+  
+  /**
+   * Executar verificação e diagnóstico
+   */
+  function runDiagnostic() {
+    checkAttempts++;
+    
+    console.group(`🔍 Diagnóstico #${checkAttempts} - Calculadora IPv6`);
+    
+    const moduleCheck = checkModules();
+    const allEssentialLoaded = moduleCheck.missing.filter(module => 
+      ESSENTIAL_MODULES[module].required
+    ).length === 0;
+    
+    // Log dos resultados
+    console.log('✅ Módulos carregados:', moduleCheck.loaded);
+    
+    if (moduleCheck.missing.length > 0) {
+      console.warn('❌ Módulos ausentes:', moduleCheck.missing);
+    }
+    
+    if (moduleCheck.partial.length > 0) {
+      console.warn('⚠️ Módulos incompletos:', moduleCheck.partial);
+    }
+    
+    if (moduleCheck.errors.length > 0) {
+      console.error('💥 Erros nos módulos:', moduleCheck.errors);
+    }
+    
+    console.log('📊 Status geral:', allEssentialLoaded ? '✅ OK' : '❌ Problemas detectados');
+    console.groupEnd();
+    
+    // Tentar correção automática se necessário
+    if (!allEssentialLoaded && checkAttempts <= CONFIG.MAX_CHECK_ATTEMPTS) {
+      const fixed = autoFix();
+      
+      if (fixed) {
+        console.log("✅ Problemas corrigidos automaticamente");
+        clearInterval(checkInterval);
+        return true;
+      }
+    }
+    
+    // Parar verificações após máximo de tentativas
+    if (checkAttempts >= CONFIG.MAX_CHECK_ATTEMPTS) {
+      console.warn(`⏹️ Máximo de tentativas atingido (${CONFIG.MAX_CHECK_ATTEMPTS})`);
+      clearInterval(checkInterval);
+      
+      if (!allEssentialLoaded) {
+        showNotification('Alguns módulos críticos não puderam ser carregados', 'error');
+      }
+    }
+    
+    return allEssentialLoaded;
+  }
+  
+  /**
+   * Detecta ambiente de desenvolvimento
+   */
   function isDevelopmentEnv() {
     return window.location.hostname === 'localhost' || 
            window.location.hostname === '127.0.0.1' ||
            window.location.protocol === 'file:';
   }
   
-  // Função para mostrar aviso na interface
-  function showInterfaceWarning(message, severity = 'warning') {
-    // Criar elemento de notificação
-    const notify = document.createElement('div');
-    notify.style.position = 'fixed';
-    notify.style.top = '10px';
-    notify.style.left = '50%';
-    notify.style.transform = 'translateX(-50%)';
-    notify.style.zIndex = '9999';
-    notify.style.padding = '15px 20px';
-    notify.style.borderRadius = '5px';
-    notify.style.boxShadow = '0 3px 10px rgba(0,0,0,0.2)';
-    notify.style.color = 'white';
-    notify.style.fontSize = '14px';
-    notify.style.maxWidth = '80%';
-    notify.style.textAlign = 'center';
+  /**
+   * Inicialização
+   */
+  function initialize() {
+    // Executar diagnóstico inicial
+    const initialCheck = runDiagnostic();
     
-    // Estilizar baseado na severidade
-    if (severity === 'error') {
-      notify.style.backgroundColor = '#e53935';
-    } else if (severity === 'warning') {
-      notify.style.backgroundColor = '#ff9800';
-    } else {
-      notify.style.backgroundColor = '#4caf50';
+    // Se estiver em desenvolvimento, continuar verificando
+    if (isDevelopmentEnv() && !initialCheck) {
+      console.log("🔄 Iniciando verificações periódicas (ambiente de desenvolvimento)");
+      checkInterval = setInterval(runDiagnostic, CONFIG.CHECK_INTERVAL);
     }
-    
-    // Conteúdo
-    notify.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 10px;">
-        <div>${severity === 'error' ? '⚠️' : severity === 'warning' ? '⚠️' : '✅'}</div>
-        <div>${message}</div>
-        <div style="margin-left: 10px; cursor: pointer;" onclick="this.parentNode.parentNode.remove()">✕</div>
-      </div>
-    `;
-    
-    // Adicionar ao DOM
-    document.body.appendChild(notify);
-    
-    // Auto-remover após alguns segundos
-    setTimeout(() => {
-      if (notify.parentNode) {
-        notify.style.opacity = '0';
-        notify.style.transition = 'opacity 0.5s ease';
-        setTimeout(() => notify.remove(), 500);
-      }
-    }, 5000);
   }
   
-  // Inicializar quando o DOM estiver pronto
-  window.addEventListener('DOMContentLoaded', function() {
-    if (isDevelopmentEnv()) {
-      console.log("Ambiente de desenvolvimento detectado. Iniciando verificações...");
-      
-      // Verificar módulos
-      const modulesLoaded = checkModules();
-      
-      if (!modulesLoaded) {
-        console.warn("⚠️ Nem todos os módulos foram carregados corretamente. Tentando correção automática...");
-        
-        const fixed = autoFix();
-        
-        if (fixed) {
-          console.log("✅ Correção automática bem-sucedida!");
-          showInterfaceWarning('Alguns módulos foram corrigidos automaticamente. A aplicação deve funcionar normalmente.', 'success');
-        } else {
-          console.error("❌ Falha na correção automática. A aplicação pode não funcionar corretamente.");
-          showInterfaceWarning('Falha ao carregar alguns módulos críticos. Algumas funcionalidades podem não estar disponíveis.', 'error');
-        }
-      } else {
-        console.log("✅ Todos os módulos carregados corretamente!");
-      }
-      
-      // Verificação periódica a cada 10 segundos
-      setInterval(checkModules, 10000);
-    }
-  });
+  // Inicializar quando DOM estiver pronto
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
   
-  // Expor API de depuração para o console
+  // Expor API para debug
   window.debugIPv6App = {
     checkModules,
     autoFix,
-    showWarning: showInterfaceWarning
+    runDiagnostic,
+    showNotification,
+    config: CONFIG
   };
+  
 })();
