@@ -1,8 +1,7 @@
 /**
- * Modal de Configuração de Rede - Versão Corrigida
+ * Modal de Configuração de Rede - Versão Simplificada e Corrigida
  * 
- * Gerencia o modal de configuração de rede com posicionamento adequado
- * e funcionalidade completa de verificação de sobreposição.
+ * Gerencia o modal de configuração de rede sem interferir com outros módulos.
  */
 
 const NetworkConfigModal = (function() {
@@ -20,21 +19,34 @@ const NetworkConfigModal = (function() {
 
   // Elementos do DOM
   let elements = {};
+  
+  // Flag para evitar inicialização dupla
+  let initialized = false;
 
   /**
    * Inicializa o modal de configuração de rede
    */
   function initialize() {
+    if (initialized) {
+      console.log('[NetworkConfigModal] Já inicializado, ignorando chamada dupla');
+      return;
+    }
+    
     try {
-      console.log("Inicializando modal de configuração de rede...");
+      console.log('[NetworkConfigModal] Inicializando modal de configuração de rede...');
       
-      mapDOMElements();
+      if (!mapDOMElements()) {
+        console.error('[NetworkConfigModal] Elementos essenciais não encontrados');
+        return;
+      }
+      
       loadInitialConfig();
       setupEventListeners();
       
-      console.log("Modal de configuração de rede inicializado com sucesso");
+      initialized = true;
+      console.log('[NetworkConfigModal] Modal de configuração de rede inicializado com sucesso');
     } catch (error) {
-      console.error("Erro ao inicializar modal de rede:", error);
+      console.error('[NetworkConfigModal] Erro ao inicializar modal de rede:', error);
     }
   }
 
@@ -59,7 +71,7 @@ const NetworkConfigModal = (function() {
     
     // Verificar se elementos essenciais existem
     if (!elements.overlay || !elements.modal || !elements.openBtn) {
-      console.error("Elementos essenciais do modal não encontrados no DOM");
+      console.error('[NetworkConfigModal] Elementos essenciais do modal não encontrados no DOM');
       return false;
     }
     
@@ -82,7 +94,7 @@ const NetworkConfigModal = (function() {
         state.lanPrefix = elements.lanInput.value;
       }
     } catch (error) {
-      console.error("Erro ao carregar configuração inicial:", error);
+      console.error('[NetworkConfigModal] Erro ao carregar configuração inicial:', error);
     }
   }
   
@@ -91,15 +103,11 @@ const NetworkConfigModal = (function() {
    */
   function setupEventListeners() {
     try {
-      // Botão de abrir modal
-      if (elements.openBtn) {
-        // Remover listeners existentes clonando o elemento
-        const newOpenBtn = elements.openBtn.cloneNode(true);
-        elements.openBtn.parentNode.replaceChild(newOpenBtn, elements.openBtn);
-        elements.openBtn = newOpenBtn;
-        
+      // Botão de abrir modal - configurar apenas se ainda não configurado
+      if (elements.openBtn && !elements.openBtn.hasAttribute('data-network-modal-ready')) {
         elements.openBtn.addEventListener('click', openModal);
-        console.log("Event listener do botão de rede configurado");
+        elements.openBtn.setAttribute('data-network-modal-ready', 'true');
+        console.log('[NetworkConfigModal] Event listener do botão de rede configurado');
       }
       
       // Botões de fechar
@@ -157,7 +165,7 @@ const NetworkConfigModal = (function() {
       }
 
     } catch (error) {
-      console.error("Erro ao configurar listeners de eventos:", error);
+      console.error('[NetworkConfigModal] Erro ao configurar listeners de eventos:', error);
     }
   }
 
@@ -166,12 +174,12 @@ const NetworkConfigModal = (function() {
    */
   function openModal() {
     if (!elements.overlay || !elements.modal) {
-      console.error("Elementos do modal não encontrados");
+      console.error('[NetworkConfigModal] Elementos do modal não encontrados');
       return;
     }
     
     try {
-      console.log("Abrindo modal de configuração de rede");
+      console.log('[NetworkConfigModal] Abrindo modal de configuração de rede');
       
       // Carregar valores mais recentes
       loadInitialConfig();
@@ -195,7 +203,7 @@ const NetworkConfigModal = (function() {
       }, 150);
       
     } catch (error) {
-      console.error("Erro ao abrir modal:", error);
+      console.error('[NetworkConfigModal] Erro ao abrir modal:', error);
     }
   }
   
@@ -206,7 +214,7 @@ const NetworkConfigModal = (function() {
     if (!elements.overlay || !elements.modal) return;
     
     try {
-      console.log("Fechando modal de configuração de rede");
+      console.log('[NetworkConfigModal] Fechando modal de configuração de rede');
       
       // Definir atributos de acessibilidade
       elements.overlay.setAttribute('aria-hidden', 'true');
@@ -217,7 +225,7 @@ const NetworkConfigModal = (function() {
       state.isOpen = false;
       
     } catch (error) {
-      console.error("Erro ao fechar modal:", error);
+      console.error('[NetworkConfigModal] Erro ao fechar modal:', error);
     }
   }
 
@@ -245,12 +253,13 @@ const NetworkConfigModal = (function() {
       
       // Feedback visual no botão
       if (elements.saveBtn) {
+        const originalHTML = elements.saveBtn.innerHTML;
         elements.saveBtn.style.backgroundColor = '#4caf50';
         elements.saveBtn.innerHTML = '<i class="fas fa-check"></i> Salvo!';
         
         setTimeout(() => {
           elements.saveBtn.style.backgroundColor = '';
-          elements.saveBtn.innerHTML = '<i class="fas fa-save"></i> Salvar';
+          elements.saveBtn.innerHTML = originalHTML;
         }, 1500);
       }
       
@@ -270,7 +279,7 @@ const NetworkConfigModal = (function() {
       }, 100);
 
     } catch (error) {
-      console.error("Erro ao salvar configuração:", error);
+      console.error('[NetworkConfigModal] Erro ao salvar configuração:', error);
       showNotification("Erro ao salvar configuração.", "error");
     }
   }
@@ -280,7 +289,7 @@ const NetworkConfigModal = (function() {
    */
   function checkOverlapInModal() {
     try {
-      console.log("Verificando sobreposição no modal");
+      console.log('[NetworkConfigModal] Verificando sobreposição no modal');
       
       // Feedback visual no botão
       if (elements.checkOverlapBtn) {
@@ -289,7 +298,7 @@ const NetworkConfigModal = (function() {
       }
       
       if (typeof IPv6Utils === 'undefined' || typeof IPv6Utils.checkIPv6Overlap !== 'function') {
-        console.error("IPv6Utils.checkIPv6Overlap não disponível");
+        console.error('[NetworkConfigModal] IPv6Utils.checkIPv6Overlap não disponível');
         showNotification("Erro: Utilitário de cálculo indisponível.", "error");
         resetCheckButtonState();
         return;
@@ -367,7 +376,7 @@ const NetworkConfigModal = (function() {
       }, 500);
       
     } catch (error) {
-      console.error("Erro ao verificar sobreposição:", error);
+      console.error('[NetworkConfigModal] Erro ao verificar sobreposição:', error);
       showNotification("Erro ao verificar sobreposição.", "error");
       hideOverlapWarningInModal();
       resetCheckButtonState(true);
@@ -430,7 +439,7 @@ const NetworkConfigModal = (function() {
       }
 
     } catch (error) {
-      console.error("Erro ao mostrar aviso de sobreposição:", error);
+      console.error('[NetworkConfigModal] Erro ao mostrar aviso de sobreposição:', error);
     }
   }
   
@@ -458,12 +467,13 @@ const NetworkConfigModal = (function() {
       
       // Feedback visual
       if (elements.applySuggestionBtn) {
+        const originalHTML = elements.applySuggestionBtn.innerHTML;
         elements.applySuggestionBtn.style.backgroundColor = '#4caf50';
         elements.applySuggestionBtn.innerHTML = '<i class="fas fa-check"></i> Aplicado!';
         
         setTimeout(() => {
           elements.applySuggestionBtn.style.backgroundColor = '';
-          elements.applySuggestionBtn.innerHTML = '<i class="fas fa-check"></i> Aplicar Sugestão';
+          elements.applySuggestionBtn.innerHTML = originalHTML;
         }, 1500);
       }
       
@@ -557,7 +567,7 @@ const NetworkConfigModal = (function() {
         }, duration);
       }, 10);
     } catch (error) {
-      console.error("Erro ao mostrar notificação:", error);
+      console.error('[NetworkConfigModal] Erro ao mostrar notificação:', error);
       console.log(`[${type.toUpperCase()}] ${message}`);
     }
   }
@@ -566,7 +576,8 @@ const NetworkConfigModal = (function() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
-    initialize();
+    // Aguardar um pouco para evitar conflitos
+    setTimeout(initialize, 200);
   }
   
   // API Pública
@@ -574,7 +585,8 @@ const NetworkConfigModal = (function() {
     openModal,
     closeModal,
     checkOverlap: checkOverlapInModal,
-    initialize
+    initialize,
+    isInitialized: () => initialized
   };
 })();
 
