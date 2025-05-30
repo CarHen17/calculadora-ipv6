@@ -9,24 +9,25 @@
   <!-- Favicon inline para evitar requests 404 -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>" type="image/svg+xml">
   
-  <!-- Estilos CSS - Carregados antes dos scripts -->
+  <!-- CSS consolidado - ordem otimizada -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/dark-mode.css">
   <link rel="stylesheet" href="css/enhanced-ui.css">
   <link rel="stylesheet" href="css/ui-fixes.css">
   <link rel="stylesheet" href="css/network-panel.css">
+  <link rel="stylesheet" href="css/overlap-checker.css">
+  <link rel="stylesheet" href="css/network-modal-styles.css">
   
   <!-- Font Awesome para ícones -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Meta tag de tema -->
+  <!-- Meta tags adicionais -->
   <meta name="theme-color" content="#0070d1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
 </head>
 <body>
-  <!-- Alerta de erro para mostrar problemas de inicialização -->
+  <!-- Alerta de erro para inicialização -->
   <div id="initErrorAlert" style="display: none; background-color: #f8d7da; color: #721c24; padding: 12px; margin: 10px; border-radius: 4px; border: 1px solid #f5c6cb;">
     <strong>Erro ao inicializar:</strong> <span id="initErrorMessage"></span>
     <button onclick="window.location.reload()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin-left: 10px; border-radius: 3px; cursor: pointer;">Recarregar</button>
@@ -37,7 +38,6 @@
     <header class="header">
       <h1>Calculadora IPv6</h1>
       <div class="header-buttons">
-        <!-- Botão para abrir o painel de configuração de rede -->
         <button id="networkConfigBtn" class="btn-primary">
           <i class="fas fa-network-wired"></i> Rede
         </button>
@@ -50,7 +50,7 @@
       </div>
     </header>
     
-    <!-- Estrutura do Modal de Configuração de Rede -->
+    <!-- Modal de Configuração de Rede -->
     <div id="networkConfigModalOverlay" class="modal-overlay">
       <div id="networkConfigModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="networkConfigModalTitle">
         <div class="modal-header">
@@ -71,14 +71,13 @@
           <div class="field-group">
             <label for="modalLanPrefix">Prefixo LAN (CIDR):</label>
             <input type="text" id="modalLanPrefix" value="2804:418:3000:5::1/64" placeholder="Ex.: 2001:db8:1::/64" autocomplete="off">
-            <div class="field-hint">Endereço IPv6 da interface LAN no formato CIDR (usado para referência, o principal é o campo da tela inicial).</div>
+            <div class="field-hint">Endereço IPv6 da interface LAN no formato CIDR (usado para referência).</div>
           </div>
           
           <button id="modalResolveConflictBtn" class="btn-primary">
             <i class="fas fa-magic"></i> Verificar Sobreposição
           </button>
           
-          <!-- Área para mostrar mensagens de sobreposição -->
           <div id="modalOverlapWarning" class="overlap-warning" style="display: none; margin-top: 20px;">
             <div class="warning-icon">⚠️</div>
             <div class="warning-content">
@@ -87,19 +86,19 @@
               <div class="suggested-prefix">
                 <code id="modalSuggestedPrefix">-</code>
                 <button id="modalApplyPrefixBtn" class="btn-primary">
-                  <i class="fas fa-check"></i> Aplicar Sugestão (no campo principal)
+                  <i class="fas fa-check"></i> Aplicar Sugestão
                 </button>
               </div>
             </div>
           </div>
         </div>
         <div class="modal-footer">
-            <button id="saveNetworkConfigBtn" class="btn-primary">
-                <i class="fas fa-save"></i> Salvar Configuração
-            </button>
-            <button id="cancelNetworkConfigBtn" class="btn-secondary">
-                Cancelar
-            </button>
+          <button id="saveNetworkConfigBtn" class="btn-primary">
+            <i class="fas fa-save"></i> Salvar
+          </button>
+          <button id="cancelNetworkConfigBtn" class="btn-secondary">
+            Cancelar
+          </button>
         </div>
       </div>
     </div>
@@ -139,7 +138,7 @@
           </div>
         </div>
         
-        <!-- Bloco principal simplificado -->
+        <!-- Bloco principal -->
         <div id="mainBlockSection" style="display: none;">
           <div class="card">
             <h3>Bloco IPv6 Principal</h3>
@@ -147,7 +146,7 @@
               <span class="info-label">CIDR:</span>
               <div class="info-value-container">
                 <div id="mainBlockCidr" class="info-value">-</div>
-                <button class="copy-btn" onclick="UIController.copiarTexto('mainBlockCidr')">
+                <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('mainBlockCidr'))">
                   <i class="fas fa-copy"></i>
                 </button>
               </div>
@@ -162,7 +161,6 @@
               </button>
             </div>
             
-            <!-- Lista de IPs do bloco principal -->
             <div id="mainBlockIpsContainer" style="display: none;">
               <h4>Primeiros IPs disponíveis neste bloco:</h4>
               <ul id="mainBlockIpsList" class="ip-list"></ul>
@@ -222,7 +220,7 @@
                 <i class="fas fa-list"></i> Gerar IPs da Sub-rede
               </button>
               <button id="exportSubnetsTableBtn" class="btn-secondary" style="display: none;">
-                  <i class="fas fa-file-excel"></i> Exportar Tabela
+                <i class="fas fa-file-excel"></i> Exportar Tabela
               </button>
             </div>
           </div>
@@ -261,7 +259,7 @@
           <span class="info-label">CIDR:</span>
           <div class="info-value-container">
             <div id="sidebarBlockCidr" class="info-value">-</div>
-            <button class="copy-btn" onclick="UIController.copiarTexto('sidebarBlockCidr')">
+            <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('sidebarBlockCidr'))">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -270,7 +268,7 @@
           <span class="info-label">Gateway padrão:</span>
           <div class="info-value-container">
             <div id="mainBlockGateway" class="info-value">-</div>
-            <button class="copy-btn" onclick="UIController.copiarTexto('mainBlockGateway')">
+            <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('mainBlockGateway'))">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -280,7 +278,7 @@
           <span class="dns-label">Google DNS</span>
           <div class="info-value-container">
             <div id="googleDNS" class="info-value">2001:4860:4860::8888</div>
-            <button class="copy-btn" onclick="UIController.copiarTexto('googleDNS')">
+            <button class="copy-btn" onclick="UIController.clipboard.copy('2001:4860:4860::8888')">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -290,7 +288,7 @@
           <span class="dns-label">Google DNS Alt</span>
           <div class="info-value-container">
             <div id="googleDNSAlt" class="info-value">2001:4860:4860::8844</div>
-            <button class="copy-btn" onclick="UIController.copiarTexto('googleDNSAlt')">
+            <button class="copy-btn" onclick="UIController.clipboard.copy('2001:4860:4860::8844')">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -300,7 +298,7 @@
           <span class="dns-label">Cloudflare DNS</span>
           <div class="info-value-container">
             <div id="cloudflareDNS" class="info-value">2606:4700:4700::1111</div>
-            <button class="copy-btn" onclick="UIController.copiarTexto('cloudflareDNS')">
+            <button class="copy-btn" onclick="UIController.clipboard.copy('2606:4700:4700::1111')">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -313,12 +311,12 @@
             <span class="info-label">Prefixo Agregado:</span>
             <div class="info-value-container">
               <div id="aggregatedPrefix" class="info-value">N/A</div>
-              <button class="copy-btn" onclick="UIController.copiarTexto('aggregatedPrefix')">
+              <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('aggregatedPrefix'))">
                 <i class="fas fa-copy"></i>
               </button>
             </div>
           </div>
-          <p class="info-desc">Este é o bloco IPv6 que engloba todas as sub-redes selecionadas, quando possível realizar a agregação.</p>
+          <p class="info-desc">Este é o bloco IPv6 que engloba todas as sub-redes selecionadas.</p>
         </div>
       </div>
     </div>
@@ -334,63 +332,110 @@
     </button>
   </div>
   
-  <!-- SCRIPTS: Carregamento direto dos scripts na ordem correta -->
+  <!-- Scripts em ordem otimizada para melhor performance -->
+  
+  <!-- 1. Utilitários básicos primeiro -->
+  <script src="js/utils/dom-cache.js"></script>
+  <script src="js/utils/module-manager.js"></script>
+  
+  <!-- 2. Módulos principais de core -->
   <script src="js/core/ipv6-utils.js"></script>
   <script src="js/ui/ui-controller.js"></script>
   <script src="js/core/ipv6-calculator.js"></script>
+  
+  <!-- 3. Verificações de ambiente -->
   <script src="js/utils/env-check.js"></script>
   <script src="js/utils/debug-check.js"></script>
+  
+  <!-- 4. Módulos de UI e componentes -->
   <script src="js/ui/ui-components.js"></script>
   <script src="js/ui/responsive-handler.js"></script>
   <script src="js/ui/ui-fixes.js"></script>
-  <script src="js/enhancements/enhanced-app.js"></script>
-  <script src="js/core/app.js"></script>
-
-  <!-- Biblioteca SheetJS (xlsx) para exportação Excel -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- Módulo de exportação Excel -->
-  <script src="js/utils/excel-exporter.js"></script>
-  <!-- Controlador de Exportação -->
-  <script src="js/ui/export-controller.js"></script>
   
-  <!-- Modal de Rede e Scripts de Sobreposição -->
+  <!-- 5. Biblioteca externa para Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <!-- 6. Módulos de funcionalidades específicas -->
+  <script src="js/utils/excel-exporter.js"></script>
+  <script src="js/ui/export-controller.js"></script>
   <script src="js/ui/overlap-checker.js"></script>
   <script src="js/ui/network-panel.js"></script>
   <script src="js/utils/modal-interactions.js"></script>
+  
+  <!-- 7. Scripts de integração -->
   <script src="js/overlap-integration.js"></script>
+  
+  <!-- 8. Melhorias e inicialização -->
+  <script src="js/enhancements/enhanced-app.js"></script>
+  
+  <!-- 9. Script principal da aplicação (por último) -->
+  <script src="js/core/app.js"></script>
 
-  <!-- Script de inicialização -->
+  <!-- Script de inicialização final -->
   <script>
-    // Script de inicialização para garantir que tudo está carregado corretamente
+    // Verificação final e configuração global
     document.addEventListener('DOMContentLoaded', function() {
-      console.log("Verificando carregamento dos módulos...");
+      console.log("🌐 Calculadora IPv6 - Verificação final de inicialização");
       
-      // Verificar se os módulos principais foram carregados
-      if (typeof IPv6Utils === 'undefined' || typeof UIController === 'undefined' || typeof IPv6Calculator === 'undefined') {
-        // Mostrar erro de inicialização
+      // Verificar módulos críticos
+      const criticalModules = ['IPv6Utils', 'UIController', 'IPv6Calculator'];
+      const missingModules = criticalModules.filter(module => typeof window[module] === 'undefined');
+      
+      if (missingModules.length > 0) {
+        console.error("❌ Módulos críticos não carregados:", missingModules);
         const errorAlert = document.getElementById('initErrorAlert');
         const errorMessage = document.getElementById('initErrorMessage');
         
         if (errorAlert && errorMessage) {
-          errorMessage.textContent = "Alguns módulos necessários não foram carregados. Por favor, recarregue a página.";
+          errorMessage.textContent = `Módulos não carregados: ${missingModules.join(', ')}. Recarregue a página.`;
           errorAlert.style.display = 'block';
         }
-        
-        console.error("Falha ao carregar os módulos necessários!");
-        console.log("IPv6Utils disponível:", typeof IPv6Utils !== 'undefined');
-        console.log("UIController disponível:", typeof UIController !== 'undefined');
-        console.log("IPv6Calculator disponível:", typeof IPv6Calculator !== 'undefined');
-        
         return;
       }
       
-      // Configurar a função global copiarTexto para compatibilidade
-      if (typeof window.copiarTexto === 'undefined') {
-        window.copiarTexto = UIController.copiarTexto;
-        console.log("Função global copiarTexto configurada");
+      // Configurar função global de cópia para compatibilidade
+      if (typeof window.copiarTexto === 'undefined' && window.UIController) {
+        window.copiarTexto = function(elementId) {
+          if (window.UIController.clipboard) {
+            const element = document.getElementById(elementId);
+            window.UIController.clipboard.copy(element);
+          }
+        };
       }
       
-      console.log("Calculadora IPv6 inicializada com sucesso!");
+      // Verificar disponibilidade da biblioteca Excel
+      if (typeof window.XLSX === 'undefined') {
+        console.warn("⚠️ Biblioteca XLSX não carregada - funcionalidade de exportação pode não funcionar");
+      }
+      
+      // Log final
+      console.log("✅ Calculadora IPv6 inicializada com sucesso!");
+      console.log("📊 Módulos carregados:", criticalModules.filter(m => window[m]).length + "/" + criticalModules.length);
+      
+      // Mostrar informações de debug se estiver em localhost
+      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
+        console.group("🔧 Informações de Debug");
+        console.log("Ambiente:", "Desenvolvimento");
+        console.log("Módulos disponíveis:", Object.keys(window).filter(key => 
+          ['IPv6Utils', 'UIController', 'IPv6Calculator', 'ModuleManager', 'DOMCache'].includes(key)
+        ));
+        console.log("Para diagnóstico completo execute: debugIPv6App.checkModules()");
+        console.groupEnd();
+      }
+    });
+    
+    // Tratamento de erros globais
+    window.addEventListener('error', function(e) {
+      console.error("❌ Erro global capturado:", e.error);
+      if (e.filename && e.filename.includes('ipv6')) {
+        console.error("Erro relacionado à Calculadora IPv6 detectado");
+      }
+    });
+    
+    // Evitar que erros de recursos não críticos quebrem a aplicação
+    window.addEventListener('unhandledrejection', function(e) {
+      console.warn("⚠️ Promise rejeitada:", e.reason);
+      // Não prevenir o comportamento padrão para promises críticas
     });
   </script>
 </body>
