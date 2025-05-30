@@ -1,12 +1,14 @@
-/* Estilos específicos para o modal de configuração de rede */
+/* Estilos específicos para o modal de configuração de rede - Versão Corrigida */
 
-/* Modal overlay */
+/* Modal overlay - sempre fixo na viewport visível */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
   background-color: rgba(0, 0, 0, 0.6);
   z-index: 1050;
   display: flex;
@@ -15,6 +17,9 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.3s ease, visibility 0s linear 0.3s;
+  /* Garantir que sempre cubra toda a viewport */
+  inset: 0;
+  overflow-y: auto;
 }
 
 .modal-overlay.visible {
@@ -23,7 +28,7 @@
   transition: opacity 0.3s ease;
 }
 
-/* Modal container */
+/* Modal container - centralizado na viewport */
 .modal {
   background-color: var(--bg-light);
   border-radius: var(--border-radius-lg);
@@ -37,6 +42,8 @@
   transform: scale(0.95);
   opacity: 0;
   transition: transform 0.3s ease, opacity 0.3s ease;
+  margin: auto;
+  position: relative;
 }
 
 .modal-overlay.visible .modal {
@@ -52,6 +59,7 @@
   padding: 16px 24px;
   border-bottom: 1px solid var(--border-light);
   background-color: var(--bg-light-accent);
+  flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -81,11 +89,12 @@
   color: var(--text-light);
 }
 
-/* Modal body */
+/* Modal body - com scroll controlado */
 .modal-body {
   padding: 24px;
   overflow-y: auto;
   flex-grow: 1;
+  max-height: calc(90vh - 140px);
 }
 
 .modal-body p {
@@ -104,6 +113,7 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 /* Form elements inside modal */
@@ -125,6 +135,7 @@
   border-radius: var(--border-radius-sm);
   font-size: 15px;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .field-group input[type="text"]:focus {
@@ -147,10 +158,10 @@
   padding: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
-  display: flex;
+  display: none;
   gap: 16px;
   box-shadow: 0 4px 12px rgba(240, 184, 73, 0.2);
-  display: none;
+  animation: slideIn 0.3s ease;
 }
 
 .overlap-warning.show {
@@ -195,6 +206,14 @@
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   font-size: 14px;
   color: #9c6f19;
+}
+
+/* Prevenir scroll do body quando modal estiver aberto */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  top: 0;
 }
 
 /* Dark mode styles */
@@ -280,6 +299,17 @@ body.dark-mode .suggested-prefix code {
   justify-content: center;
   gap: 8px;
   font-size: 14px;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+  color: white;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
 }
 
 /* Button with issue indicator */
@@ -293,14 +323,20 @@ body.dark-mode .suggested-prefix code {
 }
 
 /* Responsive adjustments */
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .modal {
     width: 95%;
+    max-width: none;
     max-height: 95vh;
+    margin: 2.5vh auto;
+  }
+  
+  .modal-body {
+    max-height: calc(95vh - 120px);
+    padding: 16px;
   }
   
   .modal-header,
-  .modal-body,
   .modal-footer {
     padding: 16px;
   }
@@ -313,4 +349,40 @@ body.dark-mode .suggested-prefix code {
   .modal-footer button {
     width: 100%;
   }
+  
+  .suggested-prefix {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .suggested-prefix button {
+    width: 100%;
+  }
+}
+
+/* Animações */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Melhorias de acessibilidade */
+.modal:focus {
+  outline: none;
+}
+
+.modal-overlay[aria-hidden="true"] {
+  display: none;
+}
+
+/* Garantir que o modal sempre apareça acima de outros elementos */
+.modal-overlay {
+  z-index: 9999;
 }
