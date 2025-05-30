@@ -1,12 +1,15 @@
 /**
- * Aplicação Principal da Calculadora IPv6 - Versão Corrigida
+ * Aplicação Principal da Calculadora IPv6 - Versão Corrigida e Simplificada
  * 
- * Este arquivo coordena a inicialização da aplicação de forma limpa e eficiente,
- * garantindo que todos os event listeners sejam configurados corretamente.
+ * Este arquivo coordena a inicialização da aplicação sem interferir
+ * nos event listeners dos outros módulos.
  */
 
 (function() {
   'use strict';
+  
+  // Flag para evitar inicialização dupla
+  let initialized = false;
   
   /**
    * Verifica se todos os módulos essenciais estão carregados
@@ -34,135 +37,119 @@
   
   /**
    * Configura event listeners básicos da aplicação
+   * APENAS para elementos que não são gerenciados por outros módulos
    */
   function setupApplicationEvents() {
     try {
-      console.log("Configurando eventos da aplicação...");
+      console.log('[App] Configurando eventos da aplicação...');
       
-      // Configurar evento do botão calcular
+      // Configurar evento do botão calcular - APENAS se não estiver configurado
       const calcularBtn = document.getElementById('calcularBtn');
-      if (calcularBtn && window.IPv6Calculator) {
-        // Remover listeners existentes
-        const newCalcBtn = calcularBtn.cloneNode(true);
-        calcularBtn.parentNode.replaceChild(newCalcBtn, calcularBtn);
-        newCalcBtn.addEventListener('click', window.IPv6Calculator.calcularSubRedes);
-        console.log("Event listener do botão calcular configurado");
+      if (calcularBtn && window.IPv6Calculator && !calcularBtn.hasAttribute('data-app-ready')) {
+        calcularBtn.addEventListener('click', window.IPv6Calculator.calcularSubRedes);
+        calcularBtn.setAttribute('data-app-ready', 'true');
+        console.log('[App] Event listener do botão calcular configurado');
       }
       
-      // Configurar evento do botão reset
+      // Configurar evento do botão reset - APENAS se não estiver configurado
       const resetBtn = document.getElementById('resetBtn');
-      if (resetBtn && window.IPv6Calculator) {
-        const newResetBtn = resetBtn.cloneNode(true);
-        resetBtn.parentNode.replaceChild(newResetBtn, resetBtn);
-        newResetBtn.addEventListener('click', window.IPv6Calculator.resetarCalculadora);
-        console.log("Event listener do botão reset configurado");
-      }
-      
-      // Configurar evento do botão de tema (já configurado no UIController)
-      // Apenas verificar se existe
-      const themeBtn = document.getElementById('toggleThemeBtn');
-      if (themeBtn && window.UIController) {
-        console.log("Botão de tema encontrado - será configurado pelo UIController");
+      if (resetBtn && window.IPv6Calculator && !resetBtn.hasAttribute('data-app-ready')) {
+        resetBtn.addEventListener('click', window.IPv6Calculator.resetarCalculadora);
+        resetBtn.setAttribute('data-app-ready', 'true');
+        console.log('[App] Event listener do botão reset configurado');
       }
       
       // Configurar botão continuar
       const continuarBtn = document.getElementById('continuarBtn');
-      if (continuarBtn && window.IPv6Calculator) {
-        const newContinuarBtn = continuarBtn.cloneNode(true);
-        continuarBtn.parentNode.replaceChild(newContinuarBtn, continuarBtn);
-        newContinuarBtn.addEventListener('click', window.IPv6Calculator.mostrarSugestoesDivisao);
+      if (continuarBtn && window.IPv6Calculator && !continuarBtn.hasAttribute('data-app-ready')) {
+        continuarBtn.addEventListener('click', window.IPv6Calculator.mostrarSugestoesDivisao);
+        continuarBtn.setAttribute('data-app-ready', 'true');
       }
       
       // Configurar checkbox "Selecionar Todos"
       const selectAllBtn = document.getElementById('selectAll');
-      if (selectAllBtn && window.UIController) {
-        const newSelectAllBtn = selectAllBtn.cloneNode(true);
-        selectAllBtn.parentNode.replaceChild(newSelectAllBtn, selectAllBtn);
-        newSelectAllBtn.addEventListener('change', window.UIController.toggleSelectAll);
+      if (selectAllBtn && window.UIController && !selectAllBtn.hasAttribute('data-app-ready')) {
+        selectAllBtn.addEventListener('change', window.UIController.toggleSelectAll);
+        selectAllBtn.setAttribute('data-app-ready', 'true');
       }
       
       // Configurar botão "Carregar Mais"
       const loadMoreBtn = document.getElementById('loadMoreButton');
-      if (loadMoreBtn && window.UIController && window.appState) {
-        const newLoadMoreBtn = loadMoreBtn.cloneNode(true);
-        loadMoreBtn.parentNode.replaceChild(newLoadMoreBtn, loadMoreBtn);
-        newLoadMoreBtn.addEventListener('click', () => {
+      if (loadMoreBtn && window.UIController && window.appState && !loadMoreBtn.hasAttribute('data-app-ready')) {
+        loadMoreBtn.addEventListener('click', () => {
           window.UIController.carregarMaisSubRedes(window.appState.subRedesExibidas || 0, 100);
         });
+        loadMoreBtn.setAttribute('data-app-ready', 'true');
       }
       
       // Configurar botões de IPs do bloco principal
       const toggleMainBlockIpsBtn = document.getElementById('toggleMainBlockIpsBtn');
-      if (toggleMainBlockIpsBtn && window.IPv6Calculator) {
-        const newToggleBtn = toggleMainBlockIpsBtn.cloneNode(true);
-        toggleMainBlockIpsBtn.parentNode.replaceChild(newToggleBtn, toggleMainBlockIpsBtn);
-        newToggleBtn.addEventListener('click', window.IPv6Calculator.toggleMainBlockIps);
+      if (toggleMainBlockIpsBtn && window.IPv6Calculator && !toggleMainBlockIpsBtn.hasAttribute('data-app-ready')) {
+        toggleMainBlockIpsBtn.addEventListener('click', window.IPv6Calculator.toggleMainBlockIps);
+        toggleMainBlockIpsBtn.setAttribute('data-app-ready', 'true');
       }
       
       const moreMainBlockIpsBtn = document.getElementById('moreMainBlockIpsBtn');
-      if (moreMainBlockIpsBtn && window.IPv6Calculator) {
-        const newMoreBtn = moreMainBlockIpsBtn.cloneNode(true);
-        moreMainBlockIpsBtn.parentNode.replaceChild(newMoreBtn, moreMainBlockIpsBtn);
-        newMoreBtn.addEventListener('click', window.IPv6Calculator.gerarMaisIPsDoBloco);
+      if (moreMainBlockIpsBtn && window.IPv6Calculator && !moreMainBlockIpsBtn.hasAttribute('data-app-ready')) {
+        moreMainBlockIpsBtn.addEventListener('click', window.IPv6Calculator.gerarMaisIPsDoBloco);
+        moreMainBlockIpsBtn.setAttribute('data-app-ready', 'true');
       }
       
       const resetMainBlockIPsBtn = document.getElementById('resetMainBlockIPsButton');
-      if (resetMainBlockIPsBtn && window.IPv6Calculator) {
-        const newResetMainBtn = resetMainBlockIPsBtn.cloneNode(true);
-        resetMainBlockIPsBtn.parentNode.replaceChild(newResetMainBtn, resetMainBlockIPsBtn);
-        newResetMainBtn.addEventListener('click', window.IPv6Calculator.resetarIPsMainBlock);
+      if (resetMainBlockIPsBtn && window.IPv6Calculator && !resetMainBlockIPsBtn.hasAttribute('data-app-ready')) {
+        resetMainBlockIPsBtn.addEventListener('click', window.IPv6Calculator.resetarIPsMainBlock);
+        resetMainBlockIPsBtn.setAttribute('data-app-ready', 'true');
       }
       
       // Configurar botões de IPs da sub-rede
       const gerarIPsBtn = document.getElementById('gerarIPsButton');
-      if (gerarIPsBtn && window.IPv6Calculator) {
-        const newGerarBtn = gerarIPsBtn.cloneNode(true);
-        gerarIPsBtn.parentNode.replaceChild(newGerarBtn, gerarIPsBtn);
-        newGerarBtn.addEventListener('click', window.IPv6Calculator.gerarPrimeirosIPs);
+      if (gerarIPsBtn && window.IPv6Calculator && !gerarIPsBtn.hasAttribute('data-app-ready')) {
+        gerarIPsBtn.addEventListener('click', window.IPv6Calculator.gerarPrimeirosIPs);
+        gerarIPsBtn.setAttribute('data-app-ready', 'true');
       }
       
       const gerarMaisIPsBtn = document.getElementById('gerarMaisIPsButton');
-      if (gerarMaisIPsBtn && window.IPv6Calculator) {
-        const newGerarMaisBtn = gerarMaisIPsBtn.cloneNode(true);
-        gerarMaisIPsBtn.parentNode.replaceChild(newGerarMaisBtn, gerarMaisIPsBtn);
-        newGerarMaisBtn.addEventListener('click', window.IPv6Calculator.gerarMaisIPs);
+      if (gerarMaisIPsBtn && window.IPv6Calculator && !gerarMaisIPsBtn.hasAttribute('data-app-ready')) {
+        gerarMaisIPsBtn.addEventListener('click', window.IPv6Calculator.gerarMaisIPs);
+        gerarMaisIPsBtn.setAttribute('data-app-ready', 'true');
       }
       
       const resetIPsBtn = document.getElementById('resetIPsButton');
-      if (resetIPsBtn && window.IPv6Calculator) {
-        const newResetIPsBtn = resetIPsBtn.cloneNode(true);
-        resetIPsBtn.parentNode.replaceChild(newResetIPsBtn, resetIPsBtn);
-        newResetIPsBtn.addEventListener('click', window.IPv6Calculator.resetarIPsGerados);
+      if (resetIPsBtn && window.IPv6Calculator && !resetIPsBtn.hasAttribute('data-app-ready')) {
+        resetIPsBtn.addEventListener('click', window.IPv6Calculator.resetarIPsGerados);
+        resetIPsBtn.setAttribute('data-app-ready', 'true');
       }
       
-      console.log("Eventos da aplicação configurados com sucesso");
+      console.log('[App] Eventos da aplicação configurados com sucesso');
     } catch (error) {
-      console.error("Erro ao configurar eventos da aplicação:", error);
+      console.error('[App] Erro ao configurar eventos da aplicação:', error);
     }
   }
   
   /**
-   * Configura funcionalidades de cópia
+   * Configurar funcionalidades de cópia
    */
   function setupCopyFunctionality() {
     try {
       // Garantir que a função global copiarTexto está disponível
       if (!window.copiarTexto && window.UIController && window.UIController.clipboard) {
-        window.copiarTexto = function(elementId) {
-          const element = document.getElementById(elementId);
-          if (element) {
-            window.UIController.clipboard.copy(element);
+        window.copiarTexto = function(elementIdOrValue) {
+          if (typeof elementIdOrValue === 'string' && elementIdOrValue.length < 50 && !elementIdOrValue.includes(' ')) {
+            const element = document.getElementById(elementIdOrValue);
+            if (element) {
+              window.UIController.clipboard.copy(element);
+            } else {
+              window.UIController.clipboard.copy(elementIdOrValue);
+            }
+          } else {
+            window.UIController.clipboard.copy(elementIdOrValue);
           }
         };
-        console.log("Função global copiarTexto configurada");
+        console.log('[App] Função global copiarTexto configurada');
       }
       
-      // Configurar todos os botões de cópia existentes
-      if (window.UIController && window.UIController.setupCopyButtons) {
-        window.UIController.setupCopyButtons();
-      }
     } catch (error) {
-      console.error("Erro ao configurar funcionalidade de cópia:", error);
+      console.error('[App] Erro ao configurar funcionalidade de cópia:', error);
     }
   }
   
@@ -181,7 +168,7 @@
         isMainBlockIpsVisible: false,
         currentStep: 1
       };
-      console.log("Estado global da aplicação inicializado");
+      console.log('[App] Estado global da aplicação inicializado');
     }
   }
   
@@ -189,6 +176,10 @@
    * Configura eventos de atalhos de teclado
    */
   function setupKeyboardShortcuts() {
+    if (document.hasAttribute('data-keyboard-shortcuts-ready')) {
+      return; // Já configurado
+    }
+    
     document.addEventListener('keydown', function(e) {
       // Ctrl+Enter: Calcular sub-redes
       if (e.ctrlKey && e.key === 'Enter') {
@@ -207,25 +198,97 @@
         }
       }
     });
+    
+    document.setAttribute('data-keyboard-shortcuts-ready', 'true');
   }
   
   /**
-   * Monitora mudanças dinâmicas no DOM
+   * Configura abas de visualização
+   */
+  function setupTabs() {
+    document.querySelectorAll('.tab:not([data-app-ready])').forEach(tab => {
+      tab.addEventListener('click', function() {
+        // Remover classe ativa de todas as abas
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('tab-active'));
+        this.classList.add('tab-active');
+        
+        // Ocultar todos os conteúdos
+        document.querySelectorAll('.tab-content').forEach(content => {
+          content.classList.remove('active');
+        });
+        
+        // Mostrar o conteúdo correspondente
+        const contentId = this.id.replace('Tab', 'Content');
+        const contentElement = document.getElementById(contentId);
+        if (contentElement) {
+          contentElement.classList.add('active');
+        }
+        
+        // Atualizar visualização se necessário
+        if (window.VisualizationModule) {
+          switch (this.id) {
+            case 'utilizationTab':
+              if (typeof VisualizationModule.initUtilizationChart === 'function') {
+                VisualizationModule.initUtilizationChart();
+              }
+              break;
+            case 'heatmapTab':
+              if (typeof VisualizationModule.initHeatmapChart === 'function') {
+                VisualizationModule.initHeatmapChart();
+              }
+              break;
+            case 'prefixComparisonTab':
+              if (typeof VisualizationModule.initPrefixComparisonChart === 'function') {
+                VisualizationModule.initPrefixComparisonChart();
+              }
+              break;
+          }
+        }
+      });
+      
+      tab.setAttribute('data-app-ready', 'true');
+    });
+  }
+  
+  /**
+   * Configura slider de prefixo
+   */
+  function setupPrefixSlider() {
+    const prefixSlider = document.getElementById('prefixSlider');
+    if (prefixSlider && !prefixSlider.hasAttribute('data-app-ready')) {
+      prefixSlider.addEventListener('input', function() {
+        const prefixValue = document.getElementById('prefixValue');
+        if (prefixValue) {
+          prefixValue.textContent = this.value;
+        }
+        
+        if (window.VisualizationModule && typeof VisualizationModule.updatePrefixStats === 'function') {
+          VisualizationModule.updatePrefixStats(parseInt(this.value));
+        }
+      });
+      
+      prefixSlider.setAttribute('data-app-ready', 'true');
+    }
+  }
+  
+  /**
+   * Monitora quando novos elementos são adicionados ao DOM
    */
   function setupDOMObserver() {
     const observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         if (mutation.type === 'childList') {
-          // Quando novos elementos são adicionados, configurar botões de cópia
+          // Se novos elementos forem adicionados, configurar eventos se necessário
           mutation.addedNodes.forEach(function(node) {
             if (node.nodeType === 1) { // Element node
-              const copyButtons = node.querySelectorAll ? node.querySelectorAll('.copy-btn') : [];
-              if (copyButtons.length > 0) {
-                setTimeout(() => {
-                  if (window.UIController && window.UIController.setupCopyButtons) {
-                    window.UIController.setupCopyButtons();
-                  }
-                }, 100);
+              // Configurar abas se necessário
+              if (node.querySelectorAll && node.querySelectorAll('.tab').length > 0) {
+                setTimeout(setupTabs, 100);
+              }
+              
+              // Configurar slider se necessário
+              if (node.id === 'prefixSlider' || node.querySelector('#prefixSlider')) {
+                setTimeout(setupPrefixSlider, 100);
               }
             }
           });
@@ -243,14 +306,19 @@
    * Função principal de inicialização
    */
   function initializeApplication() {
-    console.log('🚀 Inicializando Calculadora IPv6...');
+    if (initialized) {
+      console.log('[App] Aplicação já inicializada, ignorando chamada dupla');
+      return;
+    }
+    
+    console.log('[App] 🚀 Inicializando Calculadora IPv6...');
     
     try {
       // Verificar módulos essenciais
       const moduleCheck = checkEssentialModules();
       
       if (!moduleCheck.allLoaded) {
-        console.error('❌ Módulos essenciais não carregados:', moduleCheck.missing);
+        console.error('[App] ❌ Módulos essenciais não carregados:', moduleCheck.missing);
         
         // Mostrar erro na interface
         const errorAlert = document.getElementById('initErrorAlert');
@@ -264,7 +332,7 @@
         return false;
       }
       
-      console.log('✅ Módulos essenciais carregados:', moduleCheck.loaded);
+      console.log('[App] ✅ Módulos essenciais carregados:', moduleCheck.loaded);
       
       // Inicializar estado da aplicação
       initializeAppState();
@@ -273,18 +341,18 @@
       setupCopyFunctionality();
       setupApplicationEvents();
       setupKeyboardShortcuts();
+      setupTabs();
+      setupPrefixSlider();
       setupDOMObserver();
       
-      // Aguardar um pouco para UIController configurar seus próprios eventos
-      setTimeout(() => {
-        console.log('📋 Configuração de eventos concluída');
-      }, 500);
+      // Marcar como inicializado
+      initialized = true;
       
-      console.log('🎉 Calculadora IPv6 inicializada com sucesso!');
+      console.log('[App] 🎉 Calculadora IPv6 inicializada com sucesso!');
       return true;
       
     } catch (error) {
-      console.error('❌ Erro na inicialização da aplicação:', error);
+      console.error('[App] ❌ Erro na inicialização da aplicação:', error);
       
       // Mostrar erro na interface
       const errorAlert = document.getElementById('initErrorAlert');
@@ -304,7 +372,7 @@
     document.addEventListener('DOMContentLoaded', initializeApplication);
   } else {
     // Se o DOM já estiver carregado, aguardar um pouco para garantir que outros módulos carregaram
-    setTimeout(initializeApplication, 100);
+    setTimeout(initializeApplication, 300);
   }
   
   // Expor função de inicialização para debug
