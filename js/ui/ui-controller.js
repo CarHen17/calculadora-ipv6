@@ -1,8 +1,6 @@
 /**
- * UI Controller - Versão Corrigida
- * 
- * Controlador de interface que gerencia todas as funcionalidades de UI
- * incluindo tema, navegação, notificações e interações.
+ * UI Controller - Versão Simplificada e Corrigida
+ * Gerencia todas as funcionalidades de interface da aplicação
  */
 
 const UIController = (function() {
@@ -25,26 +23,14 @@ const UIController = (function() {
     if (typeof id === 'string') {
       return document.getElementById(id);
     }
-    return id; // Já é um elemento
-  }
-  
-  /**
-   * Executa operação DOM de forma segura
-   */
-  function safeDOMOperation(operation, context = 'Operação DOM') {
-    try {
-      return operation();
-    } catch (error) {
-      console.error(`[UIController] Erro em ${context}:`, error);
-      return null;
-    }
+    return id;
   }
   
   /**
    * Atualiza o passo atual no indicador de progresso
    */
   function updateStep(step) {
-    safeDOMOperation(() => {
+    try {
       const steps = document.querySelectorAll('.step');
       if (steps.length === 0) return;
       
@@ -55,30 +41,23 @@ const UIController = (function() {
       const currentStep = getElement(`step${step}`);
       if (currentStep) {
         currentStep.classList.add('active');
-        
-        // Animação suave
-        currentStep.style.transform = 'scale(1.05)';
-        setTimeout(() => {
-          currentStep.style.transform = '';
-        }, CONFIG.ANIMATION_DURATION);
       }
       
       // Atualizar estado global
       if (window.appState) {
         window.appState.currentStep = step;
       }
-    }, 'updateStep');
+    } catch (error) {
+      console.error('[UIController] Erro em updateStep:', error);
+    }
   }
   
   /**
    * Gerencia o tema da aplicação
    */
   const themeManager = {
-    /**
-     * Alterna entre tema claro e escuro
-     */
     toggle() {
-      safeDOMOperation(() => {
+      try {
         const isDark = document.body.classList.toggle('dark-mode');
         
         // Atualizar botão
@@ -91,18 +70,14 @@ const UIController = (function() {
         // Salvar preferência
         localStorage.setItem(CONFIG.THEME_STORAGE_KEY, isDark ? 'dark' : 'light');
         
-        // Notificar outros módulos sobre mudança de tema
-        this.notifyThemeChange(isDark);
-        
         console.log(`[UIController] Tema alterado para: ${isDark ? 'escuro' : 'claro'}`);
-      }, 'toggle theme');
+      } catch (error) {
+        console.error('[UIController] Erro ao alternar tema:', error);
+      }
     },
     
-    /**
-     * Carrega preferência de tema salva
-     */
     loadPreference() {
-      safeDOMOperation(() => {
+      try {
         const saved = localStorage.getItem(CONFIG.THEME_STORAGE_KEY);
         const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         
@@ -113,7 +88,6 @@ const UIController = (function() {
         } else if (saved === 'light') {
           shouldUseDark = false;
         } else {
-          // Usar preferência do sistema
           shouldUseDark = prefersDark;
         }
         
@@ -126,212 +100,17 @@ const UIController = (function() {
           const icon = shouldUseDark ? 'fa-sun' : 'fa-moon';
           themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
         }
-      }, 'load theme preference');
-    },
-    
-    /**
-     * Notifica outros módulos sobre mudança de tema
-     */
-    notifyThemeChange(isDark) {
-      // Disparar evento customizado
-      const event = new CustomEvent('themeChanged', { 
-        detail: { isDark } 
-      });
-      document.dispatchEvent(event);
-    }
-  };
-  
-  /**
-   * Sistema de notificações
-   */
-  const notificationSystem = {
-    /**
-     * Mostra uma notificação
-     */
-    show(message, type = 'success', duration = CONFIG.NOTIFICATION_DURATION) {
-      const notification = this.create(message, type, duration);
-      this.display(notification);
-    },
-    
-    /**
-     * Cria elemento de notificação
-     */
-    create(message, type, duration) {
-      const notification = document.createElement('div');
-      notification.className = `notification notification-${type}`;
-      
-      // Ícones por tipo
-      const icons = {
-        success: 'fa-check-circle',
-        error: 'fa-exclamation-circle',
-        warning: 'fa-exclamation-triangle',
-        info: 'fa-info-circle'
-      };
-      
-      // Cores por tipo
-      const colors = {
-        success: '#4caf50',
-        error: '#e53935',
-        warning: '#ffa000',
-        info: '#0070d1'
-      };
-      
-      notification.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <i class="fas ${icons[type] || icons.info}" style="font-size: 20px;"></i>
-          <span style="flex: 1;">${message}</span>
-          <button class="notification-close" style="background: none; border: none; color: inherit; cursor: pointer; padding: 4px;">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-      `;
-      
-      // Estilizar
-      Object.assign(notification.style, {
-        position: 'fixed',
-        bottom: '20px',
-        right: '20px',
-        minWidth: '300px',
-        maxWidth: '500px',
-        padding: '12px 16px',
-        borderRadius: '8px',
-        backgroundColor: colors[type] || colors.info,
-        color: 'white',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-        zIndex: '10000',
-        fontSize: '14px',
-        fontWeight: '500',
-        transform: 'translateX(100%)',
-        opacity: '0',
-        transition: 'all 0.3s ease'
-      });
-      
-      // Configurar botão de fechar
-      const closeBtn = notification.querySelector('.notification-close');
-      closeBtn.addEventListener('click', () => this.hide(notification));
-      
-      return { element: notification, duration, type };
-    },
-    
-    /**
-     * Exibe notificação na tela
-     */
-    display(notification) {
-      document.body.appendChild(notification.element);
-      
-      // Animar entrada
-      requestAnimationFrame(() => {
-        notification.element.style.transform = 'translateX(0)';
-        notification.element.style.opacity = '1';
-      });
-      
-      // Auto-remover
-      setTimeout(() => {
-        this.hide(notification);
-      }, notification.duration);
-    },
-    
-    /**
-     * Oculta notificação
-     */
-    hide(notification) {
-      const element = notification.element || notification;
-      
-      element.style.transform = 'translateX(100%)';
-      element.style.opacity = '0';
-      
-      setTimeout(() => {
-        if (element.parentNode) {
-          element.parentNode.removeChild(element);
-        }
-      }, CONFIG.ANIMATION_DURATION);
-    }
-  };
-  
-  /**
-   * Gerenciador de cópia para área de transferência
-   */
-  const clipboardManager = {
-    /**
-     * Copia texto para área de transferência
-     */
-    async copy(source, showFeedback = true) {
-      try {
-        let text;
-        
-        if (typeof source === 'string') {
-          text = source;
-        } else if (source instanceof HTMLElement) {
-          text = source.getAttribute('data-value') || 
-                source.getAttribute('data-ip') ||
-                source.textContent || 
-                source.innerText;
-        } else {
-          throw new Error('Fonte inválida para cópia');
-        }
-        
-        // Usar API moderna se disponível
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          await navigator.clipboard.writeText(text);
-        } else {
-          // Fallback para método mais antigo
-          const textArea = document.createElement('textarea');
-          textArea.value = text;
-          textArea.style.position = 'fixed';
-          textArea.style.left = '-999999px';
-          textArea.style.top = '-999999px';
-          document.body.appendChild(textArea);
-          textArea.focus();
-          textArea.select();
-          
-          const successful = document.execCommand('copy');
-          document.body.removeChild(textArea);
-          
-          if (!successful) {
-            throw new Error('Falha ao copiar usando método fallback');
-          }
-        }
-        
-        if (showFeedback) {
-          notificationSystem.show('Texto copiado!', 'success', 1500);
-        }
-        
-        return true;
       } catch (error) {
-        console.error('[UIController] Erro ao copiar:', error);
-        notificationSystem.show('Falha ao copiar o texto', 'error');
-        return false;
+        console.error('[UIController] Erro ao carregar preferência de tema:', error);
       }
     }
   };
-  
-  /**
-   * Função legada para compatibilidade
-   */
-  function copiarTexto(elementIdOrValue, feedback = true) {
-    // Se for string e parecer um ID (sem espaços, menor que 50 chars)
-    if (typeof elementIdOrValue === 'string' && 
-        elementIdOrValue.length < 50 && 
-        !elementIdOrValue.includes(' ')) {
-      
-      const element = getElement(elementIdOrValue);
-      if (element) {
-        clipboardManager.copy(element, feedback);
-      } else {
-        // Tratar como texto se elemento não existir
-        clipboardManager.copy(elementIdOrValue, feedback);
-      }
-    } else {
-      // Tratar como elemento ou texto
-      clipboardManager.copy(elementIdOrValue, feedback);
-    }
-  }
   
   /**
    * Adiciona um item à lista de IPs
    */
   function appendIpToList(ip, number, listId) {
-    safeDOMOperation(() => {
+    try {
       const ipsList = getElement(listId);
       if (!ipsList) {
         console.error(`[UIController] Lista "${listId}" não encontrada`);
@@ -344,36 +123,23 @@ const UIController = (function() {
       li.innerHTML = `
         <span class="ip-number">${number}.</span>
         <span class="ip-text" title="${ip}">${ip}</span>
-        <button class="copy-btn" type="button" title="Copiar IP" data-ip="${ip}">
+        <button class="copy-btn" type="button" title="Copiar IP" onclick="copyToClipboard('${ip}')">
           <i class="fas fa-copy"></i>
         </button>
       `;
       
-      // Configurar botão de cópia
-      const copyBtn = li.querySelector('.copy-btn');
-      copyBtn.addEventListener('click', () => {
-        clipboardManager.copy(ip, true);
-      });
-      
-      // Adicionar com animação
-      li.style.opacity = '0';
-      li.style.transform = 'translateY(10px)';
       ipsList.appendChild(li);
       
-      requestAnimationFrame(() => {
-        li.style.transition = 'all 0.3s ease';
-        li.style.opacity = '1';
-        li.style.transform = 'translateY(0)';
-      });
-      
-    }, 'appendIpToList');
+    } catch (error) {
+      console.error('[UIController] Erro em appendIpToList:', error);
+    }
   }
   
   /**
    * Carrega mais sub-redes na tabela
    */
   function carregarMaisSubRedes(startIndex, limit) {
-    safeDOMOperation(() => {
+    try {
       if (!window.appState || !window.appState.subRedesGeradas) {
         console.error('[UIController] Estado da aplicação não inicializado');
         return;
@@ -388,7 +154,6 @@ const UIController = (function() {
       const endIndex = Math.min(startIndex + limit, window.appState.subRedesGeradas.length);
       const fragment = document.createDocumentFragment();
       
-      // Usar DocumentFragment para melhor performance
       for (let i = startIndex; i < endIndex; i++) {
         const subnet = window.appState.subRedesGeradas[i];
         
@@ -418,6 +183,9 @@ const UIController = (function() {
         const checkbox = row.querySelector('input[type="checkbox"]');
         checkbox.addEventListener('change', function() {
           row.classList.toggle('selected', this.checked);
+          
+          // Habilitar/desabilitar botão de gerar IPs
+          updateGenerateIPsButton();
         });
         
         fragment.appendChild(row);
@@ -436,14 +204,32 @@ const UIController = (function() {
         loadMoreContainer.style.display = shouldShow ? 'block' : 'none';
       }
       
-    }, 'carregarMaisSubRedes');
+    } catch (error) {
+      console.error('[UIController] Erro em carregarMaisSubRedes:', error);
+    }
+  }
+  
+  /**
+   * Atualiza a visibilidade do botão de gerar IPs
+   */
+  function updateGenerateIPsButton() {
+    try {
+      const checkboxes = document.querySelectorAll('#subnetsTable tbody input[type="checkbox"]:checked');
+      const generateBtn = getElement('gerarIPsButton');
+      
+      if (generateBtn) {
+        generateBtn.style.display = checkboxes.length === 1 ? 'inline-block' : 'none';
+      }
+    } catch (error) {
+      console.error('[UIController] Erro em updateGenerateIPsButton:', error);
+    }
   }
   
   /**
    * Seleciona/desmarca todas as sub-redes
    */
   function toggleSelectAll() {
-    safeDOMOperation(() => {
+    try {
       const selectAll = getElement('selectAll');
       if (!selectAll) {
         console.warn('[UIController] Checkbox "selectAll" não encontrado');
@@ -461,13 +247,14 @@ const UIController = (function() {
         if (row) {
           row.classList.toggle('selected', isChecked);
         }
-        
-        // Disparar evento change
-        const changeEvent = new Event('change', { bubbles: true });
-        checkbox.dispatchEvent(changeEvent);
       });
       
-    }, 'toggleSelectAll');
+      // Atualizar botão de gerar IPs
+      updateGenerateIPsButton();
+      
+    } catch (error) {
+      console.error('[UIController] Erro em toggleSelectAll:', error);
+    }
   }
   
   /**
@@ -484,97 +271,52 @@ const UIController = (function() {
   };
   
   /**
-   * Gerenciador de layout responsivo
-   */
-  const responsiveManager = {
-    adjust() {
-      const isMobile = window.innerWidth <= 768;
-      document.body.classList.toggle('mobile-device', isMobile);
-    }
-  };
-  
-  /**
-   * Configuração segura de event listeners
+   * Configuração de event listeners
    */
   function setupEventListeners() {
     console.log('[UIController] Configurando event listeners...');
     
-    // Botão de tema - configurar apenas uma vez
+    // Botão de tema
     const themeBtn = getElement('toggleThemeBtn');
-    if (themeBtn && !themeBtn.hasAttribute('data-ui-controller-ready')) {
-      themeBtn.addEventListener('click', themeManager.toggle.bind(themeManager));
-      themeBtn.setAttribute('data-ui-controller-ready', 'true');
-      console.log('[UIController] Event listener do tema configurado');
+    if (themeBtn && !themeBtn.hasAttribute('data-ui-ready')) {
+      themeBtn.addEventListener('click', themeManager.toggle);
+      themeBtn.setAttribute('data-ui-ready', 'true');
     }
     
     // Navegação
     const topBtn = getElement('topBtn');
     const bottomBtn = getElement('bottomBtn');
     
-    if (topBtn && !topBtn.hasAttribute('data-ui-controller-ready')) {
+    if (topBtn && !topBtn.hasAttribute('data-ui-ready')) {
       topBtn.addEventListener('click', navigation.scrollToTop);
-      topBtn.setAttribute('data-ui-controller-ready', 'true');
+      topBtn.setAttribute('data-ui-ready', 'true');
     }
     
-    if (bottomBtn && !bottomBtn.hasAttribute('data-ui-controller-ready')) {
+    if (bottomBtn && !bottomBtn.hasAttribute('data-ui-ready')) {
       bottomBtn.addEventListener('click', navigation.scrollToBottom);
-      bottomBtn.setAttribute('data-ui-controller-ready', 'true');
+      bottomBtn.setAttribute('data-ui-ready', 'true');
+    }
+    
+    // Checkbox "Selecionar Todos"
+    const selectAll = getElement('selectAll');
+    if (selectAll && !selectAll.hasAttribute('data-ui-ready')) {
+      selectAll.addEventListener('change', toggleSelectAll);
+      selectAll.setAttribute('data-ui-ready', 'true');
+    }
+    
+    // Botão "Carregar Mais"
+    const loadMoreBtn = getElement('loadMoreButton');
+    if (loadMoreBtn && !loadMoreBtn.hasAttribute('data-ui-ready')) {
+      loadMoreBtn.addEventListener('click', () => {
+        carregarMaisSubRedes(window.appState.subRedesExibidas || 0, 100);
+      });
+      loadMoreBtn.setAttribute('data-ui-ready', 'true');
     }
     
     // Responsividade
-    window.addEventListener('resize', responsiveManager.adjust);
-    
-    // Configurar todos os botões de cópia da página
-    setupCopyButtons();
-  }
-  
-  /**
-   * Configura todos os botões de cópia
-   */
-  function setupCopyButtons() {
-    // Configurar botões de cópia existentes que ainda não foram configurados
-    document.querySelectorAll('.copy-btn:not([data-ui-controller-ready])').forEach(btn => {
-      btn.addEventListener('click', function() {
-        const text = this.getAttribute('data-ip') || 
-                    this.getAttribute('data-value') ||
-                    this.closest('.ip-item, .info-value-container')?.querySelector('.ip-text, .info-value')?.textContent;
-        
-        if (text) {
-          clipboardManager.copy(text, true);
-        }
-      });
-      
-      // Marcar como configurado
-      btn.setAttribute('data-ui-controller-ready', 'true');
-    });
-  }
-  
-  /**
-   * Observador para novos elementos
-   */
-  function setupDOMObserver() {
-    const observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
-        if (mutation.type === 'childList') {
-          // Quando novos elementos são adicionados, configurar botões de cópia
-          mutation.addedNodes.forEach(function(node) {
-            if (node.nodeType === 1) { // Element node
-              // Configurar botões de cópia nos novos elementos
-              const copyButtons = node.querySelectorAll ? node.querySelectorAll('.copy-btn:not([data-ui-controller-ready])') : [];
-              if (copyButtons.length > 0) {
-                setTimeout(() => {
-                  setupCopyButtons();
-                }, 100);
-              }
-            }
-          });
-        }
-      });
-    });
-    
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
+    window.addEventListener('resize', () => {
+      const isMobile = window.innerWidth <= 768;
+      document.body.classList.toggle('mobile-device', isMobile);
     });
   }
   
@@ -594,13 +336,11 @@ const UIController = (function() {
       themeManager.loadPreference();
       
       // Configurar layout responsivo
-      responsiveManager.adjust();
+      const isMobile = window.innerWidth <= 768;
+      document.body.classList.toggle('mobile-device', isMobile);
       
       // Configurar eventos
       setupEventListeners();
-      
-      // Configurar observador DOM
-      setupDOMObserver();
       
       // Marcar como inicializado
       initialized = true;
@@ -612,33 +352,21 @@ const UIController = (function() {
     }
   }
   
-  // Função global para compatibilidade
-  window.copiarTexto = copiarTexto;
-  
   // API pública
   const publicAPI = {
     // Funções principais
     updateStep,
-    copiarTexto,
     appendIpToList,
     carregarMaisSubRedes,
     toggleSelectAll,
+    updateGenerateIPsButton,
     
     // Sistemas especializados
     theme: themeManager,
-    notifications: notificationSystem,
-    clipboard: clipboardManager,
     navigation,
-    responsive: responsiveManager,
-    
-    // Alias para compatibilidade
-    showNotification: notificationSystem.show.bind(notificationSystem),
-    ajustarLayoutResponsivo: responsiveManager.adjust.bind(responsiveManager),
     
     // Utilitários
     getElement,
-    safeDOMOperation,
-    setupCopyButtons,
     
     // Informações de estado
     isInitialized: () => initialized
@@ -648,7 +376,6 @@ const UIController = (function() {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
-    // Aguardar um pouco para evitar conflitos
     setTimeout(initialize, 100);
   }
   
