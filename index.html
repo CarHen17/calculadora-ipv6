@@ -6,25 +6,25 @@
   <title>Calculadora IPv6 - Gerador de Sub-redes</title>
   <meta name="description" content="Ferramenta online para cálculo e visualização de sub-redes IPv6">
   
-  <!-- Favicon inline para evitar requests 404 -->
+  <!-- Favicon inline -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>" type="image/svg+xml">
   
-  <!-- CSS consolidado - ordem otimizada -->
+  <!-- CSS - Ordem correta -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/dark-mode.css">
   <link rel="stylesheet" href="css/enhanced-ui.css">
   <link rel="stylesheet" href="css/ui-fixes.css">
   
-  <!-- Font Awesome para ícones -->
+  <!-- Font Awesome -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- Meta tags adicionais -->
+  <!-- Meta tags -->
   <meta name="theme-color" content="#0070d1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
 <body>
-  <!-- Alerta de erro para inicialização -->
+  <!-- Alerta de erro -->
   <div id="initErrorAlert" style="display: none; background-color: #f8d7da; color: #721c24; padding: 12px; margin: 10px; border-radius: 4px; border: 1px solid #f5c6cb;">
     <strong>Erro ao inicializar:</strong> <span id="initErrorMessage"></span>
     <button onclick="window.location.reload()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin-left: 10px; border-radius: 3px; cursor: pointer;">Recarregar</button>
@@ -87,7 +87,7 @@
               <span class="info-label">CIDR:</span>
               <div class="info-value-container">
                 <div id="mainBlockCidr" class="info-value">-</div>
-                <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('mainBlockCidr'))">
+                <button class="copy-btn" onclick="copyToClipboard(document.getElementById('mainBlockCidr'))">
                   <i class="fas fa-copy"></i>
                 </button>
               </div>
@@ -111,9 +111,6 @@
                 </button>
                 <button id="resetMainBlockIPsButton" class="btn-secondary">
                   <i class="fas fa-redo-alt"></i> Resetar Lista
-                </button>
-                <button id="exportMainBlockIpsBtn" class="btn-secondary" style="display: none;">
-                  <i class="fas fa-file-excel"></i> Exportar IPs
                 </button>
               </div>
             </div>
@@ -160,9 +157,6 @@
               <button id="gerarIPsButton" class="btn-primary" style="display: none;">
                 <i class="fas fa-list"></i> Gerar IPs da Sub-rede
               </button>
-              <button id="exportSubnetsTableBtn" class="btn-secondary" style="display: none;">
-                <i class="fas fa-file-excel"></i> Exportar Tabela
-              </button>
             </div>
           </div>
         </div>
@@ -178,9 +172,6 @@
               </button>
               <button id="resetIPsButton" class="btn-secondary">
                 <i class="fas fa-redo-alt"></i> Resetar Lista
-              </button>
-              <button id="exportSubnetIpsBtn" class="btn-secondary" style="display: none;">
-                <i class="fas fa-file-excel"></i> Exportar IPs
               </button>
             </div>
           </div>
@@ -200,7 +191,7 @@
           <span class="info-label">CIDR:</span>
           <div class="info-value-container">
             <div id="sidebarBlockCidr" class="info-value">-</div>
-            <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('sidebarBlockCidr'))">
+            <button class="copy-btn" onclick="copyToClipboard(document.getElementById('sidebarBlockCidr'))">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -209,7 +200,7 @@
           <span class="info-label">Gateway padrão:</span>
           <div class="info-value-container">
             <div id="mainBlockGateway" class="info-value">-</div>
-            <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('mainBlockGateway'))">
+            <button class="copy-btn" onclick="copyToClipboard(document.getElementById('mainBlockGateway'))">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -218,8 +209,8 @@
         <div class="dns-item">
           <span class="dns-label">Google DNS</span>
           <div class="info-value-container">
-            <div id="googleDNS" class="info-value">2001:4860:4860::8888</div>
-            <button class="copy-btn" onclick="UIController.clipboard.copy('2001:4860:4860::8888')">
+            <div class="info-value">2001:4860:4860::8888</div>
+            <button class="copy-btn" onclick="copyToClipboard('2001:4860:4860::8888')">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -228,8 +219,8 @@
         <div class="dns-item">
           <span class="dns-label">Google DNS Alt</span>
           <div class="info-value-container">
-            <div id="googleDNSAlt" class="info-value">2001:4860:4860::8844</div>
-            <button class="copy-btn" onclick="UIController.clipboard.copy('2001:4860:4860::8844')">
+            <div class="info-value">2001:4860:4860::8844</div>
+            <button class="copy-btn" onclick="copyToClipboard('2001:4860:4860::8844')">
               <i class="fas fa-copy"></i>
             </button>
           </div>
@@ -238,32 +229,17 @@
         <div class="dns-item">
           <span class="dns-label">Cloudflare DNS</span>
           <div class="info-value-container">
-            <div id="cloudflareDNS" class="info-value">2606:4700:4700::1111</div>
-            <button class="copy-btn" onclick="UIController.clipboard.copy('2606:4700:4700::1111')">
+            <div class="info-value">2606:4700:4700::1111</div>
+            <button class="copy-btn" onclick="copyToClipboard('2606:4700:4700::1111')">
               <i class="fas fa-copy"></i>
             </button>
           </div>
-        </div>
-
-        <!-- Conteúdo para bloco agregado -->
-        <div id="aggregatedContent" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light);">
-          <h3>Bloco Agregado</h3>
-          <div class="info-item">
-            <span class="info-label">Prefixo Agregado:</span>
-            <div class="info-value-container">
-              <div id="aggregatedPrefix" class="info-value">N/A</div>
-              <button class="copy-btn" onclick="UIController.clipboard.copy(document.getElementById('aggregatedPrefix'))">
-                <i class="fas fa-copy"></i>
-              </button>
-            </div>
-          </div>
-          <p class="info-desc">Este é o bloco IPv6 que engloba todas as sub-redes selecionadas.</p>
         </div>
       </div>
     </div>
   </div>
   
-  <!-- Botões de navegação fixados -->
+  <!-- Botões de navegação -->
   <div class="nav-buttons">
     <button id="topBtn" class="nav-btn" title="Ir para o topo">
       <i class="fas fa-arrow-up"></i>
@@ -273,50 +249,139 @@
     </button>
   </div>
   
-  <!-- Scripts em ordem otimizada para melhor performance -->
+  <!-- Scripts na ordem correta -->
   
-  <!-- 1. Utilitários básicos primeiro -->
-  <script src="js/utils/dom-cache.js"></script>
-  <script src="js/utils/module-manager.js"></script>
-  
-  <!-- 2. Módulos principais de core -->
-  <script src="js/core/ipv6-utils.js"></script>
-  <script src="js/ui/ui-controller.js"></script>
-  <script src="js/core/ipv6-calculator.js"></script>
-  
-  <!-- 3. Verificações de ambiente -->
-  <script src="js/utils/env-check.js"></script>
-  <script src="js/utils/debug-check.js"></script>
-  
-  <!-- 4. Módulos de UI e componentes -->
-  <script src="js/ui/ui-components.js"></script>
-  <script src="js/ui/responsive-handler.js"></script>
-  <script src="js/ui/ui-fixes.js"></script>
-  
-  <!-- 5. Biblioteca externa para Excel -->
+  <!-- 1. Biblioteca externa primeiro -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
-  <!-- 6. Módulos de funcionalidades específicas -->
-  <script src="js/utils/excel-exporter.js"></script>
-  <script src="js/ui/export-controller.js"></script>
-  <script src="js/utils/modal-interactions.js"></script>
+  <!-- 2. Utilitários base -->
+  <script src="js/utils/ipv6-utils.js"></script>
   
-  <!-- 7. Scripts de integração -->
+  <!-- 3. Controladores principais -->
+  <script src="js/core/ui-controller.js"></script>
+  <script src="js/core/ipv6-calculator.js"></script>
   
-  <!-- 8. Melhorias e inicialização -->
-  <script src="js/enhancements/enhanced-app.js"></script>
-  
-  <!-- 9. Script principal da aplicação (por último) -->
+  <!-- 4. Inicialização -->
   <script src="js/core/app.js"></script>
 
-
-<!-- Scripts do modal dinâmico -->
-
-  <!-- Script de inicialização final -->
+  <!-- Script de inicialização global -->
   <script>
-    // Verificação final e configuração global
+    // Estado global da aplicação
+    window.appState = {
+      subRedesGeradas: [],
+      subRedesExibidas: 0,
+      selectedBlock: null,
+      currentIpOffset: 0,
+      mainBlock: null,
+      mainBlockCurrentOffset: 0,
+      isMainBlockIpsVisible: false,
+      currentStep: 1
+    };
+    
+    // Função global de cópia
+    function copyToClipboard(source) {
+      let text;
+      
+      if (typeof source === 'string') {
+        text = source;
+      } else if (source && source.textContent) {
+        text = source.textContent;
+      } else if (source && source.innerText) {
+        text = source.innerText;
+      } else {
+        console.error('Fonte inválida para cópia');
+        return;
+      }
+      
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          showNotification('Texto copiado!', 'success');
+        }).catch(err => {
+          console.error('Erro ao copiar:', err);
+          fallbackCopy(text);
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    }
+    
+    // Função de cópia fallback
+    function fallbackCopy(text) {
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+      
+      try {
+        document.execCommand('copy');
+        showNotification('Texto copiado!', 'success');
+      } catch (err) {
+        console.error('Falha ao copiar:', err);
+        showNotification('Falha ao copiar texto', 'error');
+      }
+      
+      document.body.removeChild(textArea);
+    }
+    
+    // Função de notificação simples
+    function showNotification(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 16px;
+        border-radius: 6px;
+        color: white;
+        font-size: 14px;
+        z-index: 10000;
+        max-width: 300px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        animation: slideIn 0.3s ease;
+      `;
+      
+      const colors = {
+        success: '#4caf50',
+        error: '#f44336',
+        warning: '#ff9800',
+        info: '#2196f3'
+      };
+      
+      notification.style.backgroundColor = colors[type] || colors.info;
+      notification.textContent = message;
+      
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(() => {
+          if (notification.parentNode) {
+            document.body.removeChild(notification);
+          }
+        }, 300);
+      }, 3000);
+    }
+    
+    // Adicionar animações CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+      }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    // Verificação de inicialização
     document.addEventListener('DOMContentLoaded', function() {
-      console.log("🌐 Calculadora IPv6 - Verificação final de inicialização");
+      console.log("🌐 Calculadora IPv6 - Inicialização");
       
       // Verificar módulos críticos
       const criticalModules = ['IPv6Utils', 'UIController', 'IPv6Calculator'];
@@ -334,49 +399,7 @@
         return;
       }
       
-      // Configurar função global de cópia para compatibilidade
-      if (typeof window.copiarTexto === 'undefined' && window.UIController) {
-        window.copiarTexto = function(elementId) {
-          if (window.UIController.clipboard) {
-            const element = document.getElementById(elementId);
-            window.UIController.clipboard.copy(element);
-          }
-        };
-      }
-      
-      // Verificar disponibilidade da biblioteca Excel
-      if (typeof window.XLSX === 'undefined') {
-        console.warn("⚠️ Biblioteca XLSX não carregada - funcionalidade de exportação pode não funcionar");
-      }
-      
-      // Log final
       console.log("✅ Calculadora IPv6 inicializada com sucesso!");
-      console.log("📊 Módulos carregados:", criticalModules.filter(m => window[m]).length + "/" + criticalModules.length);
-      
-      // Mostrar informações de debug se estiver em localhost
-      if (location.hostname === 'localhost' || location.hostname === '127.0.0.1') {
-        console.group("🔧 Informações de Debug");
-        console.log("Ambiente:", "Desenvolvimento");
-        console.log("Módulos disponíveis:", Object.keys(window).filter(key => 
-          ['IPv6Utils', 'UIController', 'IPv6Calculator', 'ModuleManager', 'DOMCache'].includes(key)
-        ));
-        console.log("Para diagnóstico completo execute: debugIPv6App.checkModules()");
-        console.groupEnd();
-      }
-    });
-    
-    // Tratamento de erros globais
-    window.addEventListener('error', function(e) {
-      console.error("❌ Erro global capturado:", e.error);
-      if (e.filename && e.filename.includes('ipv6')) {
-        console.error("Erro relacionado à Calculadora IPv6 detectado");
-      }
-    });
-    
-    // Evitar que erros de recursos não críticos quebrem a aplicação
-    window.addEventListener('unhandledrejection', function(e) {
-      console.warn("⚠️ Promise rejeitada:", e.reason);
-      // Não prevenir o comportamento padrão para promises críticas
     });
   </script>
 </body>
