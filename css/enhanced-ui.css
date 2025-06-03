@@ -1,0 +1,792 @@
+/**
+ * Melhorias Visuais para Calculadora IPv6 - Versão Corrigida
+ * IMPORTANTE: Este arquivo NÃO interfere no layout da tabela
+ */
+
+/* Variáveis adicionais */
+:root {
+  /* Cores específicas para agregação */
+  --aggregation-color: #9c27b0;
+  --aggregation-light: #ba68c8;
+  --aggregation-bg: rgba(156, 39, 176, 0.1);
+  --aggregation-border: rgba(156, 39, 176, 0.2);
+}
+
+/* ===== MELHORIAS GERAIS SEM AFETAR TABELA ===== */
+
+body {
+  overflow-x: hidden;
+}
+
+.container {
+  transition: all 0.3s ease;
+}
+
+/* Header melhorado */
+.header {
+  position: relative;
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
+
+.header h1::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 60px;
+  height: 3px;
+  background: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.header:hover h1::after {
+  width: 100%;
+}
+
+/* ===== INDICADOR DE PASSOS MELHORADO ===== */
+
+.steps::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--border-light);
+  z-index: 1;
+  transform: translateY(-50%);
+}
+
+body.dark-mode .steps::before {
+  background: var(--border-dark);
+}
+
+.step {
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  transition: transform 0.3s ease;
+}
+
+.step.active .step-number {
+  transform: scale(1.2);
+  background: var(--gradient-primary);
+  box-shadow: 0 4px 12px rgba(0, 112, 209, 0.25);
+}
+
+.step.active .step-title {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+body.dark-mode .step.active .step-title {
+  color: var(--primary-light);
+}
+
+/* ===== CARDS MELHORADOS ===== */
+
+.card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  /* REMOVIDO: transform que pode afetar layout */
+}
+
+.card h3::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -8px;
+  width: 40px;
+  height: 3px;
+  background: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.card:hover h3::after {
+  width: 100%;
+}
+
+body.dark-mode .card h3::after {
+  background: var(--primary-light);
+}
+
+/* ===== BOTÕES COM EFEITOS MELHORADOS ===== */
+
+.btn-primary,
+.btn-secondary {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+}
+
+.btn-primary {
+  background: var(--gradient-primary);
+}
+
+.btn-secondary {
+  background: var(--gradient-secondary);
+}
+
+.btn-primary:hover,
+.btn-secondary:hover {
+  /* REMOVIDO: transform que pode causar problemas */
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Efeito de onda ao clicar nos botões */
+.btn-primary::after,
+.btn-secondary::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  opacity: 0;
+  border-radius: 100%;
+  transform: scale(1, 1) translate(-50%, -50%);
+  transform-origin: 50% 50%;
+}
+
+.btn-primary:active::after,
+.btn-secondary:active::after {
+  animation: ripple 0.5s ease-out;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0, 0) translate(-50%, -50%);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(20, 20) translate(-50%, -50%);
+    opacity: 0;
+  }
+}
+
+/* ===== MELHORIAS PARA INPUTS ===== */
+
+input {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+input:focus {
+  box-shadow: 0 2px 12px rgba(0, 112, 209, 0.2);
+  /* REMOVIDO: transform que pode afetar layout */
+}
+
+/* ===== LISTA DE PREFIXOS APRIMORADA ===== */
+
+.prefix-group {
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.prefix-group:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  /* REMOVIDO: transform que pode afetar layout */
+}
+
+.prefix-item {
+  transition: all 0.2s ease;
+}
+
+.prefix-item:hover {
+  background-color: rgba(0, 112, 209, 0.2);
+  /* REMOVIDO: padding-left que afeta layout */
+}
+
+/* ===== ESTILOS ESPECÍFICOS PARA AGREGAÇÃO ===== */
+
+/* Seção de agregação na sidebar */
+.aggregation-section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid var(--aggregation-border);
+  animation: fadeInUp 0.4s ease;
+}
+
+body.dark-mode .aggregation-section {
+  border-top-color: rgba(186, 104, 200, 0.3);
+}
+
+.aggregation-section h4 {
+  color: var(--aggregation-color);
+  font-weight: 600;
+  font-size: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+body.dark-mode .aggregation-section h4 {
+  color: var(--aggregation-light);
+}
+
+.aggregation-section h4 i {
+  font-size: 18px;
+}
+
+/* Aviso de agregação */
+.aggregation-warning {
+  background-color: rgba(255, 152, 0, 0.1);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 12px;
+  animation: slideInLeft 0.3s ease;
+}
+
+body.dark-mode .aggregation-warning {
+  background-color: rgba(255, 152, 0, 0.15);
+  border-color: rgba(255, 152, 0, 0.4);
+}
+
+.aggregation-warning .warning-icon {
+  font-size: 20px;
+  color: #ff9800;
+  flex-shrink: 0;
+}
+
+.aggregation-warning .warning-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-light);
+}
+
+body.dark-mode .aggregation-warning .warning-message {
+  color: var(--text-dark);
+}
+
+/* Botões específicos de agregação */
+#toggleAggregatedIpsBtn {
+  background: linear-gradient(135deg, var(--aggregation-color), #7b1fa2);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+#toggleAggregatedIpsBtn:hover {
+  background: linear-gradient(135deg, var(--aggregation-light), var(--aggregation-color));
+  box-shadow: 0 4px 12px rgba(156, 39, 176, 0.3);
+}
+
+body.dark-mode #toggleAggregatedIpsBtn {
+  background: linear-gradient(135deg, var(--aggregation-light), var(--aggregation-color));
+}
+
+/* Container de IPs agregados */
+#aggregatedIpsContainer {
+  background-color: var(--aggregation-bg);
+  border: 1px solid var(--aggregation-border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+  animation: expandDown 0.3s ease;
+}
+
+body.dark-mode #aggregatedIpsContainer {
+  background-color: rgba(186, 104, 200, 0.08);
+  border-color: rgba(186, 104, 200, 0.25);
+}
+
+#aggregatedIpsContainer h4 {
+  color: var(--aggregation-color);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.dark-mode #aggregatedIpsContainer h4 {
+  color: var(--aggregation-light);
+}
+
+#aggregatedIpsContainer h4::before {
+  content: "🔗";
+  font-size: 16px;
+}
+
+/* Lista de IPs agregados */
+#aggregatedIpsList {
+  max-height: 300px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--aggregation-color) transparent;
+}
+
+#aggregatedIpsList .ip-item {
+  border-left: 3px solid var(--aggregation-color);
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
+}
+
+body.dark-mode #aggregatedIpsList .ip-item {
+  background-color: rgba(13, 17, 23, 0.8);
+  border-left-color: var(--aggregation-light);
+}
+
+#aggregatedIpsList .ip-item:hover {
+  background-color: var(--aggregation-bg);
+  /* REMOVIDO: transform que pode afetar alinhamento */
+  box-shadow: 0 2px 8px rgba(156, 39, 176, 0.15);
+}
+
+body.dark-mode #aggregatedIpsList .ip-item:hover {
+  background-color: rgba(186, 104, 200, 0.1);
+}
+
+#aggregatedIpsList .ip-item .copy-btn {
+  background-color: var(--aggregation-color);
+  color: white;
+}
+
+#aggregatedIpsList .ip-item .copy-btn:hover {
+  background-color: var(--aggregation-light);
+  /* APENAS scale pequeno, sem translateY */
+  transform: scale(1.05);
+}
+
+body.dark-mode #aggregatedIpsList .ip-item .copy-btn {
+  background-color: var(--aggregation-light);
+}
+
+body.dark-mode #aggregatedIpsList .ip-item .copy-btn:hover {
+  background-color: var(--aggregation-color);
+}
+
+/* Botões de ação para IPs agregados */
+#moreAggregatedIpsBtn,
+#resetAggregatedIpsBtn {
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 6px;
+}
+
+#moreAggregatedIpsBtn {
+  background: linear-gradient(135deg, var(--aggregation-color), #7b1fa2);
+  color: white;
+}
+
+#moreAggregatedIpsBtn:hover {
+  background: linear-gradient(135deg, var(--aggregation-light), var(--aggregation-color));
+  box-shadow: 0 3px 8px rgba(156, 39, 176, 0.25);
+}
+
+#resetAggregatedIpsBtn {
+  background: linear-gradient(135deg, #607d8b, #455a64);
+  color: white;
+}
+
+#resetAggregatedIpsBtn:hover {
+  background: linear-gradient(135deg, #78909c, #607d8b);
+  box-shadow: 0 3px 8px rgba(96, 125, 139, 0.25);
+}
+
+/* ===== ANIMAÇÕES ESPECÍFICAS PARA AGREGAÇÃO ===== */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes expandDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: scaleY(1);
+  }
+}
+
+/* ===== MELHORIAS NOS CARDS DE ESTATÍSTICAS ===== */
+
+.stats-cards {
+  gap: var(--spacing-lg);
+}
+
+.stat-card {
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+  border-top: 4px solid var(--primary-color);
+}
+
+.stat-card:hover {
+  /* REMOVIDO: transform que pode afetar layout */
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .stat-card {
+  border-top-color: var(--primary-light);
+}
+
+/* ===== MELHORIAS NAS ABAS ===== */
+
+.tabs {
+  position: relative;
+  padding: 0;
+  border-bottom: 2px solid var(--border-light);
+  margin-bottom: var(--spacing-lg);
+}
+
+body.dark-mode .tabs {
+  border-bottom-color: var(--border-dark);
+}
+
+.tab {
+  position: relative;
+  padding: 12px 20px;
+  margin-right: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background-color: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.tab:hover::after,
+.tab-active::after {
+  width: 100%;
+}
+
+.tab-active {
+  font-weight: 600;
+}
+
+body.dark-mode .tab::after {
+  background-color: var(--primary-light);
+}
+
+/* ===== MELHORIAS ESPECÍFICAS PARA A SIDEBAR ===== */
+
+#infoSidebar .info-item {
+  margin-bottom: var(--spacing-md);
+}
+
+#infoSidebar .info-label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 6px;
+  color: var(--text-light-secondary);
+}
+
+body.dark-mode #infoSidebar .info-label {
+  color: var(--text-dark-secondary);
+}
+
+/* ===== MENSAGENS E NOTIFICAÇÕES ===== */
+
+.error-message,
+.prefix-warning {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== ANIMAÇÕES PARA CONTAINER PRINCIPAL ===== */
+
+.container {
+  animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== BOTÕES DE NAVEGAÇÃO FIXADOS ===== */
+
+.nav-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.nav-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  opacity: 0.8;
+}
+
+.nav-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.nav-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.nav-btn:hover::after {
+  opacity: 1;
+}
+
+/* ===== MELHORIAS DE LAYOUT PARA MOBILE ===== */
+
+@media (max-width: 768px) {
+  .steps {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: var(--spacing-sm);
+  }
+  
+  .steps::before {
+    left: 0;
+    right: 0;
+  }
+  
+  .step {
+    flex: 0 0 auto;
+    margin-right: var(--spacing-lg);
+  }
+  
+  .step:last-child {
+    margin-right: var(--spacing-sm);
+  }
+  
+  .prefixes-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .card {
+    padding: var(--spacing-md);
+  }
+  
+  .action-buttons {
+    justify-content: space-between;
+  }
+  
+  #infoSidebar {
+    margin-bottom: var(--spacing-lg);
+  }
+  
+  .dns-item {
+    margin-bottom: var(--spacing-md);
+  }
+  
+  /* Ajustes para agregação em mobile */
+  .aggregation-section {
+    padding: var(--spacing-md);
+  }
+  
+  #aggregatedIpsContainer {
+    padding: var(--spacing-sm);
+  }
+  
+  #aggregatedIpsList {
+    max-height: 200px;
+  }
+  
+  .aggregation-warning {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .aggregation-warning .warning-icon {
+    align-self: center;
+  }
+}
+
+/* ===== GARANTIAS FINAIS ===== */
+
+/* Prevenir mudanças de layout durante qualquer interação EXCETO na tabela */
+.ip-item:not(table .ip-item),
+.prefix-item,
+.card {
+  contain: layout style;
+}
+
+.copy-btn:not(table .copy-btn) {
+  contain: layout style paint;
+}
+
+/* ===== ESTADOS ESPECIAIS PARA SELEÇÃO INDIVIDUAL ===== */
+
+/* Efeito visual quando um bloco individual é selecionado */
+#infoSidebar.individual-selected {
+  border-left: 4px solid #4caf50;
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.2);
+}
+
+body.dark-mode #infoSidebar.individual-selected {
+  box-shadow: 0 4px 16px rgba(102, 187, 106, 0.3);
+}
+
+/* Indicador de ação na sidebar quando bloco individual está selecionado */
+#infoSidebar .info-item {
+  transition: all 0.3s ease;
+}
+
+#infoSidebar.block-selected .info-item {
+  border-left: 3px solid transparent;
+  padding-left: 12px;
+}
+
+#infoSidebar.block-selected .info-item:nth-child(2) {
+  border-left-color: #4caf50;
+}
+
+#infoSidebar.block-selected .info-item:nth-child(3) {
+  border-left-color: #66bb6a;
+}
+
+/* Efeito de destaque nos valores quando bloco individual é selecionado */
+#infoSidebar.block-selected .info-value {
+  font-weight: 600;
+  background: linear-gradient(90deg, transparent, rgba(76, 175, 80, 0.1), transparent);
+  animation: valueHighlight 2s ease infinite;
+}
+
+@keyframes valueHighlight {
+  0%, 100% { background-position: -200% 0; }
+  50% { background-position: 200% 0; }
+}
+
+/* ===== MELHORIAS DE SCROLLBAR ===== */
+
+.ip-list::-webkit-scrollbar,
+#aggregatedIpsList::-webkit-scrollbar,
+.prefixes-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ip-list::-webkit-scrollbar-track,
+#aggregatedIpsList::-webkit-scrollbar-track,
+.prefixes-list::-webkit-scrollbar-track {
+  background: var(--bg-light-accent, #f6f8fa);
+  border-radius: 3px;
+}
+
+body.dark-mode .ip-list::-webkit-scrollbar-track,
+body.dark-mode #aggregatedIpsList::-webkit-scrollbar-track,
+body.dark-mode .prefixes-list::-webkit-scrollbar-track {
+  background: var(--bg-dark-accent, #161b22);
+}
+
+.ip-list::-webkit-scrollbar-thumb,
+#aggregatedIpsList::-webkit-scrollbar-thumb,
+.prefixes-list::-webkit-scrollbar-thumb {
+  background: #0070d1;
+  border-radius: 3px;
+}
+
+body.dark-mode .ip-list::-webkit-scrollbar-thumb,
+body.dark-mode #aggregatedIpsList::-webkit-scrollbar-thumb,
+body.dark-mode .prefixes-list::-webkit-scrollbar-thumb {
+  background: #2689db;
+}
+
+/* ===== DICAS DE INTERAÇÃO ===== */
+
+.interaction-hints {
+  background-color: rgba(33, 150, 243, 0.1);
+  border: 1px solid rgba(33, 150, 243, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+body.dark-mode .interaction-hints {
+  background-color: rgba(33, 150, 243, 0.15);
+  border-color: rgba(33, 150, 243, 0.3);
+}
+
+.interaction-hints p {
+  margin: 0 0 8px 0;
+  color: #1976d2;
+  font-weight: 600;
+}
+
+body.dark-mode .interaction-hints p {
+  color: #42a5f5;
+}
+
+.interaction-hints ul {
+  margin: 8px 0 0 20px;
+  color: var(--text-light);
+}
+
+body.dark-mode .interaction-hints ul {
+  color: var(--text-dark);
+}
+
+.interaction-hints li {
+  margin-bottom: 4px;
+}
+
+/* ===== GARANTIR QUE NADA INTERFIRA NA TABELA ===== */
+
+/* CRÍTICO: Garantir que estilos desta stylesheet não afetem a tabela */
+#subnetsTable,
+#subnetsTable *,
+.table-container,
+.table-container * {
+  /* Ignorar qualquer estilo que possa afetar layout da tabela */
+  contain: unset !important;
+}
+
+/* Permitir apenas estilos específicos e seguros para tabela que vêm do ui-fixes.css */

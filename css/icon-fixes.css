@@ -1,0 +1,615 @@
+/**
+ * Correções específicas para ícones Font Awesome - Versão Final
+ * Garante que os ícones sejam exibidos corretamente sem afetar o layout da tabela
+ */
+
+/* ===== CONFIGURAÇÃO FONT AWESOME ===== */
+
+.fas, .fa, .far, .fab {
+  font-family: "Font Awesome 6 Free", "Font Awesome 6 Brands" !important;
+  font-weight: 900;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  display: inline-block;
+}
+
+.far {
+  font-weight: 400;
+}
+
+.fab {
+  font-family: "Font Awesome 6 Brands" !important;
+  font-weight: 400;
+}
+
+/* ===== ÍCONES ESPECÍFICOS COM CÓDIGOS ===== */
+
+.fa-copy::before { content: "\f0c5"; }
+.fa-list::before { content: "\f03a"; }
+.fa-times::before { content: "\f00d"; }
+.fa-plus::before { content: "\f067"; }
+.fa-redo-alt::before { content: "\f2f9"; }
+.fa-download::before { content: "\f019"; }
+.fa-calculator::before { content: "\f1ec"; }
+.fa-angle-right::before { content: "\f105"; }
+.fa-sync::before { content: "\f021"; }
+.fa-spinner::before { content: "\f110"; }
+.fa-moon::before { content: "\f186"; }
+.fa-sun::before { content: "\f185"; }
+.fa-arrow-up::before { content: "\f062"; }
+.fa-arrow-down::before { content: "\f063"; }
+.fa-layer-group::before { content: "\f5fd"; }
+.fa-exclamation-triangle::before { content: "\f071"; }
+.fa-check-circle::before { content: "\f058"; }
+.fa-exclamation-circle::before { content: "\f06a"; }
+.fa-info-circle::before { content: "\f05a"; }
+.fa-file-excel::before { content: "\f1c3"; }
+.fa-file-csv::before { content: "\f6dd"; }
+.fa-file-alt::before { content: "\f15c"; }
+.fa-file-code::before { content: "\f1c9"; }
+.fa-network-wired::before { content: "\f6ff"; }
+
+/* ===== ANIMAÇÕES ===== */
+
+.fa-spin {
+  animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.copy-feedback {
+  animation: copySuccess 0.3s ease;
+}
+
+@keyframes copySuccess {
+  0% { 
+    transform: scale(1); 
+  }
+  50% { 
+    transform: scale(1.1); 
+    background-color: #4caf50 !important;
+  }
+  100% { 
+    transform: scale(1); 
+  }
+}
+
+/* ===== BOTÕES DE COPIAR - ESTABILIDADE MÁXIMA ===== */
+
+/* Botões de copiar em listas de IP - SEM AFETAR LAYOUT */
+.ip-item .copy-btn {
+  background-color: #0070d1 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  height: 32px !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s ease, transform 0.1s ease !important;
+  flex-shrink: 0 !important;
+  font-size: 0 !important;
+  position: relative !important;
+  /* CRÍTICO: Evitar qualquer propriedade que afete layout da lista */
+  margin: 0 !important;
+  outline: none !important;
+}
+
+.ip-item .copy-btn:hover {
+  background-color: #2689db !important;
+  transform: scale(1.05) !important;
+}
+
+.ip-item .copy-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.ip-item .copy-btn:focus {
+  outline: 2px solid #0070d1 !important;
+  outline-offset: 2px !important;
+}
+
+body.dark-mode .ip-item .copy-btn {
+  background-color: #2689db !important;
+}
+
+body.dark-mode .ip-item .copy-btn:hover {
+  background-color: #0070d1 !important;
+}
+
+body.dark-mode .ip-item .copy-btn:focus {
+  outline-color: #2689db !important;
+}
+
+/* Ícone dentro do botão de copiar */
+.ip-item .copy-btn i {
+  font-size: 12px !important;
+  line-height: 1 !important;
+  color: white !important;
+  display: block !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ===== BOTÕES DE COPIAR NA SIDEBAR ===== */
+
+.info-value-container .copy-btn,
+.dns-item .copy-btn {
+  padding: 0 !important;
+  width: 36px !important;
+  height: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  border: none !important;
+  border-radius: 0 !important;
+  background-color: rgba(0, 112, 209, 0.1) !important;
+  color: #0070d1 !important;
+  transition: all 0.2s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  flex-shrink: 0 !important;
+  font-size: 0 !important;
+  margin: 0 !important;
+  outline: none !important;
+}
+
+.info-value-container .copy-btn:hover,
+.dns-item .copy-btn:hover {
+  background-color: #0070d1 !important;
+  color: white !important;
+}
+
+.info-value-container .copy-btn:active,
+.dns-item .copy-btn:active {
+  transform: scale(0.95) !important;
+}
+
+.info-value-container .copy-btn:focus,
+.dns-item .copy-btn:focus {
+  outline: 2px solid #0070d1 !important;
+  outline-offset: 2px !important;
+}
+
+body.dark-mode .info-value-container .copy-btn,
+body.dark-mode .dns-item .copy-btn {
+  background-color: rgba(38, 137, 219, 0.1) !important;
+  color: #2689db !important;
+}
+
+body.dark-mode .info-value-container .copy-btn:hover,
+body.dark-mode .dns-item .copy-btn:hover {
+  background-color: #2689db !important;
+  color: white !important;
+}
+
+body.dark-mode .info-value-container .copy-btn:focus,
+body.dark-mode .dns-item .copy-btn:focus {
+  outline-color: #2689db !important;
+}
+
+/* Ícones nos botões da sidebar */
+.info-value-container .copy-btn i,
+.dns-item .copy-btn i {
+  font-size: 14px !important;
+  line-height: 1 !important;
+  color: inherit !important;
+  pointer-events: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* ===== GARANTIR QUE BOTÕES NÃO QUEBREM O LAYOUT ===== */
+
+button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Melhorar alinhamento de ícones em botões gerais */
+button i {
+  margin-right: 6px;
+  pointer-events: none;
+}
+
+button i:last-child {
+  margin-right: 0;
+  margin-left: 6px;
+}
+
+button i:only-child {
+  margin: 0;
+}
+
+/* Botões de ação principais */
+.btn-primary i,
+.btn-secondary i {
+  font-size: 14px;
+  line-height: 1;
+}
+
+/* ===== BOTÕES ESPECÍFICOS DE AGREGAÇÃO ===== */
+
+#toggleAggregatedIpsBtn,
+#moreAggregatedIpsBtn,
+#resetAggregatedIpsBtn {
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 6px;
+}
+
+#toggleAggregatedIpsBtn {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+  color: white;
+}
+
+#toggleAggregatedIpsBtn:hover {
+  background: linear-gradient(135deg, #ba68c8, #9c27b0);
+  box-shadow: 0 3px 8px rgba(156, 39, 176, 0.25);
+}
+
+#moreAggregatedIpsBtn {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+  color: white;
+}
+
+#moreAggregatedIpsBtn:hover {
+  background: linear-gradient(135deg, #ba68c8, #9c27b0);
+  box-shadow: 0 3px 8px rgba(156, 39, 176, 0.25);
+}
+
+#resetAggregatedIpsBtn {
+  background: linear-gradient(135deg, #607d8b, #455a64);
+  color: white;
+}
+
+#resetAggregatedIpsBtn:hover {
+  background: linear-gradient(135deg, #78909c, #607d8b);
+  box-shadow: 0 3px 8px rgba(96, 125, 139, 0.25);
+}
+
+/* ===== RESPONSIVIDADE ===== */
+
+@media (max-width: 768px) {
+  /* Ajustar tamanho dos ícones em mobile */
+  .ip-item .copy-btn {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    max-width: 28px !important;
+  }
+  
+  .ip-item .copy-btn i {
+    font-size: 11px !important;
+  }
+  
+  .info-value-container .copy-btn,
+  .dns-item .copy-btn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    max-width: 32px !important;
+  }
+  
+  /* Botões menores em mobile */
+  button i {
+    margin-right: 4px;
+  }
+  
+  .btn-primary,
+  .btn-secondary {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+}
+
+/* ===== ESTADOS DE LOADING ===== */
+
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.btn-loading i {
+  animation: fa-spin 1s linear infinite;
+}
+
+/* ===== FALLBACKS PARA ÍCONES ===== */
+
+/* Se Font Awesome não carregar completamente */
+.copy-btn:empty::after {
+  content: "📋";
+  font-size: 12px;
+  line-height: 1;
+  display: block;
+}
+
+/* Fallback universal para ícones */
+.fa:empty::after,
+.fas:empty::after {
+  content: "•";
+  font-family: sans-serif;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* Fallbacks específicos para ícones críticos */
+.fa-copy:empty::after { content: "📋"; }
+.fa-list:empty::after { content: "📝"; }
+.fa-times:empty::after { content: "✖"; }
+.fa-plus:empty::after { content: "+"; }
+.fa-download:empty::after { content: "⬇"; }
+.fa-moon:empty::after { content: "🌙"; }
+.fa-sun:empty::after { content: "☀"; }
+.fa-arrow-up:empty::after { content: "↑"; }
+.fa-arrow-down:empty::after { content: "↓"; }
+
+/* ===== CORREÇÕES PARA MODAIS DE EXPORTAÇÃO ===== */
+
+.export-format-btn i {
+  font-size: 24px;
+  color: #0070d1;
+  margin-bottom: 8px;
+}
+
+body.dark-mode .export-format-btn i {
+  color: #2689db;
+}
+
+.modal-header h3 i {
+  margin-right: 8px;
+  font-size: 18px;
+}
+
+/* ===== CORREÇÕES PARA NAVEGAÇÃO ===== */
+
+.nav-btn i {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ===== CORREÇÕES FINAIS ===== */
+
+/* Garantir que ícones não quebrem o layout */
+.fas, .fa, .far, .fab {
+  max-width: 1em;
+  overflow: hidden;
+}
+
+/* Evitar problemas de z-index */
+.copy-btn {
+  z-index: auto;
+}
+
+/* Melhorar contraste para acessibilidade */
+.copy-btn:focus {
+  box-shadow: 0 0 0 3px rgba(0, 112, 209, 0.3);
+}
+
+body.dark-mode .copy-btn:focus {
+  box-shadow: 0 0 0 3px rgba(38, 137, 219, 0.3);
+}
+
+/* ===== GARANTIR QUE TUDO FUNCIONE ===== */
+
+/* Forçar exibição de ícones */
+.copy-btn i:before {
+  content: "\f0c5" !important;
+  font-family: "Font Awesome 6 Free" !important;
+  font-weight: 900 !important;
+  display: inline-block !important;
+}
+
+/* Garantir que botões de cópia sempre tenham conteúdo visível */
+.copy-btn {
+  min-height: 28px;
+  min-width: 28px;
+}
+
+/* ===== CORREÇÕES ESPECÍFICAS PARA HEADERS E TÍTULOS ===== */
+
+/* Ícones em títulos da sidebar */
+#infoSidebar h3 i {
+  font-size: 18px;
+  margin-right: 8px;
+  color: inherit;
+}
+
+/* Ícones em títulos de seções */
+.aggregation-section h4 i {
+  font-size: 16px;
+  margin-right: 6px;
+  color: inherit;
+}
+
+/* Ícones em cards */
+.card h3 i {
+  font-size: 18px;
+  margin-right: 8px;
+  color: inherit;
+}
+
+/* ===== ÍCONES EM ELEMENTOS ESPECÍFICOS ===== */
+
+/* Ícones nos botões do header */
+.header-buttons button i {
+  font-size: 14px;
+  margin-right: 6px;
+}
+
+/* Ícones nos botões de ação */
+.action-buttons button i {
+  font-size: 14px;
+  margin-right: 6px;
+}
+
+/* Ícones nos botões de navegação */
+.nav-btn i {
+  font-size: 18px;
+  color: white;
+}
+
+/* ===== ÍCONES EM ESTADOS ESPECIAIS ===== */
+
+/* Ícones quando botão está desabilitado */
+button:disabled i {
+  opacity: 0.6;
+}
+
+/* Ícones em botões de loading */
+.btn-loading i {
+  animation: fa-spin 1s linear infinite;
+}
+
+/* ===== CORREÇÕES PARA DIFERENTES TAMANHOS DE TELA ===== */
+
+@media (max-width: 480px) {
+  /* Ícones ainda menores para telas muito pequenas */
+  .ip-item .copy-btn {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    max-width: 26px !important;
+  }
+  
+  .ip-item .copy-btn i {
+    font-size: 10px !important;
+  }
+  
+  .info-value-container .copy-btn,
+  .dns-item .copy-btn {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+  }
+  
+  .info-value-container .copy-btn i,
+  .dns-item .copy-btn i {
+    font-size: 12px !important;
+  }
+  
+  /* Ajustar espaçamento dos ícones */
+  button i {
+    margin-right: 3px;
+  }
+  
+  /* Títulos com ícones menores */
+  #infoSidebar h3 i {
+    font-size: 16px;
+  }
+  
+  .aggregation-section h4 i {
+    font-size: 14px;
+  }
+}
+
+/* ===== GARANTIAS DE ACESSIBILIDADE ===== */
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .copy-btn {
+    border: 2px solid currentColor !important;
+  }
+  
+  .copy-btn i {
+    font-weight: 900 !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .fa-spin {
+    animation: none;
+  }
+  
+  .copy-feedback {
+    animation: none;
+  }
+  
+  .copy-btn {
+    transition: none !important;
+  }
+}
+
+/* ===== CORREÇÕES PARA IMPRESSÃO ===== */
+
+@media print {
+  /* Esconder botões de cópia na impressão */
+  .copy-btn {
+    display: none !important;
+  }
+  
+  /* Mostrar apenas texto dos ícones */
+  .fa::before {
+    content: attr(title) !important;
+    font-family: inherit !important;
+    font-weight: normal !important;
+  }
+}
+
+/* ===== ÚLTIMAS GARANTIAS ===== */
+
+/* Garantir que Font Awesome carregue mesmo em conexões lentas */
+@font-face {
+  font-family: 'Font Awesome 6 Free';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+}
+
+/* Força a aplicação de ícones mesmo se CSS não carregou completamente */
+.fas {
+  font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', FontAwesome, sans-serif !important;
+}
+
+/* Reset de propriedades que podem interferir */
+.copy-btn * {
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* Garantir visibilidade em todos os modos */
+.copy-btn i {
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* ===== MELHORIAS FINAIS PARA UX ===== */
+
+/* Cursor pointer consistente */
+.copy-btn {
+  cursor: pointer !important;
+}
+
+.copy-btn:hover {
+  cursor: pointer !important;
+}
+
+/* Feedback tátil para dispositivos touch */
+.copy-btn:active {
+  transform: scale(0.95) !important;
+}
+
+/* Melhorar feedback visual */
+.copy-btn:hover i {
+  transform: scale(1.1);
+}
+
+.copy-btn:active i {
+  transform: scale(0.9);
+}
