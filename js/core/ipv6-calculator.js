@@ -1,6 +1,7 @@
 /**
  * IPv6 Calculator - Módulo Principal com Exportação e Seleção Individual
  * Implementa as funcionalidades principais da calculadora de sub-redes IPv6
+ * Versão com reset automático antes de novos cálculos
  */
 
 const IPv6Calculator = (function() {
@@ -23,14 +24,29 @@ const IPv6Calculator = (function() {
 
   /**
    * Calcula sub-redes com base no endereço IPv6 fornecido
+   * NOVO: Reset automático antes de iniciar novo cálculo
    */
   function calcularSubRedes() {
     try {
-      console.log("Iniciando cálculo de sub-redes");
+      console.log("🚀 Iniciando cálculo de sub-redes");
       if (!checkDependencies()) {
         alert("Alguns módulos necessários não foram carregados corretamente.");
         return false;
       }
+
+      // NOVA FUNCIONALIDADE: Verificação específica para seção "Sub-redes Geradas"
+      const resultadoSection = document.getElementById('resultado');
+      const needsReset = (
+        (resultadoSection && resultadoSection.style.display === 'block') ||
+        (window.appState && window.appState.subRedesGeradas && window.appState.subRedesGeradas.length > 0) ||
+        document.querySelector('#subnetsTable tbody')?.children.length > 0
+      );
+
+      if (needsReset) {
+        console.log("🔄 Detectada seção 'Sub-redes Geradas' ativa - executando reset automático");
+        resetarCalculadoraSilenciosamente();
+      }
+
       resetState();
       const ipv6Input = document.getElementById('ipv6');
       if (!ipv6Input) {
@@ -38,7 +54,7 @@ const IPv6Calculator = (function() {
         return false;
       }
       const inputValue = ipv6Input.value.trim();
-      console.log("Validando entrada:", inputValue);
+      console.log("✅ Validando entrada:", inputValue);
       const errorMessage = IPv6Utils.validateIPv6(inputValue);
       const errorMessageElement = document.getElementById('errorMessage');
       if (errorMessageElement) {
@@ -115,9 +131,10 @@ const IPv6Calculator = (function() {
         UIController.updateStep(2);
       }
       preencherListaPrefixos(prefixoNum);
+      console.log("✅ Cálculo inicial concluído - bloco principal configurado");
       return true;
     } catch (error) {
-      console.error("Erro ao calcular sub-redes:", error);
+      console.error("❌ Erro ao calcular sub-redes:", error);
       alert("Ocorreu um erro ao processar o endereço IPv6. Por favor, verifique se o formato está correto.");
       return false;
     }
@@ -291,18 +308,57 @@ const IPv6Calculator = (function() {
    */
   function clearSubnetsState() {
     try {
-      window.appState.subRedesGeradas = [];
-      window.appState.subRedesExibidas = 0;
-      const subnetsTableBody = document.querySelector('#subnetsTable tbody');
-      if (subnetsTableBody) {
-        subnetsTableBody.innerHTML = "";
+      console.log('🧹 [clearSubnetsState] Iniciando limpeza do estado das sub-redes');
+      
+      // Limpar dados do estado global
+      if (window.appState) {
+        window.appState.subRedesGeradas = [];
+        window.appState.subRedesExibidas = 0;
+        window.appState.selectedBlock = null;
+        window.appState.currentIpOffset = 0;
+        console.log('🧹 [clearSubnetsState] Estados globais resetados');
       }
+      
+      // Limpar tabela de sub-redes completamente
+      const subnetsTable = document.getElementById('subnetsTable');
+      if (subnetsTable) {
+        const tbody = subnetsTable.querySelector('tbody');
+        if (tbody) {
+          tbody.innerHTML = "";
+          console.log('🧹 [clearSubnetsState] Tabela de sub-redes limpa');
+        }
+      }
+      
+      // Limpar checkbox "selecionar todos"
+      const selectAllCheckbox = document.getElementById('selectAll');
+      if (selectAllCheckbox) {
+        selectAllCheckbox.checked = false;
+        console.log('🧹 [clearSubnetsState] Checkbox "Selecionar Todos" desmarcado');
+      }
+      
+      // Usar UIController para limpar seleções se disponível
       if (UIController && UIController.clearAllSelections) {
         UIController.clearAllSelections();
+        console.log('🧹 [clearSubnetsState] Seleções do UIController limpas');
       }
-      console.log('[IPv6Calculator] Estado das sub-redes limpo');
+      
+      // Ocultar botão "Carregar Mais"
+      const loadMoreContainer = document.getElementById('loadMoreContainer');
+      if (loadMoreContainer) {
+        loadMoreContainer.style.display = 'none';
+        console.log('🧹 [clearSubnetsState] Container "Carregar Mais" ocultado');
+      }
+      
+      // Ocultar botão "Gerar IPs"
+      const gerarIPsButton = document.getElementById('gerarIPsButton');
+      if (gerarIPsButton) {
+        gerarIPsButton.style.display = 'none';
+        console.log('🧹 [clearSubnetsState] Botão "Gerar IPs" ocultado');
+      }
+      
+      console.log('✅ [clearSubnetsState] Limpeza do estado das sub-redes concluída');
     } catch (error) {
-      console.error('[IPv6Calculator] Erro ao limpar estado das sub-redes:', error);
+      console.error('❌ [clearSubnetsState] Erro ao limpar estado das sub-redes:', error);
     }
   }
 
@@ -344,7 +400,117 @@ const IPv6Calculator = (function() {
   }
 
   /**
-   * Resetar a calculadora para o estado inicial
+   * NOVA FUNÇÃO: Resetar a calculadora silenciosamente (sem notificação)
+   * Usada internamente antes de calcular um novo bloco
+   */
+  function resetarCalculadoraSilenciosamente() {
+    try {
+      console.log("🔄 [Reset Automático] Iniciando reset silencioso...");
+      
+      // 1. CRÍTICO: Ocultar seção "Sub-redes Geradas" completamente
+      const resultado = document.getElementById('resultado');
+      if (resultado) {
+        resultado.style.display = 'none';
+        console.log("🔄 [Reset Automático] Seção 'Sub-redes Geradas' ocultada");
+      }
+      
+      // 2. Limpar tabela de sub-redes primeiro
+      const subnetsTableBody = document.querySelector('#subnetsTable tbody');
+      if (subnetsTableBody) {
+        subnetsTableBody.innerHTML = "";
+        console.log("🔄 [Reset Automático] Tabela de sub-redes limpa");
+      }
+      
+      // 3. Limpar seleções no UIController
+      if (UIController && UIController.clearAllSelections) {
+        UIController.clearAllSelections();
+        console.log("🔄 [Reset Automático] Seleções limpas");
+      }
+      
+      // 4. Resetar checkbox "selecionar todos"
+      const selectAll = document.getElementById('selectAll');
+      if (selectAll) {
+        selectAll.checked = false;
+      }
+      
+      // 5. Ocultar todas as outras seções relacionadas
+      const elementsToReset = [
+        { id: 'ipsResult', action: 'hide' },
+        { id: 'loadingIndicator', action: 'hide' },
+        { id: 'loadMoreContainer', action: 'hide' },
+        { id: 'errorMessage', action: 'hide' },
+        { id: 'ipsList', action: 'empty' },
+        { id: 'mainBlockIpsList', action: 'empty' },
+        { id: 'mainBlockIpsContainer', action: 'hide' }
+      ];
+      
+      elementsToReset.forEach(({ id, action }) => {
+        const element = document.getElementById(id);
+        if (element) {
+          switch (action) {
+            case 'hide': 
+              element.style.display = 'none'; 
+              console.log(`🔄 [Reset Automático] ${id} ocultado`);
+              break;
+            case 'empty': 
+              element.innerHTML = ''; 
+              console.log(`🔄 [Reset Automático] ${id} esvaziado`);
+              break;
+          }
+        }
+      });
+      
+      // 6. Resetar botões para estado inicial
+      const toggleMainBlockBtn = document.getElementById('toggleMainBlockIpsBtn');
+      if (toggleMainBlockBtn) {
+        toggleMainBlockBtn.innerHTML = '<i class="fas fa-list"></i> Exibir IPs';
+        toggleMainBlockBtn.disabled = false;
+      }
+      
+      // 7. Ocultar todos os botões de exportação e ação
+      hideExportButtons();
+      const additionalButtons = [
+        'gerarIPsButton',
+        'moreMainBlockIpsBtn', 
+        'resetMainBlockIPsButton',
+        'gerarMaisIPsButton',
+        'resetIPsButton'
+      ];
+      additionalButtons.forEach(buttonId => {
+        const button = document.getElementById(buttonId);
+        if (button) {
+          button.style.display = 'none';
+        }
+      });
+      
+      // 8. Resetar estados internos ANTES de limpar
+      resetState();
+      clearSubnetsState();
+      console.log("🔄 [Reset Automático] Estados internos resetados");
+      
+      // 9. Limpar sidebar e remover agregação
+      const sidebar = document.getElementById('infoSidebar');
+      if (sidebar) {
+        const existingAggregation = sidebar.querySelector('.aggregation-section');
+        if (existingAggregation) {
+          existingAggregation.remove();
+          console.log("🔄 [Reset Automático] Seção de agregação removida");
+        }
+        // MANTER sidebar visível para mostrar o novo bloco
+        sidebar.classList.remove('block-selected', 'individual-selected');
+      }
+      
+      // 10. NÃO atualizar step indicator aqui - deixar no passo 2 para continuar o fluxo
+      
+      console.log("✅ [Reset Automático] Reset silencioso concluído - pronto para novo cálculo");
+      
+    } catch (error) {
+      console.error("❌ [Reset Automático] Erro ao resetar calculadora silenciosamente:", error);
+    }
+  }
+
+  /**
+   * Resetar a calculadora para o estado inicial (versão manual com notificação)
    */
   function resetarCalculadora() {
     try {
@@ -906,6 +1072,7 @@ const IPv6Calculator = (function() {
   return {
     calcularSubRedes,
     resetarCalculadora,
+    resetarCalculadoraSilenciosamente, // NOVA FUNÇÃO exposta
     selecionarPrefixo,
     toggleMainBlockIps,
     mostrarSugestoesDivisao,
