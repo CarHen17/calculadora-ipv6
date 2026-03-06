@@ -72,6 +72,15 @@ const IPv6Calculator = (function() {
           const msg = typeof errorResult === 'string' ? errorResult : errorResult.message;
           alert("Erro: " + msg);
         }
+        // Shake no campo de entrada e mensagem de erro
+        const ipv6Input = document.getElementById('ipv6');
+        [ipv6Input, errorMessageElement].forEach(el => {
+          if (!el) return;
+          el.classList.remove('shake');
+          void el.offsetWidth; // reflow para reiniciar animação
+          el.classList.add('shake');
+          el.addEventListener('animationend', () => el.classList.remove('shake'), { once: true });
+        });
         return false;
       }
       const [endereco, prefixoInicial] = inputValue.split('/');
@@ -124,10 +133,16 @@ const IPv6Calculator = (function() {
       const suggestions = document.getElementById('suggestions');
       if (mainBlockSection) {
         mainBlockSection.style.display = 'block';
+        mainBlockSection.classList.remove('animate-reveal');
+        void mainBlockSection.offsetWidth;
+        mainBlockSection.classList.add('animate-reveal');
       }
       if (infoSidebar) {
         infoSidebar.style.display = 'block';
         infoSidebar.classList.remove('block-selected');
+        infoSidebar.classList.remove('animate-reveal');
+        void infoSidebar.offsetWidth;
+        infoSidebar.classList.add('animate-reveal');
       }
       if (suggestions) {
         suggestions.style.display = 'none';
@@ -401,6 +416,9 @@ const IPv6Calculator = (function() {
       }
       if (resultado) {
         resultado.style.display = 'block';
+        resultado.classList.remove('animate-reveal');
+        void resultado.offsetWidth;
+        resultado.classList.add('animate-reveal');
       }
       if (mainBlockSection) {
         mainBlockSection.style.display = 'none';
@@ -693,6 +711,9 @@ const IPv6Calculator = (function() {
       const suggestions = document.getElementById('suggestions');
       if (suggestions) {
         suggestions.style.display = 'block';
+        suggestions.classList.remove('animate-reveal');
+        void suggestions.offsetWidth;
+        suggestions.classList.add('animate-reveal');
         suggestions.scrollIntoView({ behavior: 'smooth' });
       }
     } catch (error) {

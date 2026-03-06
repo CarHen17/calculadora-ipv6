@@ -50,10 +50,14 @@ const UIController = (function() {
         if (prevStep) prevStep.classList.add('completed');
       }
 
-      // Activate current step
+      // Activate current step with pulse animation
       const currentStep = getElement(`step${step}`);
       if (currentStep) {
         currentStep.classList.add('active');
+        currentStep.classList.remove('step-just-activated');
+        void currentStep.offsetWidth;
+        currentStep.classList.add('step-just-activated');
+        currentStep.addEventListener('animationend', () => currentStep.classList.remove('step-just-activated'), { once: true });
       }
 
       // Set data attribute on .steps for the CSS animated line
@@ -76,12 +80,14 @@ const UIController = (function() {
     toggle() {
       try {
         const isDark = document.body.classList.toggle('dark-mode');
-        
-        // Atualizar botão
+
+        // Atualizar botão com animação de spin
         const themeBtn = getElement('toggleThemeBtn');
         if (themeBtn) {
           const icon = isDark ? 'fa-sun' : 'fa-moon';
+          themeBtn.classList.add('theme-spinning');
           themeBtn.innerHTML = `<i class="fas ${icon}"></i> Tema`;
+          themeBtn.addEventListener('animationend', () => themeBtn.classList.remove('theme-spinning'), { once: true });
         }
         
         // Salvar preferência
@@ -240,17 +246,13 @@ const UIController = (function() {
         sidebarTitle.style.color = '#4caf50';
       }
       
-      // Forçar uma atualização visual com efeito
+      // Flash da sidebar ao atualizar bloco
       const sidebar = getElement('infoSidebar');
       if (sidebar) {
-        sidebar.style.transition = 'all 0.3s ease';
-        sidebar.style.transform = 'scale(0.98)';
-        sidebar.style.boxShadow = '0 8px 20px rgba(76, 175, 80, 0.2)';
-        
-        setTimeout(() => {
-          sidebar.style.transform = 'scale(1)';
-          sidebar.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
-        }, 150);
+        sidebar.classList.remove('sidebar-updated');
+        void sidebar.offsetWidth;
+        sidebar.classList.add('sidebar-updated');
+        sidebar.addEventListener('animationend', () => sidebar.classList.remove('sidebar-updated'), { once: true });
       }
       
     } catch (error) {
@@ -452,9 +454,13 @@ const UIController = (function() {
           }
         });
         
+        // Animação de entrada para cada linha
+        row.classList.add('row-new');
+        row.addEventListener('animationend', () => row.classList.remove('row-new'), { once: true });
+
         fragment.appendChild(row);
       }
-      
+
       // Adicionar todas as linhas de uma vez
       tbody.appendChild(fragment);
       
