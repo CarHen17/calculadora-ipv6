@@ -5,21 +5,20 @@
 const HierarchicalPlanner = (function () {
   'use strict';
 
+  // Palette aligned with app design — used for node accents, not large backgrounds
   const LEVEL_COLORS = ['#0070d1', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626'];
 
   // ── Formatting ────────────────────────────────────────────────────
 
   function formatBigInt(n) {
-    if (n <= 9999n) return n.toLocaleString('pt-BR');
-    const s = n.toString();
-    const exp = s.length - 1;
-    const mantissa = (Number(s.slice(0, 5)) / 10000).toFixed(2);
-    // Use common SI abbreviations for readable ranges
-    if (n < 1000n) return s;
+    if (n < 1000n) return n.toLocaleString('pt-BR');
     if (n < 1000000n) return `${(Number(n) / 1000).toFixed(1)}K`;
     if (n < 1000000000n) return `${(Number(n) / 1e6).toFixed(1)}M`;
     if (n < 1000000000000n) return `${(Number(n) / 1e9).toFixed(1)}B`;
     if (n < 1000000000000000n) return `${(Number(n) / 1e12).toFixed(1)}T`;
+    const s = n.toString();
+    const exp = s.length - 1;
+    const mantissa = (Number(s.slice(0, 5)) / 10000).toFixed(2);
     return `${mantissa}×10<sup>${exp}</sup>`;
   }
 
@@ -76,47 +75,105 @@ const HierarchicalPlanner = (function () {
 
   function renderError(msg) {
     const el = document.getElementById('hpResults');
-    el.innerHTML = `<div class="hp-error"><i class="fas fa-exclamation-triangle"></i> ${msg}</div>`;
+    el.className = 'hp-results-error';
+    el.innerHTML = `
+      <div class="hp-error">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>${msg}</span>
+      </div>`;
     el.style.display = 'block';
   }
 
   function renderResults(base, levels) {
-    const baseColor = LEVEL_COLORS[0];
     const baseHosts = 2n ** BigInt(128 - base.prefix);
+    const totalBitsAllocated = levels[levels.length - 1].prefix - base.prefix;
+    const deepestLevel = levels[levels.length - 1];
 
-    // ── Tree ──────────────────────────────────────────────────────
+    // ── Summary stat cards ────────────────────────────────────────
+    const summaryHtml = `
+      <div class="hp-summary-cards">
+        <div class="hp-stat-card">
+          <div class="hp-stat-icon" style="background:rgba(0,112,209,.12);color:#0070d1">
+            <i class="fas fa-layer-group"></i>
+          </div>
+          <div>
+            <div class="hp-stat-value">${levels.length}</div>
+            <div class="hp-stat-label">Níveis</div>
+          </div>
+        </div>
+        <div class="hp-stat-card">
+          <div class="hp-stat-icon" style="background:rgba(124,58,237,.12);color:#7c3aed">
+            <i class="fas fa-code-branch"></i>
+          </div>
+          <div>
+            <div class="hp-stat-value">${totalBitsAllocated}</div>
+            <div class="hp-stat-label">Bits alocados</div>
+          </div>
+        </div>
+        <div class="hp-stat-card">
+          <div class="hp-stat-icon" style="background:rgba(5,150,105,.12);color:#059669">
+            <i class="fas fa-th"></i>
+          </div>
+          <div>
+            <div class="hp-stat-value">${formatBigInt(deepestLevel.totalBlocks)}</div>
+            <div class="hp-stat-label">Blocos (${deepestLevel.label})</div>
+          </div>
+        </div>
+        <div class="hp-stat-card">
+          <div class="hp-stat-icon" style="background:rgba(217,119,6,.12);color:#d97706">
+            <i class="fas fa-dot-circle"></i>
+          </div>
+          <div>
+            <div class="hp-stat-value">${formatBigInt(deepestLevel.hostsPerBlock)}</div>
+            <div class="hp-stat-label">End./bloco (${deepestLevel.label})</div>
+          </div>
+        </div>
+      </div>`;
+
+    // ── Tree visualization ────────────────────────────────────────
+    const baseColor = LEVEL_COLORS[0];
     let treeHtml = `
+      <div class="hp-section-title"><i class="fas fa-sitemap"></i> Hierarquia visual</div>
       <div class="hp-tree">
-        <div class="hp-node" style="--node-color:${baseColor}">
-          <div class="hp-node-icon" style="background:${baseColor}"><i class="fas fa-globe"></i></div>
+        <div class="hp-node" style="border-left-color:${baseColor}">
+          <div class="hp-node-icon" style="background:${baseColor}">
+            <i class="fas fa-globe"></i>
+          </div>
           <div class="hp-node-body">
-            <div class="hp-node-title">Bloco Base &nbsp;<code>${base.address}/${base.prefix}</code></div>
+            <div class="hp-node-name">
+              Bloco Base
+              <code class="hp-cidr-tag">${base.address}/${base.prefix}</code>
+            </div>
             <div class="hp-node-meta">
-              <span><i class="fas fa-dot-circle"></i> ${formatBigInt(baseHosts)} endereços totais</span>
+              <span><i class="fas fa-dot-circle"></i>&nbsp;${formatBigInt(baseHosts)} endereços totais</span>
             </div>
           </div>
         </div>`;
 
     levels.forEach((level, i) => {
       const color = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+      const bits = level.bitsAtLevel;
       treeHtml += `
         <div class="hp-connector">
-          <div class="hp-connector-line" style="border-color:${color}"></div>
-          <div class="hp-connector-badge" style="background:${color}20;border-color:${color};color:${color}">
-            ${level.bitsAtLevel} bit${level.bitsAtLevel !== 1 ? 's' : ''}
-            &nbsp;→&nbsp; ${formatBigInt(level.childrenPerParent)} filhos/pai
+          <div class="hp-conn-line" style="background:${color}"></div>
+          <div class="hp-conn-badge" style="border-color:${color};color:${color}">
+            <i class="fas fa-expand-arrows-alt"></i>
+            ${bits} bit${bits !== 1 ? 's' : ''} &nbsp;·&nbsp; ${formatBigInt(level.childrenPerParent)} filhos/pai
           </div>
         </div>
-        <div class="hp-node" style="--node-color:${color}">
-          <div class="hp-node-icon" style="background:${color}"><i class="fas fa-network-wired"></i></div>
+        <div class="hp-node" style="border-left-color:${color}">
+          <div class="hp-node-icon" style="background:${color}">
+            <i class="fas fa-network-wired"></i>
+          </div>
           <div class="hp-node-body">
-            <div class="hp-node-title">
+            <div class="hp-node-name">
               ${level.label}
-              <span class="hp-prefix-tag" style="background:${color}">/${level.prefix}</span>
+              <span class="hp-prefix-pill" style="background:${color}">/${level.prefix}</span>
             </div>
             <div class="hp-node-meta">
-              <span><i class="fas fa-th"></i> ${formatBigInt(level.totalBlocks)} blocos no total</span>
-              <span><i class="fas fa-dot-circle"></i> ${formatBigInt(level.hostsPerBlock)} end./bloco</span>
+              <span><i class="fas fa-th"></i>&nbsp;${formatBigInt(level.totalBlocks)} blocos no total</span>
+              <span class="hp-meta-sep">·</span>
+              <span><i class="fas fa-dot-circle"></i>&nbsp;${formatBigInt(level.hostsPerBlock)} end./bloco</span>
             </div>
           </div>
         </div>`;
@@ -124,8 +181,9 @@ const HierarchicalPlanner = (function () {
 
     treeHtml += '</div>';
 
-    // ── Stats Table ───────────────────────────────────────────────
-    let tableHtml = `
+    // ── Stats table ───────────────────────────────────────────────
+    const tableHtml = `
+      <div class="hp-section-title" style="margin-top:24px"><i class="fas fa-table"></i> Tabela de resumo</div>
       <div class="hp-table-wrap">
         <table class="hp-table">
           <thead>
@@ -133,15 +191,15 @@ const HierarchicalPlanner = (function () {
               <th>Nível</th>
               <th>Prefixo</th>
               <th>Bits usados</th>
-              <th>Filhos por pai</th>
+              <th>Filhos/pai</th>
               <th>Total de blocos</th>
-              <th>Endereços por bloco</th>
+              <th>End./bloco</th>
             </tr>
           </thead>
           <tbody>
             <tr class="hp-row-base">
               <td><em>Base</em></td>
-              <td>/${base.prefix}</td>
+              <td><code>/${base.prefix}</code></td>
               <td>—</td>
               <td>—</td>
               <td>1</td>
@@ -155,10 +213,10 @@ const HierarchicalPlanner = (function () {
                   <span class="hp-table-dot" style="background:${color}"></span>
                   ${l.label}
                 </td>
-                <td>/${l.prefix}</td>
-                <td>${l.bitsAtLevel}</td>
+                <td><code>/${l.prefix}</code></td>
+                <td><strong>${l.bitsAtLevel}</strong></td>
                 <td>${formatBigInt(l.childrenPerParent)}</td>
-                <td>${formatBigInt(l.totalBlocks)}</td>
+                <td><strong>${formatBigInt(l.totalBlocks)}</strong></td>
                 <td>${formatBigInt(l.hostsPerBlock)}</td>
               </tr>`;
             }).join('')}
@@ -167,8 +225,12 @@ const HierarchicalPlanner = (function () {
       </div>`;
 
     const el = document.getElementById('hpResults');
-    el.innerHTML = treeHtml + tableHtml;
+    el.className = 'hp-results-content';
+    el.innerHTML = summaryHtml + treeHtml + tableHtml;
     el.style.display = 'block';
+
+    // Scroll to results smoothly
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
   }
 
   // ── Calculate (entry point) ───────────────────────────────────────
@@ -187,7 +249,6 @@ const HierarchicalPlanner = (function () {
       return;
     }
 
-    // Validate prefixes are strictly ascending and ≤ 128
     let prev = base.prefix;
     for (const l of levels) {
       if (l.prefix <= prev) {
@@ -207,18 +268,18 @@ const HierarchicalPlanner = (function () {
 
   // ── Level Management ─────────────────────────────────────────────
 
-  let levelSeq = 0;
-
   function addLevel(labelVal = '', prefixVal = '') {
-    levelSeq++;
     const list = document.getElementById('hpLevelsList');
+    const index = list.children.length; // 0-based, for color
+    const color = LEVEL_COLORS[(index + 1) % LEVEL_COLORS.length];
+
     const row = document.createElement('div');
     row.className = 'hp-level-row';
     row.innerHTML = `
-      <span class="hp-level-num">${list.children.length + 1}</span>
-      <input type="text"   class="hp-level-label"  placeholder="Nome do nível" value="${labelVal}">
+      <span class="hp-level-num" style="background:${color}">${index + 1}</span>
+      <input type="text"   class="hp-level-label"  placeholder="Ex: Região" value="${labelVal}">
       <span class="hp-slash">/</span>
-      <input type="number" class="hp-level-prefix" min="1" max="128" placeholder="64" value="${prefixVal}">
+      <input type="number" class="hp-level-prefix" min="1" max="128" placeholder="48" value="${prefixVal}">
       <button class="hp-remove-btn" title="Remover nível" aria-label="Remover nível">
         <i class="fas fa-times"></i>
       </button>`;
@@ -230,8 +291,13 @@ const HierarchicalPlanner = (function () {
   }
 
   function renumber() {
-    document.querySelectorAll('.hp-level-num').forEach((el, i) => {
-      el.textContent = i + 1;
+    const rows = document.querySelectorAll('.hp-level-row');
+    rows.forEach((row, i) => {
+      const num = row.querySelector('.hp-level-num');
+      if (num) {
+        num.textContent = i + 1;
+        num.style.background = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+      }
     });
   }
 
@@ -239,17 +305,15 @@ const HierarchicalPlanner = (function () {
 
   const PRESETS = {
     isp: {
-      label: 'ISP (Regiões → Clientes → Sites → VLANs)',
       base: '2001:db8::/32',
       levels: [
-        { label: 'Região',   prefix: 40 },
-        { label: 'Cliente',  prefix: 48 },
-        { label: 'Site',     prefix: 56 },
-        { label: 'VLAN',     prefix: 64 },
+        { label: 'Região',  prefix: 40 },
+        { label: 'Cliente', prefix: 48 },
+        { label: 'Site',    prefix: 56 },
+        { label: 'VLAN',    prefix: 64 },
       ],
     },
     enterprise: {
-      label: 'Empresa (Departamentos → Segmentos)',
       base: '2001:db8::/48',
       levels: [
         { label: 'Departamento', prefix: 56 },
@@ -257,7 +321,6 @@ const HierarchicalPlanner = (function () {
       ],
     },
     datacenter: {
-      label: 'Data Center (PoPs → Racks → Servidores)',
       base: '2001:db8::/40',
       levels: [
         { label: 'PoP',       prefix: 48 },
@@ -267,11 +330,10 @@ const HierarchicalPlanner = (function () {
       ],
     },
     mobile: {
-      label: 'Operadora Móvel (UFs → Células → Dispositivos)',
       base: '2001:db8::/32',
       levels: [
-        { label: 'UF',        prefix: 40 },
-        { label: 'Célula',    prefix: 48 },
+        { label: 'UF',          prefix: 40 },
+        { label: 'Célula',      prefix: 48 },
         { label: 'Dispositivo', prefix: 64 },
       ],
     },
@@ -282,9 +344,7 @@ const HierarchicalPlanner = (function () {
     if (!p) return;
     document.getElementById('hpBaseBlock').value = p.base;
     document.getElementById('hpLevelsList').innerHTML = '';
-    levelSeq = 0;
     p.levels.forEach(l => addLevel(l.label, l.prefix));
-    // Auto-calculate
     calculate();
   }
 
@@ -309,285 +369,576 @@ const HierarchicalPlanner = (function () {
     const s = document.createElement('style');
     s.id = 'hpStyles';
     s.textContent = `
-/* ── Panel ── */
+
+/* ═══════════════════════════════════════════════
+   BACKDROP & PANEL SHELL
+═══════════════════════════════════════════════ */
 #hpPanelBackdrop {
   display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,.45);
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
   z-index: 1100;
+  backdrop-filter: blur(2px);
 }
+
 #hpPanel {
   position: fixed;
-  top: 0; right: 0;
-  width: min(760px, 100vw);
+  top: 0;
+  right: 0;
+  width: min(720px, 100vw);
   height: 100vh;
-  background: var(--bg-light, #fff);
-  box-shadow: -4px 0 32px rgba(0,0,0,.18);
+  background: #ffffff;
+  box-shadow: -6px 0 40px rgba(0, 0, 0, 0.15);
   z-index: 1101;
   display: flex;
   flex-direction: column;
   transform: translateX(100%);
-  transition: transform .3s cubic-bezier(.4,0,.2,1);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
-body.dark-mode #hpPanel { background: var(--bg-dark, #1e2330); }
-#hpPanel.hp-panel-open { transform: translateX(0); }
+body.dark-mode #hpPanel {
+  background: #0d1117;
+}
+#hpPanel.hp-panel-open {
+  transform: translateX(0);
+}
 
-/* ── Panel Header ── */
+/* ═══════════════════════════════════════════════
+   PANEL HEADER (gradient, like main buttons)
+═══════════════════════════════════════════════ */
 .hp-panel-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border-light, #e2e8f0);
+  gap: 14px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #0070d1, #0056a3);
   flex-shrink: 0;
 }
-body.dark-mode .hp-panel-header { border-color: var(--border-dark, #2d3748); }
-.hp-panel-header h2 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--text-light, #1a202c);
-  flex: 1;
-}
-body.dark-mode .hp-panel-header h2 { color: var(--text-dark, #e2e8f0); }
-.hp-panel-header i.fa-sitemap { color: var(--primary-color, #0070d1); font-size: 20px; }
-.hp-close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-light-secondary, #718096);
-  font-size: 18px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  transition: background .15s;
-}
-.hp-close-btn:hover { background: var(--border-light, #e2e8f0); }
-body.dark-mode .hp-close-btn:hover { background: var(--border-dark, #2d3748); }
 
-/* ── Panel Body (scrollable) ── */
+.hp-header-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.hp-header-text {
+  flex: 1;
+  min-width: 0;
+}
+.hp-header-text h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.2;
+}
+.hp-header-text p {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  line-height: 1.3;
+}
+
+.hp-close-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  color: #fff;
+  font-size: 15px;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.hp-close-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* ═══════════════════════════════════════════════
+   PANEL BODY (scrollable)
+═══════════════════════════════════════════════ */
 .hp-panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
 }
 
-/* ── Presets ── */
-.hp-presets {
+.hp-panel-body::-webkit-scrollbar { width: 6px; }
+.hp-panel-body::-webkit-scrollbar-track {
+  background: #f6f8fa;
+}
+body.dark-mode .hp-panel-body::-webkit-scrollbar-track {
+  background: #161b22;
+}
+.hp-panel-body::-webkit-scrollbar-thumb {
+  background: #0070d1;
+  border-radius: 3px;
+}
+
+/* ═══════════════════════════════════════════════
+   FORM SECTIONS
+═══════════════════════════════════════════════ */
+.hp-form-section {
+  padding: 20px 24px;
+  border-bottom: 1px solid #d0d7de;
+}
+body.dark-mode .hp-form-section {
+  border-color: #30363d;
+}
+
+.hp-section-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #57606a;
+  margin-bottom: 12px;
+}
+body.dark-mode .hp-section-label {
+  color: #8b949e;
+}
+
+/* ═══════════════════════════════════════════════
+   PRESETS
+═══════════════════════════════════════════════ */
+.hp-presets-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
-.hp-presets label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  color: var(--text-light-secondary, #718096);
-  display: block;
-  margin-bottom: 8px;
-}
+
 .hp-preset-btn {
-  padding: 6px 14px;
-  border: 1.5px solid var(--border-light, #cbd5e0);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 1.5px solid #d0d7de;
   border-radius: 20px;
-  background: transparent;
+  background: #f6f8fa;
   cursor: pointer;
   font-size: 13px;
-  color: var(--text-light, #2d3748);
-  transition: all .15s;
+  font-weight: 500;
+  color: #24292f;
+  transition: all 0.2s ease;
+  font-family: inherit;
 }
 .hp-preset-btn:hover {
-  border-color: var(--primary-color, #0070d1);
-  color: var(--primary-color, #0070d1);
-  background: rgba(0,112,209,.06);
+  border-color: #0070d1;
+  color: #0070d1;
+  background: rgba(0, 112, 209, 0.06);
+  box-shadow: 0 2px 8px rgba(0, 112, 209, 0.12);
+  transform: translateY(-1px);
 }
-body.dark-mode .hp-preset-btn { color: var(--text-dark, #e2e8f0); border-color: var(--border-dark, #4a5568); }
-body.dark-mode .hp-preset-btn:hover { border-color: var(--primary-light, #60a5fa); color: var(--primary-light, #60a5fa); }
+body.dark-mode .hp-preset-btn {
+  background: #161b22;
+  border-color: #30363d;
+  color: #e6edf3;
+}
+body.dark-mode .hp-preset-btn:hover {
+  border-color: #2689db;
+  color: #2689db;
+  background: rgba(38, 137, 219, 0.08);
+}
 
-/* ── Base Input ── */
-.hp-base-row {
+/* ═══════════════════════════════════════════════
+   BASE BLOCK INPUT
+═══════════════════════════════════════════════ */
+.hp-base-input-wrap {
+  position: relative;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  max-width: 340px;
 }
-.hp-base-row label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-light, #2d3748);
+.hp-base-input-icon {
+  position: absolute;
+  left: 13px;
+  color: #57606a;
+  font-size: 14px;
+  pointer-events: none;
 }
-body.dark-mode .hp-base-row label { color: var(--text-dark, #e2e8f0); }
-.hp-base-row input {
-  padding: 10px 14px;
-  border: 1.5px solid var(--border-light, #cbd5e0);
+body.dark-mode .hp-base-input-icon { color: #8b949e; }
+
+#hpBaseBlock {
+  width: 100%;
+  padding: 10px 14px 10px 38px;
+  border: 1.5px solid #d0d7de;
   border-radius: 8px;
   font-size: 14px;
-  font-family: 'Courier New', monospace;
-  background: var(--bg-light, #fff);
-  color: var(--text-light, #2d3748);
-  transition: border-color .15s;
-  max-width: 320px;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  background: #fff;
+  color: #24292f;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
-body.dark-mode .hp-base-row input {
-  background: var(--bg-dark-accent, #2d3748);
-  border-color: var(--border-dark, #4a5568);
-  color: var(--text-dark, #e2e8f0);
+body.dark-mode #hpBaseBlock {
+  background: #161b22;
+  border-color: #30363d;
+  color: #e6edf3;
 }
-.hp-base-row input:focus {
+#hpBaseBlock:focus {
   outline: none;
-  border-color: var(--primary-color, #0070d1);
-  box-shadow: 0 0 0 3px rgba(0,112,209,.15);
+  border-color: #0070d1;
+  box-shadow: 0 2px 12px rgba(0, 112, 209, 0.2);
 }
 
-/* ── Level Rows ── */
-.hp-levels-section label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-light, #2d3748);
-  display: block;
-  margin-bottom: 10px;
+/* ═══════════════════════════════════════════════
+   LEVEL ROWS
+═══════════════════════════════════════════════ */
+.hp-levels-col-header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+  padding: 0 2px;
 }
-body.dark-mode .hp-levels-section label { color: var(--text-dark, #e2e8f0); }
+.hp-levels-col-header span {
+  font-size: 11px;
+  font-weight: 600;
+  color: #57606a;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+body.dark-mode .hp-levels-col-header span { color: #8b949e; }
+.hp-col-name { flex: 1; padding-left: 34px; }
+.hp-col-prefix { width: 68px; text-align: center; }
+.hp-col-actions { width: 28px; }
+
 #hpLevelsList {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: 6px;
+  margin-bottom: 12px;
 }
+
 .hp-level-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
+
 .hp-level-num {
-  width: 22px;
-  min-width: 22px;
-  height: 22px;
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--primary-color, #0070d1);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
+
 .hp-level-label {
   flex: 1;
-  padding: 8px 10px;
-  border: 1.5px solid var(--border-light, #cbd5e0);
+  padding: 8px 12px;
+  border: 1.5px solid #d0d7de;
   border-radius: 6px;
   font-size: 13px;
-  background: var(--bg-light, #fff);
-  color: var(--text-light, #2d3748);
+  font-family: inherit;
+  background: #fff;
+  color: #24292f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
 body.dark-mode .hp-level-label {
-  background: var(--bg-dark-accent, #2d3748);
-  border-color: var(--border-dark, #4a5568);
-  color: var(--text-dark, #e2e8f0);
+  background: #161b22;
+  border-color: #30363d;
+  color: #e6edf3;
 }
-.hp-level-label:focus { outline: none; border-color: var(--primary-color, #0070d1); }
+.hp-level-label:focus {
+  outline: none;
+  border-color: #0070d1;
+  box-shadow: 0 2px 8px rgba(0, 112, 209, 0.15);
+}
+
 .hp-slash {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--text-light-secondary, #718096);
+  color: #57606a;
+  flex-shrink: 0;
 }
+body.dark-mode .hp-slash { color: #8b949e; }
+
 .hp-level-prefix {
   width: 68px;
   padding: 8px 10px;
-  border: 1.5px solid var(--border-light, #cbd5e0);
+  border: 1.5px solid #d0d7de;
   border-radius: 6px;
   font-size: 13px;
-  font-family: 'Courier New', monospace;
+  font-family: 'SFMono-Regular', Consolas, monospace;
   text-align: center;
-  background: var(--bg-light, #fff);
-  color: var(--text-light, #2d3748);
+  background: #fff;
+  color: #24292f;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
 }
 body.dark-mode .hp-level-prefix {
-  background: var(--bg-dark-accent, #2d3748);
-  border-color: var(--border-dark, #4a5568);
-  color: var(--text-dark, #e2e8f0);
+  background: #161b22;
+  border-color: #30363d;
+  color: #e6edf3;
 }
-.hp-level-prefix:focus { outline: none; border-color: var(--primary-color, #0070d1); }
+.hp-level-prefix:focus {
+  outline: none;
+  border-color: #0070d1;
+  box-shadow: 0 2px 8px rgba(0, 112, 209, 0.15);
+}
+
 .hp-remove-btn {
   background: none;
   border: none;
   cursor: pointer;
-  color: var(--text-light-secondary, #718096);
-  padding: 4px 7px;
-  border-radius: 4px;
-  font-size: 13px;
-  transition: color .15s, background .15s;
+  color: #57606a;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: color 0.15s, background 0.15s;
+  flex-shrink: 0;
 }
-.hp-remove-btn:hover { color: #dc2626; background: #fef2f2; }
-body.dark-mode .hp-remove-btn:hover { background: rgba(220,38,38,.15); }
+.hp-remove-btn:hover {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.08);
+}
+body.dark-mode .hp-remove-btn:hover {
+  background: rgba(220, 38, 38, 0.12);
+}
 
-/* ── Action buttons ── */
-.hp-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
-}
+/* ═══════════════════════════════════════════════
+   ADD LEVEL BUTTON
+═══════════════════════════════════════════════ */
 .hp-add-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 7px;
   padding: 8px 14px;
-  border: 1.5px dashed var(--border-light, #cbd5e0);
+  border: 1.5px dashed #d0d7de;
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
   font-size: 13px;
-  color: var(--text-light-secondary, #718096);
-  transition: all .15s;
+  font-weight: 500;
+  color: #57606a;
+  font-family: inherit;
+  transition: all 0.2s ease;
 }
 .hp-add-btn:hover {
-  border-color: var(--primary-color, #0070d1);
-  color: var(--primary-color, #0070d1);
+  border-color: #0070d1;
+  color: #0070d1;
+  background: rgba(0, 112, 209, 0.04);
 }
-body.dark-mode .hp-add-btn { color: var(--text-dark-secondary, #a0aec0); border-color: var(--border-dark, #4a5568); }
+body.dark-mode .hp-add-btn {
+  color: #8b949e;
+  border-color: #30363d;
+}
+body.dark-mode .hp-add-btn:hover {
+  border-color: #2689db;
+  color: #2689db;
+}
 
-/* ── Results ── */
-#hpResults { margin-top: 4px; }
+/* ═══════════════════════════════════════════════
+   CALCULATE BUTTON (prominent, full-width)
+═══════════════════════════════════════════════ */
+.hp-calc-section {
+  padding: 20px 24px;
+}
+
+#hpCalcBtn {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #0070d1, #0056a3);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 112, 209, 0.3);
+}
+#hpCalcBtn:hover {
+  box-shadow: 0 6px 18px rgba(0, 112, 209, 0.4);
+  transform: translateY(-1px);
+}
+#hpCalcBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 112, 209, 0.3);
+}
+
+/* ═══════════════════════════════════════════════
+   RESULTS AREA
+═══════════════════════════════════════════════ */
+#hpResults {
+  padding: 24px;
+  border-top: 1px solid #d0d7de;
+}
+body.dark-mode #hpResults {
+  border-color: #30363d;
+}
+
+@keyframes hpFadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hp-results-content {
+  animation: hpFadeInUp 0.35s ease;
+}
+.hp-results-error {
+  animation: hpFadeInUp 0.25s ease;
+}
+
+/* ── Error box ── */
 .hp-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   padding: 14px 16px;
-  background: #fef3cd;
-  border: 1px solid #f59e0b;
+  background: #fff8e1;
+  border: 1px solid #f0b849;
+  border-left: 4px solid #f59e0b;
   border-radius: 8px;
   color: #92400e;
   font-size: 14px;
+  line-height: 1.5;
+}
+body.dark-mode .hp-error {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.4);
+  border-left-color: #f59e0b;
+  color: #fbbf24;
+}
+.hp-error i { margin-top: 1px; flex-shrink: 0; }
+
+/* ── Summary stat cards ── */
+.hp-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.hp-stat-card {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease;
 }
-body.dark-mode .hp-error { background: rgba(245,158,11,.15); color: #fbbf24; border-color: #f59e0b; }
+.hp-stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+body.dark-mode .hp-stat-card {
+  background: #161b22;
+  border-color: #30363d;
+}
+body.dark-mode .hp-stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
 
-/* ── Tree ── */
+.hp-stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.hp-stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #24292f;
+  line-height: 1.1;
+}
+body.dark-mode .hp-stat-value { color: #e6edf3; }
+
+.hp-stat-label {
+  font-size: 11px;
+  color: #57606a;
+  margin-top: 2px;
+  line-height: 1.3;
+}
+body.dark-mode .hp-stat-label { color: #8b949e; }
+
+/* ── Section title (before tree/table) ── */
+.hp-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #24292f;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+body.dark-mode .hp-section-title { color: #e6edf3; }
+.hp-section-title i { color: #0070d1; }
+
+/* ═══════════════════════════════════════════════
+   TREE VISUALIZATION
+═══════════════════════════════════════════════ */
 .hp-tree {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  padding: 8px 0 16px 0;
-  margin-bottom: 24px;
+  margin-bottom: 0;
 }
+
+/* Nodes: left-border accent (no color-mix, no full-color backgrounds) */
 .hp-node {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 10px 14px 10px 10px;
-  border: 2px solid var(--node-color, #0070d1);
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--node-color, #0070d1) 8%, transparent);
-  width: 100%;
+  padding: 12px 14px;
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-left: 4px solid #0070d1; /* overridden inline per level */
+  border-radius: 8px;
   box-sizing: border-box;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.hp-node:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+  transform: translateX(2px);
 }
 body.dark-mode .hp-node {
-  background: color-mix(in srgb, var(--node-color, #0070d1) 12%, transparent);
+  background: #161b22;
+  border-color: #30363d;
 }
+body.dark-mode .hp-node:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
 .hp-node-icon {
   width: 36px;
   min-width: 36px;
@@ -598,122 +949,203 @@ body.dark-mode .hp-node {
   justify-content: center;
   color: #fff;
   font-size: 14px;
+  flex-shrink: 0;
 }
+
 .hp-node-body { flex: 1; min-width: 0; }
-.hp-node-title {
+
+.hp-node-name {
   font-size: 14px;
   font-weight: 700;
-  color: var(--text-light, #1a202c);
+  color: #24292f;
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  line-height: 1.3;
 }
-body.dark-mode .hp-node-title { color: var(--text-dark, #e2e8f0); }
-.hp-prefix-tag {
+body.dark-mode .hp-node-name { color: #e6edf3; }
+
+.hp-cidr-tag {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(0, 112, 209, 0.1);
+  color: #0070d1;
+  padding: 2px 8px;
+  border-radius: 5px;
+  border: 1px solid rgba(0, 112, 209, 0.2);
+}
+body.dark-mode .hp-cidr-tag {
+  background: rgba(38, 137, 219, 0.12);
+  color: #58a6ff;
+  border-color: rgba(38, 137, 219, 0.25);
+}
+
+.hp-prefix-pill {
+  display: inline-block;
   font-size: 11px;
   font-weight: 700;
   color: #fff;
-  padding: 2px 7px;
+  padding: 2px 8px;
   border-radius: 10px;
 }
+
 .hp-node-meta {
   display: flex;
-  gap: 16px;
+  align-items: center;
   flex-wrap: wrap;
-  margin-top: 4px;
+  gap: 4px;
+  margin-top: 5px;
 }
 .hp-node-meta span {
   font-size: 12px;
-  color: var(--text-light-secondary, #718096);
-  display: flex;
+  color: #57606a;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
-body.dark-mode .hp-node-meta span { color: var(--text-dark-secondary, #a0aec0); }
+body.dark-mode .hp-node-meta span { color: #8b949e; }
+.hp-meta-sep {
+  color: #d0d7de !important;
+  font-size: 14px !important;
+}
+body.dark-mode .hp-meta-sep { color: #30363d !important; }
+
+/* Connector between nodes */
 .hp-connector {
   display: flex;
   align-items: center;
-  gap: 0;
-  padding: 2px 0 2px 18px;
-}
-.hp-connector-line {
-  width: 2px;
-  height: 28px;
-  border-left: 2px dashed;
-  opacity: .5;
-}
-.hp-connector-badge {
-  margin-left: 10px;
-  padding: 3px 10px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1.5px solid;
-  white-space: nowrap;
+  gap: 10px;
+  padding: 6px 0 6px 20px;
 }
 
-/* ── Stats Table ── */
+.hp-conn-line {
+  width: 2px;
+  height: 30px;
+  border-radius: 2px;
+  opacity: 0.35;
+  flex-shrink: 0;
+}
+
+.hp-conn-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border: 1.5px solid;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #fff;
+  white-space: nowrap;
+}
+body.dark-mode .hp-conn-badge {
+  background: #0d1117;
+}
+
+/* ═══════════════════════════════════════════════
+   STATS TABLE
+═══════════════════════════════════════════════ */
 .hp-table-wrap {
   overflow-x: auto;
   border-radius: 8px;
-  border: 1px solid var(--border-light, #e2e8f0);
+  border: 1px solid #d0d7de;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
-body.dark-mode .hp-table-wrap { border-color: var(--border-dark, #2d3748); }
+body.dark-mode .hp-table-wrap {
+  border-color: #30363d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
 .hp-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
+
+/* Gradient header matching app's table style */
+.hp-table thead tr {
+  background: linear-gradient(135deg, #0070d1, #0056a3);
+}
 .hp-table th {
-  padding: 10px 14px;
+  padding: 11px 14px;
   text-align: left;
-  background: var(--bg-light, #f7fafc);
-  color: var(--text-light-secondary, #718096);
+  color: #fff;
   font-weight: 600;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: .05em;
-  border-bottom: 1px solid var(--border-light, #e2e8f0);
+  font-size: 12px;
   white-space: nowrap;
 }
-body.dark-mode .hp-table th {
-  background: var(--bg-dark-accent, #2d3748);
-  color: var(--text-dark-secondary, #a0aec0);
-  border-color: var(--border-dark, #4a5568);
-}
+
 .hp-table td {
   padding: 10px 14px;
-  border-bottom: 1px solid var(--border-light, #e2e8f0);
-  color: var(--text-light, #2d3748);
+  border-bottom: 1px solid #d0d7de;
+  color: #24292f;
   vertical-align: middle;
 }
-body.dark-mode .hp-table td { border-color: var(--border-dark, #2d3748); color: var(--text-dark, #e2e8f0); }
-.hp-table tr:last-child td { border-bottom: none; }
-.hp-table tr:hover td { background: rgba(0,112,209,.04); }
-body.dark-mode .hp-table tr:hover td { background: rgba(96,165,250,.05); }
-.hp-row-base td { color: var(--text-light-secondary, #718096); font-style: italic; }
-body.dark-mode .hp-row-base td { color: var(--text-dark-secondary, #a0aec0); }
+body.dark-mode .hp-table td {
+  border-color: #21262d;
+  color: #e6edf3;
+}
+
+.hp-table tbody tr:last-child td { border-bottom: none; }
+.hp-table tbody tr:hover td { background: rgba(0, 112, 209, 0.04); }
+body.dark-mode .hp-table tbody tr:hover td { background: rgba(38, 137, 219, 0.05); }
+
+.hp-row-base td {
+  color: #57606a;
+  background: #f6f8fa;
+}
+body.dark-mode .hp-row-base td {
+  color: #8b949e;
+  background: #161b22;
+}
+
+.hp-table code {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+body.dark-mode .hp-table code {
+  background: rgba(255, 255, 255, 0.07);
+}
+
 .hp-table-dot {
   display: inline-block;
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   margin-right: 7px;
   vertical-align: middle;
+  flex-shrink: 0;
 }
 
-/* ── Open button in header ── */
+/* ═══════════════════════════════════════════════
+   HEADER OPEN BUTTON
+═══════════════════════════════════════════════ */
 #hpOpenBtn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
 }
 
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
 @media (max-width: 600px) {
-  .hp-panel-body { padding: 16px; }
-  .hp-node-meta { gap: 8px; }
-  .hp-connector-badge { font-size: 11px; }
+  .hp-form-section { padding: 16px; }
+  .hp-calc-section { padding: 16px; }
+  #hpResults { padding: 16px; }
+  .hp-summary-cards { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .hp-stat-value { font-size: 17px; }
+  .hp-node-meta { gap: 3px; }
+  .hp-conn-badge { font-size: 11px; padding: 3px 9px; }
+  .hp-header-text p { display: none; }
+}
+@media (max-width: 400px) {
+  .hp-summary-cards { grid-template-columns: 1fr; }
 }
     `;
     document.head.appendChild(s);
@@ -722,66 +1154,96 @@ body.dark-mode .hp-row-base td { color: var(--text-dark-secondary, #a0aec0); }
   // ── DOM Scaffolding ───────────────────────────────────────────────
 
   function buildPanel() {
-    // Backdrop
     const backdrop = document.createElement('div');
     backdrop.id = 'hpPanelBackdrop';
     backdrop.addEventListener('click', closePanel);
     document.body.appendChild(backdrop);
 
-    // Panel
     const panel = document.createElement('div');
     panel.id = 'hpPanel';
     panel.setAttribute('role', 'dialog');
+    panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('aria-label', 'Planejador Hierárquico de Sub-redes');
 
     panel.innerHTML = `
+      <!-- Header (gradient) -->
       <div class="hp-panel-header">
-        <i class="fas fa-sitemap"></i>
-        <h2>Planejador Hierárquico de Sub-redes</h2>
+        <div class="hp-header-icon-wrap">
+          <i class="fas fa-sitemap"></i>
+        </div>
+        <div class="hp-header-text">
+          <h2>Planejador Hierárquico</h2>
+          <p>Visualize o endereçamento IPv6 em múltiplos níveis</p>
+        </div>
         <button class="hp-close-btn" id="hpCloseBtn" title="Fechar" aria-label="Fechar planejador">
           <i class="fas fa-times"></i>
         </button>
       </div>
+
       <div class="hp-panel-body">
 
-        <!-- Presets -->
-        <div>
-          <label class="hp-presets" style="font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-light-secondary,#718096);display:block;margin-bottom:8px;">Exemplos prontos</label>
-          <div class="hp-presets">
-            <button class="hp-preset-btn" data-preset="isp"><i class="fas fa-building"></i> ISP</button>
-            <button class="hp-preset-btn" data-preset="enterprise"><i class="fas fa-sitemap"></i> Empresa</button>
-            <button class="hp-preset-btn" data-preset="datacenter"><i class="fas fa-server"></i> Data Center</button>
-            <button class="hp-preset-btn" data-preset="mobile"><i class="fas fa-mobile-alt"></i> Operadora Móvel</button>
+        <!-- 1. Presets -->
+        <div class="hp-form-section">
+          <span class="hp-section-label">Início rápido</span>
+          <div class="hp-presets-row">
+            <button class="hp-preset-btn" data-preset="isp">
+              <i class="fas fa-building"></i> ISP
+            </button>
+            <button class="hp-preset-btn" data-preset="enterprise">
+              <i class="fas fa-sitemap"></i> Empresa
+            </button>
+            <button class="hp-preset-btn" data-preset="datacenter">
+              <i class="fas fa-server"></i> Data Center
+            </button>
+            <button class="hp-preset-btn" data-preset="mobile">
+              <i class="fas fa-mobile-alt"></i> Operadora Móvel
+            </button>
           </div>
         </div>
 
-        <!-- Base block -->
-        <div class="hp-base-row">
-          <label for="hpBaseBlock">Bloco base (CIDR):</label>
-          <input type="text" id="hpBaseBlock" placeholder="Ex: 2001:db8::/32" autocomplete="off" spellcheck="false">
+        <!-- 2. Base block -->
+        <div class="hp-form-section">
+          <label class="hp-section-label" for="hpBaseBlock">Bloco base (CIDR)</label>
+          <div class="hp-base-input-wrap">
+            <i class="fas fa-cube hp-base-input-icon"></i>
+            <input
+              type="text"
+              id="hpBaseBlock"
+              placeholder="Ex: 2001:db8::/32"
+              autocomplete="off"
+              spellcheck="false"
+            >
+          </div>
         </div>
 
-        <!-- Levels -->
-        <div class="hp-levels-section">
-          <label>Níveis hierárquicos:</label>
+        <!-- 3. Hierarchical levels -->
+        <div class="hp-form-section">
+          <span class="hp-section-label">Níveis hierárquicos</span>
+          <div class="hp-levels-col-header">
+            <span class="hp-col-name">Nome</span>
+            <span class="hp-col-prefix">Prefixo</span>
+            <span class="hp-col-actions"></span>
+          </div>
           <div id="hpLevelsList"></div>
-          <div class="hp-actions">
-            <button id="hpAddLevelBtn" class="hp-add-btn">
-              <i class="fas fa-plus"></i> Adicionar nível
-            </button>
-            <button id="hpCalcBtn" class="btn-primary">
-              <i class="fas fa-calculator"></i> Calcular
-            </button>
-          </div>
+          <button id="hpAddLevelBtn" class="hp-add-btn">
+            <i class="fas fa-plus"></i> Adicionar nível
+          </button>
         </div>
 
-        <!-- Results -->
+        <!-- 4. Calculate button -->
+        <div class="hp-calc-section">
+          <button id="hpCalcBtn">
+            <i class="fas fa-calculator"></i> Calcular Hierarquia
+          </button>
+        </div>
+
+        <!-- 5. Results (hidden until calculated) -->
         <div id="hpResults" style="display:none"></div>
+
       </div>`;
 
     document.body.appendChild(panel);
 
-    // Events
     panel.querySelector('#hpCloseBtn').addEventListener('click', closePanel);
     panel.querySelector('#hpAddLevelBtn').addEventListener('click', () => addLevel());
     panel.querySelector('#hpCalcBtn').addEventListener('click', calculate);
@@ -789,7 +1251,6 @@ body.dark-mode .hp-row-base td { color: var(--text-dark-secondary, #a0aec0); }
       btn.addEventListener('click', () => loadPreset(btn.dataset.preset));
     });
 
-    // Escape key closes panel
     document.addEventListener('keydown', e => {
       if (e.key === 'Escape' && panel.classList.contains('hp-panel-open')) {
         closePanel();
@@ -808,7 +1269,6 @@ body.dark-mode .hp-row-base td { color: var(--text-dark-secondary, #a0aec0); }
     btn.innerHTML = '<i class="fas fa-sitemap"></i> Planejar';
     btn.addEventListener('click', openPanel);
 
-    // Insert before the first button in the header
     headerButtons.insertBefore(btn, headerButtons.firstChild);
   }
 
