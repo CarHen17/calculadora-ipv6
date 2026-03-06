@@ -28,6 +28,21 @@ const VirtualScroll = (function() {
     return window._filteredSubnets || (window.appState && window.appState.subRedesGeradas) || [];
   }
 
+  function setEndOfListIndicator(visible) {
+    let indicator = container && container.parentElement && container.parentElement.querySelector('.vs-end-indicator');
+    if (!visible) {
+      if (indicator) indicator.remove();
+      return;
+    }
+    if (!indicator && container) {
+      indicator = document.createElement('p');
+      indicator.className = 'vs-end-indicator';
+      indicator.style.cssText = 'text-align:center;padding:10px 0;color:var(--text-light-secondary,#888);font-size:13px;';
+      indicator.textContent = '— fim da lista —';
+      container.parentElement.insertBefore(indicator, container.nextSibling);
+    }
+  }
+
   function onScroll() {
     if (!container || !enabled) return;
     const threshold = 200; // px from bottom
@@ -41,6 +56,8 @@ const VirtualScroll = (function() {
         if (window.UIController && window.UIController.carregarMaisSubRedes) {
           window.UIController.carregarMaisSubRedes(current, next - current);
         }
+      } else {
+        setEndOfListIndicator(true);
       }
     }
   }
@@ -80,6 +97,7 @@ const VirtualScroll = (function() {
     if (scrollHandler && container) {
       container.removeEventListener('scroll', scrollHandler);
     }
+    setEndOfListIndicator(false);
     // Restore container style
     if (container) {
       container.style.overflowY = '';
@@ -92,6 +110,7 @@ const VirtualScroll = (function() {
 
   function refresh() {
     if (!enabled) return;
+    setEndOfListIndicator(false);
     const data = getDataSource();
     const tbody = document.querySelector('#subnetsTable tbody');
     if (!tbody) return;

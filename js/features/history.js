@@ -6,8 +6,22 @@ const CalculationHistory = (function() {
   'use strict';
 
   const STORAGE_KEY = 'ipv6calc_history';
-  const MAX_ITEMS = 10;
+  const MAX_ITEMS = 20;
   let isOpen = false;
+
+  function getRelativeTime(timestamp) {
+    const diff = Date.now() - timestamp;
+    const mins = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (mins < 1) return 'agora mesmo';
+    if (mins < 60) return `há ${mins} min`;
+    if (hours < 24) return `há ${hours}h`;
+    if (days < 7) return `há ${days}d`;
+
+    return new Date(timestamp).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
+  }
 
   function loadHistory() {
     try {
@@ -64,11 +78,8 @@ const CalculationHistory = (function() {
       li.className = 'history-item';
       li.setAttribute('role', 'option');
 
-      const date = new Date(entry.timestamp);
-      const dateStr = date.toLocaleDateString('pt-BR', {
-        day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
-      });
-      const subnetLabel = entry.subnetCount != null ? `, ${entry.subnetCount} sub-redes` : '';
+      const dateStr = getRelativeTime(entry.timestamp);
+      const subnetLabel = (entry.subnetCount != null && entry.subnetCount > 0) ? `, ${entry.subnetCount} sub-redes` : '';
       const prefixLabel = entry.prefix ? ` → /${entry.prefix}` : '';
 
       li.innerHTML = `
@@ -110,6 +121,7 @@ const CalculationHistory = (function() {
   }
 
   function clearHistory() {
+    if (!confirm('Apagar todo o histórico de cálculos?')) return;
     localStorage.removeItem(STORAGE_KEY);
     renderHistory();
     if (window.showNotification) window.showNotification('Histórico apagado', 'info');

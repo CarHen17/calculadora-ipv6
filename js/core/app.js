@@ -54,16 +54,20 @@
           }
         }
         
-        // Escape: Resetar (com confirmação)
+        // Escape: Resetar (somente quando não estiver em um campo de texto)
         if (e.key === 'Escape') {
-          const resetBtn = document.getElementById('resetBtn');
-          if (resetBtn && confirm('Deseja resetar a calculadora?')) {
-            resetBtn.click();
+          const active = document.activeElement;
+          const inInput = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable);
+          if (!inInput) {
+            const resetBtn = document.getElementById('resetBtn');
+            if (resetBtn && confirm('Deseja resetar a calculadora?')) {
+              resetBtn.click();
+            }
           }
         }
-        
-        // Ctrl+D: Alternar tema
-        if (e.ctrlKey && e.key === 'd') {
+
+        // Ctrl+Shift+D: Alternar tema (Ctrl+D conflita com o favorito do navegador)
+        if (e.ctrlKey && e.shiftKey && e.key === 'D') {
           e.preventDefault();
           const themeBtn = document.getElementById('toggleThemeBtn');
           if (themeBtn) {
@@ -255,7 +259,7 @@
         console.group("⌨️ Atalhos de Teclado Disponíveis");
         console.log("• Ctrl+Enter: Calcular sub-redes");
         console.log("• Escape: Resetar calculadora (com confirmação)");
-        console.log("• Ctrl+D: Alternar tema escuro/claro");
+        console.log("• Ctrl+Shift+D: Alternar tema escuro/claro");
         console.groupEnd();
       }
       
