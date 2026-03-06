@@ -441,6 +441,14 @@ const IPv6Calculator = (function() {
       const reverseSection = document.getElementById('reverseSearchSection');
       if (reverseSection) reverseSection.style.display = 'block';
 
+      // Update count badge in heading
+      const countBadge = document.getElementById('subnetCountBadge');
+      if (countBadge) {
+        const total = window.appState.subRedesGeradas.length;
+        countBadge.textContent = total.toLocaleString('pt-BR');
+        countBadge.style.display = 'inline-flex';
+      }
+
       // Add to history (Feature 1)
       if (window.CalculationHistory && window.appState.subRedesGeradas.length > 0) {
         const ipv6Input = document.getElementById('ipv6');
