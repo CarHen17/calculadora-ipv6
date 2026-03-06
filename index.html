@@ -183,23 +183,30 @@
         <!-- Resultados -->
         <div id="resultado" style="display: none;">
           <div class="card">
-            <h3>Sub-redes Geradas</h3>
-            <div class="interaction-hints">
-              <p><strong>💡 Dicas de Interação:</strong></p>
-              <ul style="margin: 8px 0 16px 20px; font-size: 14px; line-height: 1.5;">
-                <li><strong>Clique simples</strong> em uma linha: Ver detalhes na sidebar →</li>
-                <li><strong>Checkbox</strong>: Seleção múltipla para agregação</li>
-                <li><strong>Selecionar todos</strong>: Use o checkbox no cabeçalho</li>
-              </ul>
+            <h3>Sub-redes Geradas <span id="subnetCountBadge" class="count-badge" style="display:none"></span></h3>
+            <!-- Dica compacta e dispensável -->
+            <div class="interaction-hints-compact" id="interactionHints">
+              <span class="hints-text">
+                <i class="fas fa-info-circle"></i>
+                <strong>Clique</strong> na linha para detalhes
+                &nbsp;·&nbsp; <strong>Checkbox</strong> para agregar
+                &nbsp;·&nbsp; <strong>Ctrl+A</strong> seleciona tudo
+              </span>
+              <button class="hints-dismiss" id="dismissHintsBtn" title="Fechar dica" aria-label="Fechar dica">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
 
             <!-- Barra de ações: busca + copiar tabela -->
             <div class="table-actions-bar">
-              <input type="text" id="searchSubnets"
-                     placeholder="Filtrar sub-redes..."
-                     autocomplete="off"
-                     aria-label="Buscar sub-redes">
-              <span id="searchMatchCount" class="search-match-count" style="display:none"></span>
+              <div class="search-wrapper">
+                <i class="fas fa-search search-icon-inside"></i>
+                <input type="text" id="searchSubnets"
+                       placeholder="Filtrar sub-redes..."
+                       autocomplete="off"
+                       aria-label="Buscar sub-redes">
+                <span id="searchMatchCount" class="search-match-count" style="display:none"></span>
+              </div>
               <button id="copyTableBtn" class="btn-primary btn-sm">
                 <i class="fas fa-copy"></i> Copiar CSV
               </button>
@@ -593,43 +600,6 @@
       .fas, .fa {
         font-family: "Font Awesome 6 Free" !important;
         font-weight: 900 !important;
-      }
-      
-      /* Estilos para as dicas de interação */
-      .interaction-hints {
-        background-color: rgba(33, 150, 243, 0.1);
-        border: 1px solid rgba(33, 150, 243, 0.2);
-        border-radius: 8px;
-        padding: 12px 16px;
-        margin-bottom: 16px;
-      }
-      
-      body.dark-mode .interaction-hints {
-        background-color: rgba(33, 150, 243, 0.15);
-        border-color: rgba(33, 150, 243, 0.3);
-      }
-      
-      .interaction-hints p {
-        margin: 0 0 8px 0;
-        color: #1976d2;
-        font-weight: 600;
-      }
-      
-      body.dark-mode .interaction-hints p {
-        color: #42a5f5;
-      }
-      
-      .interaction-hints ul {
-        margin: 8px 0 0 20px;
-        color: var(--text-light);
-      }
-      
-      body.dark-mode .interaction-hints ul {
-        color: var(--text-dark);
-      }
-      
-      .interaction-hints li {
-        margin-bottom: 4px;
       }
       
       /* Melhorar estilo dos separadores na sidebar */

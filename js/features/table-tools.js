@@ -113,6 +113,37 @@ const TableTools = (function() {
     }
   }
 
+  // ===== Interaction Hints dismiss =====
+
+  const HINTS_DISMISSED_KEY = 'ipv6calc_hints_dismissed';
+
+  function setupHintsDismiss() {
+    const hintsEl = document.getElementById('interactionHints');
+    const dismissBtn = document.getElementById('dismissHintsBtn');
+
+    if (!hintsEl) return;
+
+    // Hide immediately if already dismissed
+    if (localStorage.getItem(HINTS_DISMISSED_KEY) === 'true') {
+      hintsEl.style.display = 'none';
+      return;
+    }
+
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', () => {
+        hintsEl.style.transition = 'opacity 0.2s ease, max-height 0.25s ease, margin 0.25s ease, padding 0.25s ease';
+        hintsEl.style.overflow = 'hidden';
+        hintsEl.style.opacity = '0';
+        hintsEl.style.maxHeight = '0';
+        hintsEl.style.marginBottom = '0';
+        hintsEl.style.paddingTop = '0';
+        hintsEl.style.paddingBottom = '0';
+        setTimeout(() => { hintsEl.style.display = 'none'; }, 250);
+        try { localStorage.setItem(HINTS_DISMISSED_KEY, 'true'); } catch (e) {}
+      });
+    }
+  }
+
   // ===== Initialization =====
 
   function initialize() {
@@ -130,6 +161,8 @@ const TableTools = (function() {
       });
       searchInput.setAttribute('data-table-tools-ready', 'true');
     }
+
+    setupHintsDismiss();
   }
 
   if (document.readyState === 'loading') {
