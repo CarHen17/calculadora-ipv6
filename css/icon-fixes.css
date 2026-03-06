@@ -52,6 +52,11 @@
 .fa-file-alt::before { content: "\f15c"; }
 .fa-file-code::before { content: "\f1c9"; }
 .fa-network-wired::before { content: "\f6ff"; }
+.fa-search::before { content: "\f002"; }
+.fa-history::before { content: "\f1da"; }
+.fa-chevron-down::before { content: "\f078"; }
+.fa-chevron-up::before { content: "\f077"; }
+.fa-trash::before { content: "\f1f8"; }
 
 /* ===== ANIMAÇÕES ===== */
 
@@ -612,4 +617,33 @@ button:disabled i {
 
 .copy-btn:active i {
   transform: scale(0.9);
+}
+
+/* ===== BOTÕES DE COPIAR NA BARRA STICKY ===== */
+
+.sticky-copy {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  border-radius: 4px !important;
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  padding: 0 !important;
+  transition: background 0.15s ease !important;
+}
+
+.sticky-copy:hover {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+.sticky-copy i {
+  font-size: 12px !important;
+  color: white !important;
+  margin: 0 !important;
+  pointer-events: none !important;
 }
