@@ -224,8 +224,7 @@ const HierarchicalPlanner = (function () {
         <div class="hp-connector">
           <div class="hp-conn-line" style="background:${color}"></div>
           <div class="hp-conn-badge" style="border-color:${color};color:${color}">
-            <i class="fas fa-expand-arrows-alt"></i>
-            ${bits} bit${bits !== 1 ? 's' : ''} &nbsp;·&nbsp; ${formatBigInt(level.childrenPerParent)} filhos/pai
+            ${bits} bit${bits !== 1 ? 's' : ''} &nbsp;&rarr;&nbsp; ${formatBigInt(level.childrenPerParent)} sub-redes/bloco
           </div>
         </div>
         <div class="hp-node" style="border-left-color:${color}">
@@ -238,11 +237,17 @@ const HierarchicalPlanner = (function () {
               <span class="hp-prefix-pill" style="background:${color}">/${level.prefix}</span>
             </div>
             <div class="hp-node-meta">
-              <span><i class="fas fa-th"></i>&nbsp;${formatBigInt(level.totalBlocks)} blocos no total</span>
+              <span><i class="fas fa-th"></i>&nbsp;${formatBigInt(level.totalBlocks)} blocos</span>
               <span class="hp-meta-sep">·</span>
               <span><i class="fas fa-dot-circle"></i>&nbsp;${formatBigInt(level.hostsPerBlock)} end./bloco</span>
             </div>
           </div>
+          <button class="hp-view-blocks-btn" data-level="${i}"
+                  title="Ver os ${formatBigInt(level.totalBlocks)} blocos de ${level.label}"
+                  style="border-color:${color};color:${color}">
+            <i class="fas fa-list-ul"></i>
+            <span>Ver blocos</span>
+          </button>
         </div>`;
     });
 
@@ -291,97 +296,137 @@ const HierarchicalPlanner = (function () {
         </table>
       </div>`;
 
-    // ── Blocks section ────────────────────────────────────────────
-    const tabsHtml = levels.map((l, i) => {
-      const color = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+    const el = document.getElementById('hpResults');
+    el.className = 'hp-results-content';
+    el.innerHTML = summaryHtml + treeHtml + tableHtml;
+    el.style.display = 'block';
+
+    // Save state for block enumeration (used by popup)
+    lastBase   = base;
+    lastLevels = levels;
+
+    // Wire "Ver blocos" buttons on each tree node
+    el.querySelectorAll('.hp-view-blocks-btn').forEach(btn => {
+      btn.addEventListener('click', () => openBlocksModal(parseInt(btn.dataset.level, 10)));
+    });
+
+    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+
+  // ── Blocks popup modal ────────────────────────────────────────────
+
+  function shadeColor(hex) {
+    const n = parseInt(hex.slice(1), 16);
+    const r = Math.max(0, ((n >> 16) & 0xff) - 35);
+    const g = Math.max(0, ((n >> 8)  & 0xff) - 35);
+    const b = Math.max(0, ( n        & 0xff) - 35);
+    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+  }
+
+  function openBlocksModal(initialIndex) {
+    if (!lastBase || !lastLevels) return;
+    bvLevel  = initialIndex;
+    bvOffset = 0;
+
+    const color     = LEVEL_COLORS[(initialIndex + 1) % LEVEL_COLORS.length];
+    const darkColor = shadeColor(color);
+    const level     = lastLevels[initialIndex];
+
+    const tabsHtml = lastLevels.map((l, i) => {
+      const c = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+      const active = i === initialIndex;
       return `
-        <button class="hp-level-tab${i === 0 ? ' hp-tab-active' : ''}" data-index="${i}"
-                style="${i === 0 ? `border-color:${color};color:${color};background:${color}15` : ''}">
-          <span class="hp-tab-dot" style="background:${color}"></span>
+        <button class="hp-level-tab${active ? ' hp-tab-active' : ''}" data-index="${i}"
+                style="${active ? `border-color:${c};color:${c};background:${c}18` : ''}">
+          <span class="hp-tab-dot" style="background:${c}"></span>
           ${l.label}
           <span class="hp-tab-count">${formatBigInt(l.totalBlocks)}</span>
         </button>`;
     }).join('');
 
-    const blocksSectionHtml = `
-      <div class="hp-blocks-section" id="hpBlocksSection" style="margin-top:28px">
-        <div class="hp-blocks-header">
-          <div class="hp-section-title"><i class="fas fa-list-ul"></i> Blocos enumerados</div>
-          <div class="hp-level-tabs" id="hpLevelTabs">${tabsHtml}</div>
+    const backdrop = document.createElement('div');
+    backdrop.id = 'hpModalBackdrop';
+    backdrop.className = 'hp-modal-backdrop';
+    backdrop.addEventListener('click', closeBlocksModal);
+
+    const modal = document.createElement('div');
+    modal.className = 'hp-blocks-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.innerHTML = `
+      <div class="hp-modal-header" style="background:linear-gradient(135deg,${color},${darkColor})">
+        <div class="hp-modal-title">
+          <i class="fas fa-network-wired"></i>
+          Blocos &mdash; ${level.label}
+          <span class="hp-prefix-pill" style="background:rgba(255,255,255,.2);color:#fff">/${level.prefix}</span>
         </div>
-        <div class="hp-blocks-info" id="hpBlocksInfo"></div>
-        <div class="hp-blocks-list" id="hpBlocksList"></div>
-        <div class="hp-blocks-footer" id="hpBlocksFooter"></div>
-      </div>`;
+        <button class="hp-modal-close" title="Fechar"><i class="fas fa-times"></i></button>
+      </div>
+      ${lastLevels.length > 1 ? `<div class="hp-level-tabs hp-modal-tabs" id="hpModalLevelTabs">${tabsHtml}</div>` : ''}
+      <div class="hp-blocks-info" id="hpModalBlocksInfo"></div>
+      <div class="hp-blocks-list" id="hpModalBlocksList"></div>
+      <div class="hp-blocks-footer" id="hpModalBlocksFooter"></div>`;
 
-    const el = document.getElementById('hpResults');
-    el.className = 'hp-results-content';
-    el.innerHTML = summaryHtml + treeHtml + tableHtml + blocksSectionHtml;
-    el.style.display = 'block';
+    modal.addEventListener('click', e => e.stopPropagation());
+    modal.querySelector('.hp-modal-close').addEventListener('click', closeBlocksModal);
 
-    // Save state for block enumeration
-    lastBase   = base;
-    lastLevels = levels;
-    bvLevel    = 0;
-    bvOffset   = 0;
+    if (lastLevels.length > 1) {
+      modal.querySelectorAll('.hp-level-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          const idx = parseInt(tab.dataset.index, 10);
+          if (idx === bvLevel) return;
+          modal.querySelectorAll('.hp-level-tab').forEach((t, i) => {
+            const c = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+            const isActive = parseInt(t.dataset.index, 10) === idx;
+            t.classList.toggle('hp-tab-active', isActive);
+            t.style.borderColor = isActive ? c : '';
+            t.style.color       = isActive ? c : '';
+            t.style.background  = isActive ? c + '18' : '';
+          });
+          bvLevel  = idx;
+          bvOffset = 0;
+          modal.querySelector('#hpModalBlocksList').innerHTML = '';
+          renderBlocksPage(false);
+        });
+      });
+    }
 
-    // Wire tabs + render first page
-    attachBlocksEvents();
+    const onEsc = e => {
+      if (e.key === 'Escape') { closeBlocksModal(); document.removeEventListener('keydown', onEsc); }
+    };
+    document.addEventListener('keydown', onEsc);
+
+    backdrop.appendChild(modal);
+    document.body.appendChild(backdrop);
+    requestAnimationFrame(() => backdrop.classList.add('hp-modal-open'));
     renderBlocksPage(false);
-
-    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
   }
 
-  // ── Block view helpers ────────────────────────────────────────────
-
-  function attachBlocksEvents() {
-    document.querySelectorAll('.hp-level-tab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        const idx = parseInt(tab.dataset.index, 10);
-        if (idx === bvLevel) return;
-
-        // Update active tab styling
-        document.querySelectorAll('.hp-level-tab').forEach((t, i) => {
-          const color = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
-          if (parseInt(t.dataset.index, 10) === idx) {
-            t.classList.add('hp-tab-active');
-            t.style.borderColor = color;
-            t.style.color       = color;
-            t.style.background  = color + '15';
-          } else {
-            t.classList.remove('hp-tab-active');
-            t.style.borderColor = '';
-            t.style.color       = '';
-            t.style.background  = '';
-          }
-        });
-
-        bvLevel  = idx;
-        bvOffset = 0;
-        document.getElementById('hpBlocksList').innerHTML = '';
-        renderBlocksPage(false);
-      });
-    });
+  function closeBlocksModal() {
+    const bd = document.getElementById('hpModalBackdrop');
+    if (!bd) return;
+    bd.classList.remove('hp-modal-open');
+    setTimeout(() => bd.parentNode && bd.parentNode.removeChild(bd), 260);
   }
 
   function renderBlocksPage(append) {
     if (!lastBase || !lastLevels) return;
-
     const { items, total, hasMore } = getBlocksPage(lastBase, lastLevels, bvLevel, bvOffset);
     const level = lastLevels[bvLevel];
     const color = LEVEL_COLORS[(bvLevel + 1) % LEVEL_COLORS.length];
-
-    // Info bar
     const shown = bvOffset + items.length;
-    document.getElementById('hpBlocksInfo').innerHTML = `
-      <i class="fas fa-info-circle" style="color:${color}"></i>
-      Mostrando <strong>${bvOffset + 1}–${shown}</strong> de
-      <strong>${formatBigInt(total)}</strong> blocos
-      <span class="hp-info-level" style="background:${color}15;border-color:${color};color:${color}">/${level.prefix}</span>`;
 
-    // Block rows
-    const list = document.getElementById('hpBlocksList');
-    if (!append) list.innerHTML = '';
+    const infoEl = document.getElementById('hpModalBlocksInfo');
+    if (infoEl) {
+      infoEl.innerHTML = `
+        <i class="fas fa-info-circle" style="color:${color}"></i>
+        Mostrando <strong>${bvOffset + 1}–${shown}</strong> de
+        <strong>${formatBigInt(total)}</strong> blocos
+        <span class="hp-info-level" style="background:${color}15;border-color:${color};color:${color}">/${level.prefix}</span>`;
+    }
+
+    const listEl = document.getElementById('hpModalBlocksList');
+    if (!listEl) return;
+    if (!append) listEl.innerHTML = '';
 
     items.forEach(item => {
       const row = document.createElement('div');
@@ -398,29 +443,24 @@ const HierarchicalPlanner = (function () {
         navigator.clipboard.writeText(btn.dataset.cidr).then(() => {
           btn.innerHTML = '<i class="fas fa-check"></i>';
           btn.style.background = '#059669';
-          setTimeout(() => {
-            btn.innerHTML = '<i class="fas fa-copy"></i>';
-            btn.style.background = '';
-          }, 1500);
+          setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i>'; btn.style.background = ''; }, 1500);
         });
       });
-      list.appendChild(row);
+      listEl.appendChild(row);
     });
 
     bvOffset = shown;
 
-    // Footer
-    const footer = document.getElementById('hpBlocksFooter');
+    const footerEl = document.getElementById('hpModalBlocksFooter');
+    if (!footerEl) return;
     if (hasMore) {
-      footer.innerHTML = `
-        <button id="hpBlocksMoreBtn" class="hp-more-btn" style="border-color:${color};color:${color}">
+      footerEl.innerHTML = `
+        <button class="hp-more-btn" style="border-color:${color};color:${color}">
           <i class="fas fa-chevron-down"></i> Ver mais ${BV_PAGE} blocos
         </button>`;
-      footer.querySelector('#hpBlocksMoreBtn').addEventListener('click', () => {
-        renderBlocksPage(true);
-      });
+      footerEl.querySelector('.hp-more-btn').addEventListener('click', () => renderBlocksPage(true));
     } else {
-      footer.innerHTML = items.length > 0
+      footerEl.innerHTML = items.length > 0
         ? `<span class="hp-blocks-done"><i class="fas fa-check-circle" style="color:#059669"></i> Todos os ${formatBigInt(total)} blocos exibidos</span>`
         : '';
     }
@@ -1175,7 +1215,6 @@ body.dark-mode .hp-section-title { color: #e6edf3; }
 }
 .hp-node:hover {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-  transform: translateX(2px);
 }
 body.dark-mode .hp-node {
   background: #161b22;
@@ -1183,6 +1222,33 @@ body.dark-mode .hp-node {
 }
 body.dark-mode .hp-node:hover {
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Ver blocos button (on each tree node) ── */
+.hp-view-blocks-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1.5px solid;
+  border-radius: 16px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  opacity: 0.85;
+}
+.hp-view-blocks-btn:hover {
+  opacity: 1;
+  transform: scale(1.04);
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+@media (max-width: 480px) {
+  .hp-view-blocks-btn span { display: none; }
 }
 
 .hp-node-icon {
@@ -1324,10 +1390,14 @@ body.dark-mode .hp-table-wrap {
 }
 
 .hp-table td {
-  padding: 10px 14px;
+  padding: 9px 14px;
   border-bottom: 1px solid #d0d7de;
   color: #24292f;
   vertical-align: middle;
+  /* Override global table height that causes rows to balloon */
+  height: auto !important;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 body.dark-mode .hp-table td {
   border-color: #21262d;
@@ -1395,31 +1465,96 @@ body.dark-mode .hp-table code {
 }
 
 /* ═══════════════════════════════════════════════
-   BLOCKS ENUMERATION SECTION
+   BLOCKS POPUP MODAL
 ═══════════════════════════════════════════════ */
-.hp-blocks-section {
-  border: 1px solid #d0d7de;
-  border-radius: 10px;
+.hp-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.hp-modal-backdrop.hp-modal-open {
+  opacity: 1;
+}
+
+.hp-blocks-modal {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transform: translateY(16px) scale(0.97);
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
-body.dark-mode .hp-blocks-section {
-  border-color: #30363d;
+.hp-modal-backdrop.hp-modal-open .hp-blocks-modal {
+  transform: translateY(0) scale(1);
+}
+body.dark-mode .hp-blocks-modal {
+  background: #161b22;
 }
 
-.hp-blocks-header {
-  padding: 14px 16px 0;
+.hp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  flex-shrink: 0;
 }
+.hp-modal-title {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  flex-wrap: wrap;
+}
+.hp-modal-close {
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+.hp-modal-close:hover { background: rgba(255, 255, 255, 0.3); }
 
-/* ── Level tabs ── */
+/* ── Level tabs (shared between modal and any future use) ── */
 .hp-level-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  padding: 10px 16px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid #d0d7de;
+  flex-shrink: 0;
 }
 body.dark-mode .hp-level-tabs {
   border-color: #30363d;
+}
+.hp-modal-tabs {
+  background: #f6f8fa;
+}
+body.dark-mode .hp-modal-tabs {
+  background: #0d1117;
 }
 
 .hp-level-tab {
@@ -1490,8 +1625,9 @@ body.dark-mode .hp-blocks-info {
   display: flex;
   flex-direction: column;
   gap: 5px;
-  max-height: 380px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 .hp-blocks-list::-webkit-scrollbar { width: 5px; }
 .hp-blocks-list::-webkit-scrollbar-thumb { background: #0070d1; border-radius: 3px; }
