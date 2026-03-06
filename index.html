@@ -9,29 +9,57 @@
   <!-- Favicon inline -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>" type="image/svg+xml">
   
-  <!-- Font Awesome - carregar primeiro -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
-  
-  <!-- CSS - Ordem correta de carregamento -->
+  <!-- Preconnects para recursos externos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
+  <!-- Google Fonts - carregamento assíncrono (não bloqueia rendering) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"></noscript>
+
+  <!-- Font Awesome - carregamento assíncrono -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous"></noscript>
+
+  <!-- Preload do webfont crítico do Font Awesome -->
+  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- CSS local - ordem correta -->
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/dark-mode.css">
   <link rel="stylesheet" href="css/enhanced-ui.css">
   <link rel="stylesheet" href="css/ui-fixes.css">
   <link rel="stylesheet" href="css/icon-fixes.css">
-  
+
   <!-- Meta tags -->
   <meta name="theme-color" content="#0070d1">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  
-  <!-- Preload Font Awesome para melhor performance -->
-  <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body>
   <!-- Alerta de erro -->
   <div id="initErrorAlert" style="display: none; background-color: #f8d7da; color: #721c24; padding: 12px; margin: 10px; border-radius: 4px; border: 1px solid #f5c6cb;">
     <strong>Erro ao inicializar:</strong> <span id="initErrorMessage"></span>
     <button onclick="window.location.reload()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin-left: 10px; border-radius: 3px; cursor: pointer;">Recarregar</button>
+  </div>
+
+  <!-- Barra de contexto sticky (aparece ao rolar) -->
+  <div id="stickyInfoBar" class="sticky-info-bar" aria-hidden="true">
+    <div class="sticky-info-inner">
+      <i class="fas fa-network-wired sticky-info-icon"></i>
+      <span class="sticky-info-label">Bloco:</span>
+      <span id="stickyInfoCidr" class="sticky-info-value">—</span>
+      <button class="copy-btn sticky-copy" onclick="copyToClipboard(document.getElementById('stickyInfoCidr').textContent)" title="Copiar CIDR">
+        <i class="fas fa-copy"></i>
+      </button>
+      <span class="sticky-info-sep">|</span>
+      <span class="sticky-info-label">Gateway:</span>
+      <span id="stickyInfoGateway" class="sticky-info-value">—</span>
+      <button class="copy-btn sticky-copy" onclick="copyToClipboard(document.getElementById('stickyInfoGateway').textContent)" title="Copiar Gateway">
+        <i class="fas fa-copy"></i>
+      </button>
+    </div>
   </div>
 
   <div class="container">
@@ -42,7 +70,7 @@
         <button id="toggleThemeBtn" class="btn-primary">
           <i class="fas fa-moon"></i> Tema
         </button>
-        <button id="sidebarToggleBtn" class="btn-primary mobile-only" aria-label="Informações do bloco">
+        <button id="sidebarToggleBtn" class="btn-primary" aria-label="Informações do bloco">
           <i class="fas fa-info-circle"></i> Info
         </button>
         <button id="resetBtn" class="btn-primary">
@@ -337,11 +365,10 @@
   </div>
   
   <!-- Scripts na ordem correta -->
-  
-  <!-- 1. Biblioteca externa primeiro -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  
-  <!-- 2. Utilitários base -->
+
+  <!-- Nota: XLSX (~1MB) é carregado dinamicamente apenas quando o export Excel for usado -->
+
+  <!-- 1. Utilitários base -->
   <script src="js/utils/ipv6-utils.js"></script>
   <script src="js/utils/export-utils.js"></script>
   

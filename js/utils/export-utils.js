@@ -92,44 +92,60 @@ const ExportUtils = (function() {
   }
   
   /**
+   * Carrega a biblioteca XLSX dinamicamente (lazy-load)
+   */
+  function loadXLSXLibrary(callback) {
+    if (window.XLSX) {
+      callback();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = function() {
+      console.log('[ExportUtils] XLSX carregado dinamicamente');
+      callback();
+    };
+    script.onerror = function() {
+      alert('Não foi possível carregar o exportador Excel. Verifique sua conexão com a internet.');
+    };
+    document.head.appendChild(script);
+  }
+
+  /**
    * Exporta dados para arquivo Excel
    */
   function exportToExcel(data, filename = 'ips_ipv6') {
-    try {
-      if (!window.XLSX) {
-        alert('Funcionalidade de exportação Excel não está disponível.');
-        return;
-      }
-      
-      if (!data || data.length === 0) {
-        alert('Não há dados para exportar.');
-        return;
-      }
-      
-      const excelData = data.map(item => ({
-        'Número': item.number || '',
-        'Endereço IPv6': item.ip || ''
-      }));
-      
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(excelData);
-      
-      ws['!cols'] = [
-        { width: 10 },  // Número
-        { width: 40 }   // Endereço IPv6
-      ];
-      
-      XLSX.utils.book_append_sheet(wb, ws, 'IPs IPv6');
-      
-      const finalFilename = `${filename}_${getCurrentDateString()}.xlsx`;
-      XLSX.writeFile(wb, finalFilename);
-      
-      console.log(`Exportados ${data.length} IPs para Excel`);
-      
-    } catch (error) {
-      console.error('Erro ao exportar Excel:', error);
-      alert('Erro ao exportar arquivo Excel');
+    if (!data || data.length === 0) {
+      alert('Não há dados para exportar.');
+      return;
     }
+
+    loadXLSXLibrary(function() {
+      try {
+        const excelData = data.map(item => ({
+          'Número': item.number || '',
+          'Endereço IPv6': item.ip || ''
+        }));
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.json_to_sheet(excelData);
+
+        ws['!cols'] = [
+          { width: 10 },  // Número
+          { width: 40 }   // Endereço IPv6
+        ];
+
+        XLSX.utils.book_append_sheet(wb, ws, 'IPs IPv6');
+
+        const finalFilename = `${filename}_${getCurrentDateString()}.xlsx`;
+        XLSX.writeFile(wb, finalFilename);
+
+        console.log(`Exportados ${data.length} IPs para Excel`);
+      } catch (error) {
+        console.error('Erro ao exportar Excel:', error);
+        alert('Erro ao exportar arquivo Excel');
+      }
+    });
   }
   
   /**
