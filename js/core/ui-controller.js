@@ -967,7 +967,7 @@ const UIController = (function() {
   };
   
   /**
-   * Configures the mobile bottom sheet for sidebar
+   * Configures the Info button behavior for both desktop and mobile
    */
   function setupMobileBottomSheet() {
     const toggleBtn = document.getElementById('sidebarToggleBtn');
@@ -987,20 +987,43 @@ const UIController = (function() {
       sidebar.classList.remove('open');
       backdrop.classList.remove('visible');
       document.body.style.overflow = '';
+      // Reset display so the sidebar hides properly on mobile
+      if (window.innerWidth <= 768) {
+        sidebar.style.display = 'none';
+      }
     }
 
     toggleBtn.addEventListener('click', () => {
-      if (sidebar.classList.contains('open')) {
-        closeSheet();
+      if (window.innerWidth <= 768) {
+        // Mobile: toggle bottom sheet
+        if (sidebar.classList.contains('open')) {
+          closeSheet();
+        } else {
+          openSheet();
+        }
       } else {
-        openSheet();
+        // Desktop: show and scroll to sidebar
+        sidebar.style.display = 'block';
+        sidebar.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Brief highlight effect
+        sidebar.style.transition = 'box-shadow 0.3s ease';
+        sidebar.style.boxShadow = '0 0 0 3px var(--primary-color)';
+        setTimeout(() => {
+          sidebar.style.boxShadow = '';
+        }, 1000);
       }
     });
 
     backdrop.addEventListener('click', closeSheet);
 
     window.addEventListener('resize', () => {
-      if (window.innerWidth > 768) closeSheet();
+      if (window.innerWidth > 768) {
+        closeSheet();
+        // On desktop, restore display if sidebar has content
+        if (sidebar.style.display === 'none' && sidebar.innerHTML.trim() !== '') {
+          // Keep hidden until a calculation is done
+        }
+      }
     });
   }
 

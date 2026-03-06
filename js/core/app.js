@@ -80,35 +80,7 @@
     }
   }
   
-  /**
-   * Monitora quando novos elementos são adicionados ao DOM
-   */
-  function setupDOMObserver() {
-    try {
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'childList') {
-            mutation.addedNodes.forEach(function(node) {
-              if (node.nodeType === 1) { // Element node
-                // Se novos botões de cópia forem adicionados, eles já têm onclick direto
-                // Não precisamos fazer nada especial aqui
-              }
-            });
-          }
-        });
-      });
-      
-      observer.observe(document.body, {
-        childList: true,
-        subtree: true
-      });
-      
-      console.log('[App] Observador DOM configurado');
-      
-    } catch (error) {
-      console.error('[App] Erro ao configurar observador DOM:', error);
-    }
-  }
+  // MutationObserver removido - não era necessário (botões usam onclick direto)
   
   /**
    * Verifica compatibilidade do navegador
@@ -270,7 +242,6 @@
       // 3. Configurar funcionalidades
       setupErrorHandling();
       setupKeyboardShortcuts();
-      setupDOMObserver();
       setupResponsiveBehavior();
       initializeBasicUI();
       
