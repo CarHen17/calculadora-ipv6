@@ -983,6 +983,7 @@ body.dark-mode #subnetsTable tbody tr:hover:not(.selected):not(.individual-selec
 }
 
 /* --- Barra de contexto sticky (topo, aparece ao rolar) --- */
+/* Visibilidade controlada via JS (display:none/flex) para evitar conflitos CSS */
 .sticky-info-bar {
   position: fixed;
   top: 0;
@@ -992,17 +993,11 @@ body.dark-mode #subnetsTable tbody tr:hover:not(.selected):not(.individual-selec
   background: var(--primary-color);
   color: white;
   padding: 8px 20px;
-  display: flex;
+  display: none; /* Gerenciado via JS */
   align-items: center;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-  transform: translateY(-100%);
-  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   font-size: 13px;
   font-weight: 500;
-}
-
-.sticky-info-bar.bar-visible {
-  transform: translateY(0);
 }
 
 .sticky-info-inner {

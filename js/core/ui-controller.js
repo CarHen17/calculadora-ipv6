@@ -1110,14 +1110,34 @@ const UIController = (function() {
 
   /**
    * Configura comportamento contextual baseado em scroll:
-   * - Botões ↑↓ aparecem apenas quando necessário
-   * - Mini barra de info aparece ao rolar para baixo
+   * - Botões ↑↓ aparecem apenas quando necessário (via inline style)
+   * - Mini barra de info aparece ao rolar para baixo (via display)
    */
   function setupScrollBehavior() {
     const topBtn = getElement('topBtn');
     const bottomBtn = getElement('bottomBtn');
     const stickyBar = document.getElementById('stickyInfoBar');
     let ticking = false;
+
+    // Forçar estado inicial via inline styles (supera qualquer CSS)
+    function hideBtn(btn) {
+      if (!btn) return;
+      btn.style.opacity = '0';
+      btn.style.pointerEvents = 'none';
+      btn.style.transform = 'scale(0.75)';
+      btn.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+    }
+
+    function showBtn(btn) {
+      if (!btn) return;
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      btn.style.transform = 'scale(1)';
+    }
+
+    // Ocultar ambos imediatamente no carregamento
+    hideBtn(topBtn);
+    hideBtn(bottomBtn);
 
     function onScroll() {
       if (ticking) return;
@@ -1126,23 +1146,33 @@ const UIController = (function() {
         const scrollY = window.scrollY || window.pageYOffset;
         const maxScroll = Math.max(0, document.body.scrollHeight - window.innerHeight);
 
-        // --- Botão TOPO: visível quando rolou > 250px ---
-        if (topBtn) {
-          topBtn.classList.toggle('nav-visible', scrollY > 250);
+        // --- Botão TOPO ---
+        if (scrollY > 250) {
+          showBtn(topBtn);
+        } else {
+          hideBtn(topBtn);
         }
 
-        // --- Botão BAIXO: visível quando não está perto do fim ---
-        if (bottomBtn) {
-          bottomBtn.classList.toggle('nav-visible', maxScroll > 100 && scrollY < maxScroll - 80);
+        // --- Botão BAIXO ---
+        if (maxScroll > 100 && scrollY < maxScroll - 80) {
+          showBtn(bottomBtn);
+        } else {
+          hideBtn(bottomBtn);
         }
 
-        // --- Mini barra: visível quando rolou > 120px e há bloco ativo ---
+        // --- Mini barra sticky ---
         if (stickyBar) {
           const hasBlock = stickyBar.dataset.hasBlock === 'true';
           const show = scrollY > 120 && hasBlock;
-          stickyBar.classList.toggle('bar-visible', show);
-          document.body.classList.toggle('sticky-bar-active', show);
-          stickyBar.setAttribute('aria-hidden', show ? 'false' : 'true');
+          if (show) {
+            stickyBar.style.display = 'flex';
+            document.body.classList.add('sticky-bar-active');
+            stickyBar.setAttribute('aria-hidden', 'false');
+          } else {
+            stickyBar.style.display = 'none';
+            document.body.classList.remove('sticky-bar-active');
+            stickyBar.setAttribute('aria-hidden', 'true');
+          }
         }
 
         ticking = false;
@@ -1150,9 +1180,8 @@ const UIController = (function() {
     }
 
     window.addEventListener('scroll', onScroll, { passive: true });
-    // Expor função para atualizar ao mudar conteúdo dinamicamente
     window._updateScrollBehavior = onScroll;
-    onScroll();
+    onScroll(); // Estado inicial
   }
 
   /**
@@ -1166,7 +1195,6 @@ const UIController = (function() {
     if (cidr && cidrEl) cidrEl.textContent = cidr;
     if (gateway && gatewayEl) gatewayEl.textContent = gateway;
     bar.dataset.hasBlock = cidr ? 'true' : 'false';
-    // Trigger scroll check to update visibility
     if (window._updateScrollBehavior) window._updateScrollBehavior();
   }
   
