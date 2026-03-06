@@ -5,6 +5,22 @@
 const ReverseSearch = (function() {
   'use strict';
 
+  // Basic IPv6 format validation (accepts full, compressed, and partial forms)
+  function isValidIPv6Address(ip) {
+    // Strip CIDR if present
+    const addr = ip.split('/')[0];
+    // Must contain at least one colon and only hex digits + colons
+    if (!/^[0-9a-fA-F:]+$/.test(addr)) return false;
+    if (!addr.includes(':')) return false;
+    // No more than one double-colon
+    if ((addr.match(/::/g) || []).length > 1) return false;
+    // Validate groups
+    const expanded = addr.replace('::', ':EXPAND:');
+    const groups = expanded.split(':').filter(g => g !== 'EXPAND');
+    if (groups.some(g => g.length > 4 || (g.length > 0 && !/^[0-9a-fA-F]+$/.test(g)))) return false;
+    return true;
+  }
+
   function performSearch() {
     const ipInput = document.getElementById('reverseSearchIp');
     const resultDiv = document.getElementById('reverseSearchResult');
@@ -13,6 +29,14 @@ const ReverseSearch = (function() {
     const ip = ipInput.value.trim();
     if (!ip) {
       resultDiv.style.display = 'none';
+      return;
+    }
+
+    // Validate IPv6 format before searching
+    if (!isValidIPv6Address(ip)) {
+      resultDiv.className = 'reverse-search-result not-found';
+      resultDiv.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right:8px;color:#f39c12;"></i>Endereço IPv6 inválido. Exemplo: <code>2001:db8::1</code>`;
+      resultDiv.style.display = 'block';
       return;
     }
 
@@ -41,13 +65,13 @@ const ReverseSearch = (function() {
 
     if (result.error) {
       resultDiv.className = 'reverse-search-result not-found';
-      resultDiv.textContent = `Erro: ${result.error}`;
+      resultDiv.innerHTML = `<i class="fas fa-exclamation-triangle" style="margin-right:8px;color:#f39c12;"></i>Endereço inválido: ${result.error}`;
       return;
     }
 
     if (!result.found) {
       resultDiv.className = 'reverse-search-result not-found';
-      resultDiv.textContent = `IP ${ip} não encontrado em nenhuma das ${subnets.length} sub-redes geradas`;
+      resultDiv.innerHTML = `<i class="fas fa-times-circle" style="margin-right:8px;"></i>IP <code>${ip}</code> não encontrado nas ${subnets.length} sub-redes geradas`;
       return;
     }
 
@@ -108,6 +132,7 @@ const ReverseSearch = (function() {
     }
 
     if (ipInput && !ipInput.hasAttribute('data-reverse-ready')) {
+      ipInput.placeholder = 'Ex: 2001:db8::1';
       ipInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') { e.preventDefault(); performSearch(); }
       });

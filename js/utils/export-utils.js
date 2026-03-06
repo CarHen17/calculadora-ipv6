@@ -201,10 +201,11 @@ const ExportUtils = (function() {
         
         if (textSpan) {
           const ip = textSpan.textContent.trim();
-          const number = numberSpan ? numberSpan.textContent.replace('.', '') : (index + 1);
-          
+          const rawNumber = numberSpan ? numberSpan.textContent.replace('.', '').trim() : '';
+          const parsed = parseInt(rawNumber, 10);
+
           data.push({
-            number: parseInt(number) || (index + 1),
+            number: !isNaN(parsed) ? parsed : (index + 1),
             ip: ip
           });
         }
@@ -341,7 +342,9 @@ const ExportUtils = (function() {
         btn.addEventListener('click', () => {
           const format = btn.dataset.format;
           const filenameInput = modal.querySelector('#exportFilename');
-          const filename = filenameInput.value.trim() || 'ips_ipv6';
+          // Sanitize: remove invalid filename characters and strip known extensions
+          const rawName = filenameInput.value.trim() || 'ips_ipv6';
+          const filename = rawName.replace(/[\\/:*?"<>|]/g, '_').replace(/\.(csv|xlsx?|txt|json)$/i, '');
           
           // Metadados para JSON
           const metadata = subnetInfo ? { subnet: subnetInfo } : {};
