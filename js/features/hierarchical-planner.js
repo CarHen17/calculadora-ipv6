@@ -8,6 +8,13 @@ const HierarchicalPlanner = (function () {
   // Palette aligned with app design — used for node accents, not large backgrounds
   const LEVEL_COLORS = ['#0070d1', '#7c3aed', '#0891b2', '#059669', '#d97706', '#dc2626'];
 
+  // ── Block-view state ─────────────────────────────────────────────
+  let lastBase   = null;
+  let lastLevels = null;
+  let bvLevel    = 0;    // active level tab
+  let bvOffset   = 0;    // pagination offset
+  const BV_PAGE  = 50;
+
   // ── Formatting ────────────────────────────────────────────────────
 
   function formatBigInt(n) {
@@ -69,6 +76,66 @@ const HierarchicalPlanner = (function () {
       parentPrefix = level.prefix;
     }
     return result;
+  }
+
+  // ── IPv6 / Block Enumeration ─────────────────────────────────────
+
+  /** Compress an expanded IPv6 address (no CIDR) to its shortest form. */
+  function compressIPv6(addr) {
+    const groups = addr.split(':').map(g => parseInt(g, 16).toString(16));
+    let bestStart = -1, bestLen = 0, curStart = -1, curLen = 0;
+    groups.forEach((g, i) => {
+      if (g === '0') {
+        if (curStart < 0) curStart = i;
+        curLen++;
+        if (curLen > bestLen) { bestStart = curStart; bestLen = curLen; }
+      } else { curStart = -1; curLen = 0; }
+    });
+    if (bestLen < 2) return groups.join(':');
+    const before = groups.slice(0, bestStart).join(':');
+    const after  = groups.slice(bestStart + bestLen).join(':');
+    if (!before && !after) return '::';
+    if (!before) return `::${after}`;
+    if (!after)  return `${before}::`;
+    return `${before}::${after}`;
+  }
+
+  /** Return the i-th subnet CIDR string for a given level. */
+  function blockCIDR(networkBase, blockSize, i, prefix) {
+    const start = networkBase + BigInt(i) * blockSize;
+    try {
+      const expanded = IPv6Utils.formatIPv6Address(start);
+      return `${compressIPv6(expanded)}/${prefix}`;
+    } catch (e) {
+      // fallback: raw hex
+      return `${start.toString(16).padStart(32, '0').match(/.{4}/g).join(':')}/${prefix}`;
+    }
+  }
+
+  /**
+   * Return one page of enumerated blocks for the given level.
+   * @returns {{ items: [{index,cidr,label}], total: BigInt, hasMore: boolean }}
+   */
+  function getBlocksPage(base, levels, levelIndex, offset) {
+    const level      = levels[levelIndex];
+    const total      = level.totalBlocks;          // BigInt
+    const prefix     = level.prefix;
+    const blockSize  = 2n ** BigInt(128 - prefix);
+    const networkBase = IPv6Utils.getNetworkAddress(base.address, base.prefix);
+
+    const end = BigInt(offset) + BigInt(BV_PAGE) < total
+      ? offset + BV_PAGE
+      : Number(total);
+
+    const items = [];
+    for (let i = offset; i < end; i++) {
+      items.push({
+        index: i + 1,
+        cidr:  blockCIDR(networkBase, blockSize, i, prefix),
+        label: `${level.label} ${i + 1}`,
+      });
+    }
+    return { items, total, hasMore: BigInt(end) < total };
   }
 
   // ── Rendering ────────────────────────────────────────────────────
@@ -224,13 +291,153 @@ const HierarchicalPlanner = (function () {
         </table>
       </div>`;
 
+    // ── Blocks section ────────────────────────────────────────────
+    const tabsHtml = levels.map((l, i) => {
+      const color = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+      return `
+        <button class="hp-level-tab${i === 0 ? ' hp-tab-active' : ''}" data-index="${i}"
+                style="${i === 0 ? `border-color:${color};color:${color};background:${color}15` : ''}">
+          <span class="hp-tab-dot" style="background:${color}"></span>
+          ${l.label}
+          <span class="hp-tab-count">${formatBigInt(l.totalBlocks)}</span>
+        </button>`;
+    }).join('');
+
+    const blocksSectionHtml = `
+      <div class="hp-blocks-section" id="hpBlocksSection" style="margin-top:28px">
+        <div class="hp-blocks-header">
+          <div class="hp-section-title"><i class="fas fa-list-ul"></i> Blocos enumerados</div>
+          <div class="hp-level-tabs" id="hpLevelTabs">${tabsHtml}</div>
+        </div>
+        <div class="hp-blocks-info" id="hpBlocksInfo"></div>
+        <div class="hp-blocks-list" id="hpBlocksList"></div>
+        <div class="hp-blocks-footer" id="hpBlocksFooter"></div>
+      </div>`;
+
     const el = document.getElementById('hpResults');
     el.className = 'hp-results-content';
-    el.innerHTML = summaryHtml + treeHtml + tableHtml;
+    el.innerHTML = summaryHtml + treeHtml + tableHtml + blocksSectionHtml;
     el.style.display = 'block';
 
-    // Scroll to results smoothly
+    // Save state for block enumeration
+    lastBase   = base;
+    lastLevels = levels;
+    bvLevel    = 0;
+    bvOffset   = 0;
+
+    // Wire tabs + render first page
+    attachBlocksEvents();
+    renderBlocksPage(false);
+
     setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
+
+  // ── Block view helpers ────────────────────────────────────────────
+
+  function attachBlocksEvents() {
+    document.querySelectorAll('.hp-level-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const idx = parseInt(tab.dataset.index, 10);
+        if (idx === bvLevel) return;
+
+        // Update active tab styling
+        document.querySelectorAll('.hp-level-tab').forEach((t, i) => {
+          const color = LEVEL_COLORS[(i + 1) % LEVEL_COLORS.length];
+          if (parseInt(t.dataset.index, 10) === idx) {
+            t.classList.add('hp-tab-active');
+            t.style.borderColor = color;
+            t.style.color       = color;
+            t.style.background  = color + '15';
+          } else {
+            t.classList.remove('hp-tab-active');
+            t.style.borderColor = '';
+            t.style.color       = '';
+            t.style.background  = '';
+          }
+        });
+
+        bvLevel  = idx;
+        bvOffset = 0;
+        document.getElementById('hpBlocksList').innerHTML = '';
+        renderBlocksPage(false);
+      });
+    });
+  }
+
+  function renderBlocksPage(append) {
+    if (!lastBase || !lastLevels) return;
+
+    const { items, total, hasMore } = getBlocksPage(lastBase, lastLevels, bvLevel, bvOffset);
+    const level = lastLevels[bvLevel];
+    const color = LEVEL_COLORS[(bvLevel + 1) % LEVEL_COLORS.length];
+
+    // Info bar
+    const shown = bvOffset + items.length;
+    document.getElementById('hpBlocksInfo').innerHTML = `
+      <i class="fas fa-info-circle" style="color:${color}"></i>
+      Mostrando <strong>${bvOffset + 1}–${shown}</strong> de
+      <strong>${formatBigInt(total)}</strong> blocos
+      <span class="hp-info-level" style="background:${color}15;border-color:${color};color:${color}">/${level.prefix}</span>`;
+
+    // Block rows
+    const list = document.getElementById('hpBlocksList');
+    if (!append) list.innerHTML = '';
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'hp-block-item';
+      row.innerHTML = `
+        <span class="hp-block-index">${item.index}</span>
+        <code class="hp-block-cidr">${item.cidr}</code>
+        <span class="hp-block-label" style="background:${color}12;border-color:${color}40;color:${color}">${item.label}</span>
+        <button class="hp-block-copy" data-cidr="${item.cidr}" title="Copiar ${item.cidr}">
+          <i class="fas fa-copy"></i>
+        </button>`;
+      row.querySelector('.hp-block-copy').addEventListener('click', e => {
+        const btn = e.currentTarget;
+        navigator.clipboard.writeText(btn.dataset.cidr).then(() => {
+          btn.innerHTML = '<i class="fas fa-check"></i>';
+          btn.style.background = '#059669';
+          setTimeout(() => {
+            btn.innerHTML = '<i class="fas fa-copy"></i>';
+            btn.style.background = '';
+          }, 1500);
+        });
+      });
+      list.appendChild(row);
+    });
+
+    bvOffset = shown;
+
+    // Footer
+    const footer = document.getElementById('hpBlocksFooter');
+    if (hasMore) {
+      footer.innerHTML = `
+        <button id="hpBlocksMoreBtn" class="hp-more-btn" style="border-color:${color};color:${color}">
+          <i class="fas fa-chevron-down"></i> Ver mais ${BV_PAGE} blocos
+        </button>`;
+      footer.querySelector('#hpBlocksMoreBtn').addEventListener('click', () => {
+        renderBlocksPage(true);
+      });
+    } else {
+      footer.innerHTML = items.length > 0
+        ? `<span class="hp-blocks-done"><i class="fas fa-check-circle" style="color:#059669"></i> Todos os ${formatBigInt(total)} blocos exibidos</span>`
+        : '';
+    }
+  }
+
+  // ── Clear ─────────────────────────────────────────────────────────
+
+  function clearPlanner() {
+    document.getElementById('hpBaseBlock').value = '';
+    document.getElementById('hpLevelsList').innerHTML = '';
+    const results = document.getElementById('hpResults');
+    results.style.display = 'none';
+    results.innerHTML = '';
+    lastBase = null;
+    lastLevels = null;
+    bvLevel = 0;
+    bvOffset = 0;
   }
 
   // ── Calculate (entry point) ───────────────────────────────────────
@@ -759,14 +966,53 @@ body.dark-mode .hp-add-btn:hover {
 }
 
 /* ═══════════════════════════════════════════════
-   CALCULATE BUTTON (prominent, full-width)
+   CALCULATE + CLEAR BUTTONS
 ═══════════════════════════════════════════════ */
 .hp-calc-section {
   padding: 20px 24px;
 }
 
+.hp-calc-buttons {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.hp-clear-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 14px 18px;
+  background: transparent;
+  color: #57606a;
+  border: 1.5px solid #d0d7de;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.hp-clear-btn:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.05);
+}
+body.dark-mode .hp-clear-btn {
+  color: #8b949e;
+  border-color: #30363d;
+}
+body.dark-mode .hp-clear-btn:hover {
+  border-color: #dc2626;
+  color: #f87171;
+  background: rgba(220, 38, 38, 0.08);
+}
+
 #hpCalcBtn {
-  width: 100%;
+  flex: 1;
   padding: 14px 20px;
   background: linear-gradient(135deg, #0070d1, #0056a3);
   color: #fff;
@@ -1147,6 +1393,219 @@ body.dark-mode .hp-table code {
 @media (max-width: 400px) {
   .hp-summary-cards { grid-template-columns: 1fr; }
 }
+
+/* ═══════════════════════════════════════════════
+   BLOCKS ENUMERATION SECTION
+═══════════════════════════════════════════════ */
+.hp-blocks-section {
+  border: 1px solid #d0d7de;
+  border-radius: 10px;
+  overflow: hidden;
+}
+body.dark-mode .hp-blocks-section {
+  border-color: #30363d;
+}
+
+.hp-blocks-header {
+  padding: 14px 16px 0;
+}
+
+/* ── Level tabs ── */
+.hp-level-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 10px 16px 14px;
+  border-bottom: 1px solid #d0d7de;
+}
+body.dark-mode .hp-level-tabs {
+  border-color: #30363d;
+}
+
+.hp-level-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 13px;
+  border: 1.5px solid #d0d7de;
+  border-radius: 20px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  color: #57606a;
+  transition: all 0.2s ease;
+}
+.hp-level-tab:hover {
+  box-shadow: 0 2px 6px rgba(0,0,0,.08);
+  transform: translateY(-1px);
+}
+body.dark-mode .hp-level-tab {
+  color: #8b949e;
+  border-color: #30363d;
+}
+.hp-tab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.hp-tab-count {
+  font-size: 11px;
+  opacity: 0.7;
+  margin-left: 1px;
+}
+
+/* ── Info bar ── */
+.hp-blocks-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #57606a;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+body.dark-mode .hp-blocks-info {
+  background: #161b22;
+  border-color: #30363d;
+  color: #8b949e;
+}
+.hp-info-level {
+  display: inline-block;
+  padding: 1px 8px;
+  border: 1px solid;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'SFMono-Regular', monospace;
+  margin-left: 4px;
+}
+
+/* ── Block list ── */
+.hp-blocks-list {
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+.hp-blocks-list::-webkit-scrollbar { width: 5px; }
+.hp-blocks-list::-webkit-scrollbar-thumb { background: #0070d1; border-radius: 3px; }
+
+.hp-block-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 11px;
+  border: 1px solid #d0d7de;
+  border-radius: 7px;
+  background: #fff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.hp-block-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+body.dark-mode .hp-block-item {
+  background: #0d1117;
+  border-color: #21262d;
+}
+body.dark-mode .hp-block-item:hover {
+  border-color: #30363d;
+  box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+
+.hp-block-index {
+  min-width: 30px;
+  text-align: right;
+  font-size: 12px;
+  color: #57606a;
+  flex-shrink: 0;
+}
+body.dark-mode .hp-block-index { color: #8b949e; }
+
+.hp-block-cidr {
+  flex: 1;
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  color: #24292f;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+body.dark-mode .hp-block-cidr { color: #e6edf3; }
+
+.hp-block-label {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 9px;
+  border-radius: 10px;
+  border: 1px solid;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hp-block-copy {
+  background: #0070d1;
+  color: #fff;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: background 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+.hp-block-copy:hover {
+  background: #0056a3;
+  transform: scale(1.07);
+}
+
+/* ── Footer ── */
+.hp-blocks-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #d0d7de;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.dark-mode .hp-blocks-footer { border-color: #30363d; }
+
+.hp-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 20px;
+  border: 1.5px solid;
+  border-radius: 20px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.2s ease;
+}
+.hp-more-btn:hover {
+  opacity: 0.8;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(0,0,0,.1);
+}
+.hp-blocks-done {
+  font-size: 13px;
+  color: #57606a;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+body.dark-mode .hp-blocks-done { color: #8b949e; }
     `;
     document.head.appendChild(s);
   }
@@ -1230,11 +1689,16 @@ body.dark-mode .hp-table code {
           </button>
         </div>
 
-        <!-- 4. Calculate button -->
+        <!-- 4. Calculate + Clear buttons -->
         <div class="hp-calc-section">
-          <button id="hpCalcBtn">
-            <i class="fas fa-calculator"></i> Calcular Hierarquia
-          </button>
+          <div class="hp-calc-buttons">
+            <button id="hpClearBtn" class="hp-clear-btn">
+              <i class="fas fa-redo-alt"></i> Limpar
+            </button>
+            <button id="hpCalcBtn">
+              <i class="fas fa-calculator"></i> Calcular Hierarquia
+            </button>
+          </div>
         </div>
 
         <!-- 5. Results (hidden until calculated) -->
@@ -1247,6 +1711,7 @@ body.dark-mode .hp-table code {
     panel.querySelector('#hpCloseBtn').addEventListener('click', closePanel);
     panel.querySelector('#hpAddLevelBtn').addEventListener('click', () => addLevel());
     panel.querySelector('#hpCalcBtn').addEventListener('click', calculate);
+    panel.querySelector('#hpClearBtn').addEventListener('click', clearPlanner);
     panel.querySelectorAll('.hp-preset-btn').forEach(btn => {
       btn.addEventListener('click', () => loadPreset(btn.dataset.preset));
     });
