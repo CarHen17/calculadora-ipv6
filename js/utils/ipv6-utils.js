@@ -50,35 +50,81 @@ const IPv6Utils = (function() {
    */
   function validateIPv6(addressCIDR) {
     try {
-      if (!addressCIDR || typeof addressCIDR !== 'string') {
-        return "Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).";
+      if (!addressCIDR || typeof addressCIDR !== 'string' || addressCIDR.trim() === '') {
+        return {
+          code: 'EMPTY',
+          message: 'Por favor, insira um endereço IPv6 válido no formato CIDR.',
+          suggestion: 'Exemplo: 2001:db8::/41'
+        };
       }
-      
-      const parts = addressCIDR.split('/');
-      if (parts.length !== 2) {
-        return "Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).";
+
+      const trimmed = addressCIDR.trim();
+
+      // Detect IPv4 address
+      if (/^\d{1,3}(\.\d{1,3}){3}(\/\d+)?$/.test(trimmed)) {
+        return {
+          code: 'IPV4_DETECTED',
+          message: 'Endereço IPv4 detectado. Esta calculadora é para IPv6.',
+          suggestion: 'Para usar IPv4 mapeado em IPv6, use o prefixo ::ffff: (ex: ::ffff:192.0.2.1/128)'
+        };
       }
-      
+
+      const parts = trimmed.split('/');
+      if (parts.length !== 2 || !parts[1]) {
+        return {
+          code: 'MISSING_PREFIX',
+          message: 'Prefixo CIDR ausente ou formato inválido.',
+          suggestion: 'Adicione o prefixo após "/". Exemplo: 2001:db8::/48'
+        };
+      }
+
       const [addr, prefix] = parts;
-      if (!addr || !prefix || isNaN(prefix)) {
-        return "Por favor, insira um endereço IPv6 válido no formato CIDR (ex.: 2001:db8::/41).";
+      if (!addr || isNaN(prefix)) {
+        return {
+          code: 'MISSING_PREFIX',
+          message: 'Por favor, insira um endereço IPv6 válido no formato CIDR.',
+          suggestion: 'Exemplo: 2001:db8::/41'
+        };
       }
-      
+
       const prefixNum = parseInt(prefix);
       if (prefixNum < 1 || prefixNum > 128) {
-        return "O prefixo inicial deve estar entre 1 e 128.";
+        return {
+          code: 'PREFIX_RANGE',
+          message: `Prefixo /${prefix} fora do intervalo válido (1–128).`,
+          suggestion: 'Use um prefixo entre /1 e /128. Prefixos comuns: /48, /56, /64'
+        };
       }
-      
+
       // Validar formato básico do endereço
       if (!isValidIPv6Format(addr)) {
-        return "Formato de endereço IPv6 inválido.";
+        return {
+          code: 'WRONG_FORMAT',
+          message: 'Formato de endereço IPv6 inválido.',
+          suggestion: 'IPv6 usa 8 grupos hexadecimais separados por ":". Zeros consecutivos podem ser abreviados com "::"'
+        };
       }
-      
+
       return null;
     } catch (error) {
       console.error('[IPv6Utils] Erro na validação:', error);
-      return "Erro ao processar o endereço IPv6.";
+      return {
+        code: 'ERROR',
+        message: 'Erro ao processar o endereço IPv6.',
+        suggestion: null
+      };
     }
+  }
+
+  /**
+   * Extracts a plain string message from a validation error (for backward compat)
+   * @param {Object|string|null} error - Result from validateIPv6
+   * @returns {string|null}
+   */
+  function getValidationMessage(error) {
+    if (!error) return null;
+    if (typeof error === 'string') return error;
+    return error.message || 'Endereço inválido';
   }
   
   /**
@@ -498,9 +544,15 @@ const IPv6Utils = (function() {
         const now = Date.now();
         if (now - lastProgressUpdate > CONFIG.PROGRESS_UPDATE_INTERVAL) {
           const loadingMessage = document.querySelector('#loadingIndicator .loading-message');
-          if (loadingMessage && total > 1000n) {
+          const progressBar = document.getElementById('progressBar');
+          if (total > 1000n) {
             const percent = Math.min(99, Math.floor(Number((current * 100n) / total)));
-            loadingMessage.textContent = `Gerando sub-redes (${percent}%)... Por favor, aguarde.`;
+            if (loadingMessage) {
+              loadingMessage.textContent = `Gerando sub-redes (${percent}%)... Por favor, aguarde.`;
+            }
+            if (progressBar) {
+              progressBar.style.width = percent + '%';
+            }
           }
           lastProgressUpdate = now;
         }
@@ -547,11 +599,13 @@ const IPv6Utils = (function() {
         if (i < maxSubRedes) {
           requestAnimationFrame(processChunk);
         } else {
-          // Ocultar indicador de carregamento
+          // Ocultar indicador de carregamento e resetar barra
           const loadingIndicator = document.getElementById('loadingIndicator');
           if (loadingIndicator) {
             loadingIndicator.style.display = 'none';
           }
+          const progressBar = document.getElementById('progressBar');
+          if (progressBar) progressBar.style.width = '0%';
           
           // Mostrar notificação com informações das sub-redes geradas
           showSubnetsGeneratedNotification(numSubRedes, Number(i));
@@ -601,7 +655,7 @@ const IPv6Utils = (function() {
         return false;
       }
       
-      return validateIPv6(ipv6) === null;
+      return getValidationMessage(validateIPv6(ipv6)) === null;
     } catch (error) {
       return false;
     }
@@ -614,26 +668,104 @@ const IPv6Utils = (function() {
     console.log('[IPv6Utils] Módulo IPv6 Utils inicializado');
   }
   
+  /**
+   * Compares two IPv6 blocks for containment and overlap.
+   * @param {Object} b1 - {network, prefix}
+   * @param {Object} b2 - {network, prefix}
+   * @returns {Object} comparison result
+   */
+  function compareBlocks(b1, b2) {
+    try {
+      const net1 = getNetworkAddress(b1.network, b1.prefix);
+      const net2 = getNetworkAddress(b2.network, b2.prefix);
+      const size1 = 1n << (128n - BigInt(b1.prefix));
+      const size2 = 1n << (128n - BigInt(b2.prefix));
+      const end1 = net1 + size1 - 1n;
+      const end2 = net2 + size2 - 1n;
+
+      const b2InB1 = net1 <= net2 && end2 <= end1;
+      const b1InB2 = net2 <= net1 && end1 <= end2;
+      const hasOverlap = !(end1 < net2 || end2 < net1);
+
+      let relationship;
+      if (b1InB2 && b2InB1) {
+        relationship = 'identical';
+      } else if (b2InB1) {
+        relationship = 'b2_in_b1';
+      } else if (b1InB2) {
+        relationship = 'b1_in_b2';
+      } else if (hasOverlap) {
+        relationship = 'overlap';
+      } else {
+        relationship = 'disjoint';
+      }
+
+      return { relationship, net1, net2, end1, end2, size1, size2 };
+    } catch (error) {
+      console.error('[IPv6Utils] Erro em compareBlocks:', error);
+      return { relationship: 'error', error: error.message };
+    }
+  }
+
+  /**
+   * Finds which subnet in the list contains the given IP address.
+   * @param {string} ip - IPv6 address (without prefix)
+   * @param {Array} subnets - array of {subnet, network, initial, final}
+   * @returns {Object} - matching subnet or {found: false} or {error: string}
+   */
+  function findSubnetForIP(ip, subnets) {
+    try {
+      const expandedIp = expandIPv6Address(ip.includes('/') ? ip : ip + '/128');
+      if (expandedIp.startsWith('Erro')) {
+        return { error: 'Endereço IP inválido: ' + expandedIp };
+      }
+      const ipBigInt = ipv6ToBigInt(expandedIp.split('/')[0] || expandedIp);
+
+      for (let i = 0; i < subnets.length; i++) {
+        const s = subnets[i];
+        const parts = s.subnet.split('/');
+        const prefix = parseInt(parts[1], 10);
+        const networkBigInt = getNetworkAddress(s.network || parts[0], prefix);
+        const blockSize = 1n << (128n - BigInt(prefix));
+        const endBigInt = networkBigInt + blockSize - 1n;
+
+        if (ipBigInt >= networkBigInt && ipBigInt <= endBigInt) {
+          return { found: true, subnet: s, index: i };
+        }
+      }
+
+      return { found: false };
+    } catch (error) {
+      console.error('[IPv6Utils] Erro em findSubnetForIP:', error);
+      return { error: error.message };
+    }
+  }
+
   // API pública
   const publicAPI = {
     // Funções principais
     validateIPv6,
+    getValidationMessage,
     expandIPv6Address,
     shortenIPv6,
     formatIPv6Address,
     isValidIPv6,
     gerarSubRedesAssincronamente,
-    
+
     // Funções de agregação
     ipv6ToBigInt,
     calculateNetworkMask,
     getNetworkAddress,
     areConsecutiveBlocks,
     canAggregateBlocks,
-    
+
+    // Novas funções de análise
+    compareBlocks,
+    findSubnetForIP,
+
     // Utilitários
     formatNumber,
-    
+
     // Configuração
     config: CONFIG
   };

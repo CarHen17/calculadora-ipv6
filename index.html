@@ -42,6 +42,9 @@
         <button id="toggleThemeBtn" class="btn-primary">
           <i class="fas fa-moon"></i> Tema
         </button>
+        <button id="sidebarToggleBtn" class="btn-primary mobile-only" aria-label="Informações do bloco">
+          <i class="fas fa-info-circle"></i> Info
+        </button>
         <button id="resetBtn" class="btn-primary">
           <i class="fas fa-redo-alt"></i> Limpar
         </button>
@@ -70,12 +73,28 @@
         <!-- Formulário inicial -->
         <div class="form-group">
           <label for="ipv6">Insira um endereço IPv6 no formato CIDR:</label>
-          <input type="text" id="ipv6" 
-                 placeholder="Ex.: 2001:db8::/41" 
-                 autocomplete="off" 
-                 aria-describedby="errorMessage">
+          <div class="input-with-history" style="position:relative;">
+            <input type="text" id="ipv6"
+                   placeholder="Ex.: 2001:db8::/41"
+                   autocomplete="off"
+                   aria-describedby="errorMessage">
+            <button id="historyBtn" class="btn-icon" title="Histórico de cálculos" aria-label="Ver histórico de cálculos">
+              <i class="fas fa-history"></i>
+            </button>
+            <div id="historyDropdown" class="history-dropdown" style="display:none" role="listbox"
+                 aria-label="Histórico de cálculos">
+              <div class="history-header">
+                <span>Histórico</span>
+                <button id="clearHistoryBtn" class="btn-sm">
+                  <i class="fas fa-trash"></i> Limpar
+                </button>
+              </div>
+              <ul id="historyList" class="history-list"></ul>
+              <p id="historyEmpty" class="history-empty" style="display:none">Nenhum cálculo no histórico</p>
+            </div>
+          </div>
           <div id="errorMessage" class="error-message"></div>
-          
+
           <div class="action-buttons">
             <button id="calcularBtn" class="btn-primary">
               <i class="fas fa-calculator"></i> Calcular Sub-redes
@@ -145,6 +164,19 @@
                 <li><strong>Selecionar todos</strong>: Use o checkbox no cabeçalho</li>
               </ul>
             </div>
+
+            <!-- Barra de ações: busca + copiar tabela -->
+            <div class="table-actions-bar">
+              <input type="text" id="searchSubnets"
+                     placeholder="Filtrar sub-redes..."
+                     autocomplete="off"
+                     aria-label="Buscar sub-redes">
+              <span id="searchMatchCount" class="search-match-count" style="display:none"></span>
+              <button id="copyTableBtn" class="btn-primary btn-sm">
+                <i class="fas fa-copy"></i> Copiar CSV
+              </button>
+            </div>
+
             <div class="table-container">
               <table id="subnetsTable">
                 <thead>
@@ -161,13 +193,33 @@
                 <tbody></tbody>
               </table>
             </div>
-            
+
             <div id="loadMoreContainer" style="display: none; text-align: center; margin-top: 16px;">
               <button id="loadMoreButton" class="btn-primary">
                 <i class="fas fa-sync"></i> Carregar Mais Sub-redes
               </button>
             </div>
-            
+
+            <!-- Cálculo Reverso: Localizar IP -->
+            <div id="reverseSearchSection" class="reverse-search-section" style="display:none;">
+              <button id="toggleReverseSearchBtn" class="reverse-search-toggle">
+                <i class="fas fa-search"></i> Localizar IP na Tabela
+                <i class="fas fa-chevron-down reverse-search-chevron"></i>
+              </button>
+              <div id="reverseSearchBody" class="reverse-search-body" style="display:none;">
+                <div class="reverse-search-input-row">
+                  <input type="text" id="reverseSearchIp"
+                         placeholder="Ex.: 2001:db8::1"
+                         autocomplete="off"
+                         aria-label="Endereço IPv6 para localizar">
+                  <button id="reverseSearchBtn" class="btn-primary btn-sm">
+                    <i class="fas fa-search"></i> Localizar
+                  </button>
+                </div>
+                <div id="reverseSearchResult" class="reverse-search-result" style="display:none;"></div>
+              </div>
+            </div>
+
             <div class="action-buttons">
               <button id="gerarIPsButton" class="btn-primary" style="display: none;">
                 <i class="fas fa-list"></i> Gerar IPs da Sub-rede
@@ -198,7 +250,12 @@
         <!-- Indicador de carregamento -->
         <div id="loadingIndicator" class="loader-container" style="display: none;">
           <div class="loader"></div>
-          <div class="loading-message">Gerando sub-redes... Por favor, aguarde.</div>
+          <div class="loader-content">
+            <div class="loading-message">Gerando sub-redes... Por favor, aguarde.</div>
+            <div class="progress-bar-container">
+              <div id="progressBar" class="progress-fill"></div>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -266,6 +323,9 @@
     </div>
   </div>
   
+  <!-- Backdrop para sidebar mobile -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
   <!-- Botões de navegação -->
   <div class="nav-buttons">
     <button id="topBtn" class="nav-btn" title="Ir para o topo">
@@ -289,7 +349,13 @@
   <script src="js/core/ui-controller.js"></script>
   <script src="js/core/ipv6-calculator.js"></script>
   
-  <!-- 4. Inicialização -->
+  <!-- 4. Novas funcionalidades -->
+  <script src="js/features/virtual-scroll.js"></script>
+  <script src="js/features/table-tools.js"></script>
+  <script src="js/features/history.js"></script>
+  <script src="js/features/reverse-search.js"></script>
+
+  <!-- 5. Inicialização -->
   <script src="js/core/app.js"></script>
 
   <!-- Script de inicialização global -->

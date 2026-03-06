@@ -40,17 +40,27 @@ const UIController = (function() {
     try {
       const steps = document.querySelectorAll('.step');
       if (steps.length === 0) return;
-      
-      // Remover classe ativa de todos os passos
-      steps.forEach(el => el.classList.remove('active'));
-      
-      // Ativar passo atual
+
+      // Remove all state classes
+      steps.forEach(el => el.classList.remove('active', 'completed'));
+
+      // Mark previous steps as completed
+      for (let i = 1; i < step; i++) {
+        const prevStep = getElement(`step${i}`);
+        if (prevStep) prevStep.classList.add('completed');
+      }
+
+      // Activate current step
       const currentStep = getElement(`step${step}`);
       if (currentStep) {
         currentStep.classList.add('active');
       }
-      
-      // Atualizar estado global
+
+      // Set data attribute on .steps for the CSS animated line
+      const stepsContainer = document.querySelector('.steps');
+      if (stepsContainer) stepsContainer.dataset.step = step;
+
+      // Update global state
       if (window.appState) {
         window.appState.currentStep = step;
       }
@@ -629,17 +639,23 @@ const UIController = (function() {
         
       } else {
         currentAggregation = null;
-        
-        aggregationSection.innerHTML = `
-          <h4><i class="fas fa-exclamation-triangle"></i> Agregação</h4>
-          <div class="aggregation-warning">
-            <div class="warning-icon">⚠️</div>
-            <div class="warning-message">
-              <strong>Blocos não podem ser agregados:</strong><br>
-              ${aggregationResult.reason}
+
+        // Show block comparator if exactly 2 blocks are selected
+        if (selectedBlocks.length === 2 && window.IPv6Utils && window.IPv6Utils.compareBlocks) {
+          const comparison = window.IPv6Utils.compareBlocks(selectedBlocks[0], selectedBlocks[1]);
+          renderComparisonSection(aggregationSection, selectedBlocks, comparison, aggregationResult.reason);
+        } else {
+          aggregationSection.innerHTML = `
+            <h4><i class="fas fa-exclamation-triangle"></i> Agregação</h4>
+            <div class="aggregation-warning">
+              <div class="warning-icon">⚠️</div>
+              <div class="warning-message">
+                <strong>Blocos não podem ser agregados:</strong><br>
+                ${aggregationResult.reason}
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        }
       }
       
       // Adicionar ao final da sidebar
@@ -653,6 +669,68 @@ const UIController = (function() {
     }
   }
   
+  /**
+   * Renders a block comparison section (Feature 3)
+   */
+  function renderComparisonSection(container, blocks, comparison, aggregReason) {
+    const shorten = window.IPv6Utils && window.IPv6Utils.shortenIPv6
+      ? window.IPv6Utils.shortenIPv6
+      : (x) => x;
+    const b1Label = shorten(blocks[0].subnet);
+    const b2Label = shorten(blocks[1].subnet);
+
+    const labels = {
+      identical: `Os blocos são <strong>idênticos</strong>`,
+      b2_in_b1: `<strong>${b2Label}</strong> está contido em <strong>${b1Label}</strong>`,
+      b1_in_b2: `<strong>${b1Label}</strong> está contido em <strong>${b2Label}</strong>`,
+      overlap: `Os blocos têm <strong>sobreposição parcial</strong>`,
+      disjoint: `Os blocos são <strong>disjuntos</strong> (sem sobreposição)`,
+      error: `Erro ao comparar blocos`
+    };
+
+    const colorMap = {
+      identical: 'var(--primary-color)',
+      b2_in_b1: 'var(--secondary-color)',
+      b1_in_b2: 'var(--secondary-color)',
+      overlap: 'var(--warning-color)',
+      disjoint: 'var(--text-light-secondary)',
+      error: 'var(--error-color)'
+    };
+
+    const iconMap = {
+      identical: 'fa-equals',
+      b2_in_b1: 'fa-compress-arrows-alt',
+      b1_in_b2: 'fa-compress-arrows-alt',
+      overlap: 'fa-exclamation-triangle',
+      disjoint: 'fa-arrows-alt-h',
+      error: 'fa-times-circle'
+    };
+
+    const rel = comparison.relationship;
+    const color = colorMap[rel] || 'var(--text-light-secondary)';
+    const icon = iconMap[rel] || 'fa-info';
+
+    container.innerHTML = `
+      <h4><i class="fas fa-balance-scale"></i> Comparação de Blocos</h4>
+      <div style="padding:10px 12px;border-radius:var(--border-radius-sm);background:rgba(0,0,0,0.03);border-left:4px solid ${color};margin:8px 0;">
+        <p style="margin:0;font-size:14px;line-height:1.5;">
+          <i class="fas ${icon}" style="color:${color};margin-right:8px;"></i>
+          ${labels[rel] || 'Relação desconhecida'}
+        </p>
+      </div>
+      <div style="font-size:12px;color:var(--text-light-secondary);margin-top:6px;">
+        <div><strong>Bloco A:</strong> <code>${b1Label}</code></div>
+        <div><strong>Bloco B:</strong> <code>${b2Label}</code></div>
+      </div>
+      <div class="aggregation-warning" style="margin-top:12px;">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-message" style="font-size:13px;">
+          <strong>Agregação não possível:</strong> ${aggregReason}
+        </div>
+      </div>
+    `;
+  }
+
   /**
    * Configura event listeners para funcionalidades de agregação
    */
@@ -889,6 +967,59 @@ const UIController = (function() {
   };
   
   /**
+   * Configures the mobile bottom sheet for sidebar
+   */
+  function setupMobileBottomSheet() {
+    const toggleBtn = document.getElementById('sidebarToggleBtn');
+    const backdrop = document.getElementById('sidebarBackdrop');
+    const sidebar = document.getElementById('infoSidebar');
+
+    if (!toggleBtn || !backdrop || !sidebar) return;
+
+    function openSheet() {
+      sidebar.classList.add('open');
+      sidebar.style.display = 'block';
+      backdrop.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSheet() {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('visible');
+      document.body.style.overflow = '';
+    }
+
+    toggleBtn.addEventListener('click', () => {
+      if (sidebar.classList.contains('open')) {
+        closeSheet();
+      } else {
+        openSheet();
+      }
+    });
+
+    backdrop.addEventListener('click', closeSheet);
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768) closeSheet();
+    });
+  }
+
+  /**
+   * Shows sidebar, handling mobile bottom sheet on small screens
+   */
+  function showSidebar() {
+    const sidebar = getElement('infoSidebar');
+    if (!sidebar) return;
+    sidebar.style.display = 'block';
+    if (window.innerWidth <= 768) {
+      sidebar.classList.add('open');
+      const backdrop = document.getElementById('sidebarBackdrop');
+      if (backdrop) backdrop.classList.add('visible');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  /**
    * Configuração de event listeners
    */
   function setupEventListeners() {
@@ -1000,7 +1131,10 @@ const UIController = (function() {
       
       // Configurar eventos
       setupEventListeners();
-      
+
+      // Configurar bottom sheet mobile
+      setupMobileBottomSheet();
+
       // Marcar como inicializado
       initialized = true;
       
@@ -1024,6 +1158,7 @@ const UIController = (function() {
     // Funções de seleção individual
     updateSidebarWithBlock,
     restoreSidebarToMainBlock,
+    showSidebar,
     
     // Funções de agregação
     updateAggregationDisplay,
