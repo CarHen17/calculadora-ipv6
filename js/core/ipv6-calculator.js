@@ -55,17 +55,22 @@ const IPv6Calculator = (function() {
       }
       const inputValue = ipv6Input.value.trim();
       console.log("✅ Validando entrada:", inputValue);
-      const errorMessage = IPv6Utils.validateIPv6(inputValue);
+      const errorResult = IPv6Utils.validateIPv6(inputValue);
       const errorMessageElement = document.getElementById('errorMessage');
       if (errorMessageElement) {
         errorMessageElement.style.display = 'none';
       }
-      if (errorMessage) {
+      if (errorResult) {
         if (errorMessageElement) {
-          errorMessageElement.innerText = errorMessage;
+          const msg = typeof errorResult === 'string' ? errorResult : errorResult.message;
+          const suggestion = typeof errorResult === 'object' ? errorResult.suggestion : null;
+          errorMessageElement.innerHTML = suggestion
+            ? `${msg}<br><small style="opacity:0.8;font-size:12px;">💡 ${suggestion}</small>`
+            : msg;
           errorMessageElement.style.display = 'block';
         } else {
-          alert("Erro: " + errorMessage);
+          const msg = typeof errorResult === 'string' ? errorResult : errorResult.message;
+          alert("Erro: " + msg);
         }
         return false;
       }
@@ -356,6 +361,9 @@ const IPv6Calculator = (function() {
         console.log('🧹 [clearSubnetsState] Botão "Gerar IPs" ocultado');
       }
       
+      // Deactivate virtual scroll
+      if (window.VirtualScroll) window.VirtualScroll.deactivate();
+
       console.log('✅ [clearSubnetsState] Limpeza do estado das sub-redes concluída');
     } catch (error) {
       console.error('❌ [clearSubnetsState] Erro ao limpar estado das sub-redes:', error);
@@ -367,9 +375,22 @@ const IPv6Calculator = (function() {
    */
   function onSubRedesGenerated() {
     try {
-      if (UIController && UIController.carregarMaisSubRedes) {
-        UIController.carregarMaisSubRedes(0, 100);
+      // Try virtual scroll for large datasets
+      const vsActivated = window.VirtualScroll &&
+        window.VirtualScroll.activate(window.appState.subRedesGeradas);
+
+      if (!vsActivated) {
+        // Fallback: existing load-more approach
+        if (UIController && UIController.carregarMaisSubRedes) {
+          UIController.carregarMaisSubRedes(0, 100);
+        }
+      } else {
+        // Virtual scroll handles rendering; load initial batch
+        if (UIController && UIController.carregarMaisSubRedes) {
+          UIController.carregarMaisSubRedes(0, 100);
+        }
       }
+
       const loadMoreContainer = document.getElementById('loadMoreContainer');
       const resultado = document.getElementById('resultado');
       const mainBlockSection = document.getElementById('mainBlockSection');
@@ -390,6 +411,20 @@ const IPv6Calculator = (function() {
       if (UIController && UIController.restoreSidebarToMainBlock) {
         UIController.restoreSidebarToMainBlock();
       }
+
+      // Show reverse search section (Feature 6)
+      const reverseSection = document.getElementById('reverseSearchSection');
+      if (reverseSection) reverseSection.style.display = 'block';
+
+      // Add to history (Feature 1)
+      if (window.CalculationHistory && window.appState.subRedesGeradas.length > 0) {
+        const ipv6Input = document.getElementById('ipv6');
+        const inputVal = ipv6Input ? ipv6Input.value.trim() : '';
+        const firstSubnet = window.appState.subRedesGeradas[0];
+        const subnetPrefix = firstSubnet ? parseInt(firstSubnet.subnet.split('/')[1]) : 0;
+        window.CalculationHistory.addEntry(inputVal, subnetPrefix, window.appState.subRedesGeradas.length);
+      }
+
     } catch (error) {
       console.error("Erro ao processar sub-redes geradas:", error);
       const loadingIndicator = document.getElementById('loadingIndicator');
@@ -441,7 +476,9 @@ const IPv6Calculator = (function() {
         { id: 'errorMessage', action: 'hide' },
         { id: 'ipsList', action: 'empty' },
         { id: 'mainBlockIpsList', action: 'empty' },
-        { id: 'mainBlockIpsContainer', action: 'hide' }
+        { id: 'mainBlockIpsContainer', action: 'hide' },
+        { id: 'reverseSearchSection', action: 'hide' },
+        { id: 'reverseSearchResult', action: 'hide' }
       ];
       
       elementsToReset.forEach(({ id, action }) => {
@@ -488,6 +525,15 @@ const IPv6Calculator = (function() {
       clearSubnetsState();
       console.log("🔄 [Reset Automático] Estados internos resetados");
       
+      // 9a. Limpar filtro e busca reversa
+      window._filteredSubnets = null;
+      const reverseIpInput = document.getElementById('reverseSearchIp');
+      if (reverseIpInput) reverseIpInput.value = '';
+      const searchSubnets = document.getElementById('searchSubnets');
+      if (searchSubnets) searchSubnets.value = '';
+      const searchMatchCount = document.getElementById('searchMatchCount');
+      if (searchMatchCount) searchMatchCount.style.display = 'none';
+
       // 9. Limpar sidebar e remover agregação
       const sidebar = document.getElementById('infoSidebar');
       if (sidebar) {
@@ -514,6 +560,15 @@ const IPv6Calculator = (function() {
    */
   function resetarCalculadora() {
     try {
+      // Clear filter and reverse search state
+      window._filteredSubnets = null;
+      const reverseIpInput = document.getElementById('reverseSearchIp');
+      if (reverseIpInput) reverseIpInput.value = '';
+      const searchSubnetsInput = document.getElementById('searchSubnets');
+      if (searchSubnetsInput) searchSubnetsInput.value = '';
+      const matchCount = document.getElementById('searchMatchCount');
+      if (matchCount) matchCount.style.display = 'none';
+
       const elementsToReset = [
         { id: 'ipv6', action: 'clear' },
         { id: 'mainBlockSection', action: 'hide' },
@@ -524,7 +579,9 @@ const IPv6Calculator = (function() {
         { id: 'loadingIndicator', action: 'hide' },
         { id: 'errorMessage', action: 'hide' },
         { id: 'ipsList', action: 'empty' },
-        { id: 'mainBlockIpsList', action: 'empty' }
+        { id: 'mainBlockIpsList', action: 'empty' },
+        { id: 'reverseSearchSection', action: 'hide' },
+        { id: 'reverseSearchResult', action: 'hide' }
       ];
       elementsToReset.forEach(({ id, action }) => {
         const element = document.getElementById(id);
