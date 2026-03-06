@@ -236,7 +236,10 @@ const UIController = (function() {
       
       // Armazenar bloco selecionado
       selectedIndividualBlock = blockData;
-      
+
+      // Atualizar mini barra de contexto sticky
+      updateStickyBar(subnetDisplay, gatewayIp);
+
       console.log('[UIController] Sidebar atualizada com bloco:', subnetDisplay);
       
       // Atualizar título da sidebar para indicar seleção individual
@@ -316,7 +319,11 @@ const UIController = (function() {
       
       // Limpar seleção individual
       selectedIndividualBlock = null;
-      
+
+      // Atualizar mini barra de contexto sticky com bloco principal
+      const mainCidr = `${shortenIPv6(mainBlock.network)}/${mainBlock.prefix}`;
+      updateStickyBar(mainCidr, gatewayIp);
+
       console.log('[UIController] Sidebar restaurada para bloco principal (versão encurtada)');
       
     } catch (error) {
@@ -1096,6 +1103,71 @@ const UIController = (function() {
       const isMobile = window.innerWidth <= 768;
       document.body.classList.toggle('mobile-device', isMobile);
     });
+
+    // Botões de navegação contextuais + barra de contexto sticky
+    setupScrollBehavior();
+  }
+
+  /**
+   * Configura comportamento contextual baseado em scroll:
+   * - Botões ↑↓ aparecem apenas quando necessário
+   * - Mini barra de info aparece ao rolar para baixo
+   */
+  function setupScrollBehavior() {
+    const topBtn = getElement('topBtn');
+    const bottomBtn = getElement('bottomBtn');
+    const stickyBar = document.getElementById('stickyInfoBar');
+    let ticking = false;
+
+    function onScroll() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const scrollY = window.scrollY || window.pageYOffset;
+        const maxScroll = Math.max(0, document.body.scrollHeight - window.innerHeight);
+
+        // --- Botão TOPO: visível quando rolou > 250px ---
+        if (topBtn) {
+          topBtn.classList.toggle('nav-visible', scrollY > 250);
+        }
+
+        // --- Botão BAIXO: visível quando não está perto do fim ---
+        if (bottomBtn) {
+          bottomBtn.classList.toggle('nav-visible', maxScroll > 100 && scrollY < maxScroll - 80);
+        }
+
+        // --- Mini barra: visível quando rolou > 120px e há bloco ativo ---
+        if (stickyBar) {
+          const hasBlock = stickyBar.dataset.hasBlock === 'true';
+          const show = scrollY > 120 && hasBlock;
+          stickyBar.classList.toggle('bar-visible', show);
+          document.body.classList.toggle('sticky-bar-active', show);
+          stickyBar.setAttribute('aria-hidden', show ? 'false' : 'true');
+        }
+
+        ticking = false;
+      });
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    // Expor função para atualizar ao mudar conteúdo dinamicamente
+    window._updateScrollBehavior = onScroll;
+    onScroll();
+  }
+
+  /**
+   * Atualiza a mini barra de contexto sticky com dados do bloco
+   */
+  function updateStickyBar(cidr, gateway) {
+    const bar = document.getElementById('stickyInfoBar');
+    const cidrEl = document.getElementById('stickyInfoCidr');
+    const gatewayEl = document.getElementById('stickyInfoGateway');
+    if (!bar) return;
+    if (cidr && cidrEl) cidrEl.textContent = cidr;
+    if (gateway && gatewayEl) gatewayEl.textContent = gateway;
+    bar.dataset.hasBlock = cidr ? 'true' : 'false';
+    // Trigger scroll check to update visibility
+    if (window._updateScrollBehavior) window._updateScrollBehavior();
   }
   
   /**
@@ -1188,6 +1260,7 @@ const UIController = (function() {
     updateSidebarWithBlock,
     restoreSidebarToMainBlock,
     showSidebar,
+    updateStickyBar,
     
     // Funções de agregação
     updateAggregationDisplay,

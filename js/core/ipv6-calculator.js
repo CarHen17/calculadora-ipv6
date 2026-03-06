@@ -144,6 +144,13 @@ const IPv6Calculator = (function() {
         void infoSidebar.offsetWidth;
         infoSidebar.classList.add('animate-reveal');
       }
+      // Inicializar sticky bar com bloco principal
+      if (UIController && UIController.updateStickyBar) {
+        UIController.updateStickyBar(
+          `${enderecoFormatado}/${prefixoNum}`,
+          gatewayIpShort
+        );
+      }
       if (suggestions) {
         suggestions.style.display = 'none';
       }

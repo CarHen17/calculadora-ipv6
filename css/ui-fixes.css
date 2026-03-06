@@ -931,3 +931,149 @@ body.dark-mode #subnetsTable tbody tr:hover:not(.selected):not(.individual-selec
   background: rgba(255, 255, 255, 0.9) !important;
   color: #000 !important;
 }
+/* ============================================================
+   MELHORIAS DE UX: LAYOUT MODULAR E NAVEGAÇÃO CONTEXTUAL
+   ============================================================ */
+
+/* --- Tabela: altura limitada com scroll interno --- */
+.table-container {
+  max-height: 52vh !important;
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+  contain: initial !important; /* remove contain:layout para permitir scroll */
+  border-radius: 4px 4px 0 0 !important;
+}
+
+/* Thead fixo dentro do scroll da tabela */
+#subnetsTable thead {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+#subnetsTable thead tr th {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 10 !important;
+}
+
+/* --- Listas de IPs: scroll interno --- */
+#ipsList,
+#mainBlockIpsList,
+#aggregatedIpsList {
+  max-height: 300px !important;
+  overflow-y: auto !important;
+  padding-right: 2px;
+}
+
+/* --- Botões de navegação: ocultos por padrão, contextuais --- */
+#topBtn,
+#bottomBtn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: scale(0.75) !important;
+  transition: opacity 0.3s ease, transform 0.3s ease !important;
+}
+
+#topBtn.nav-visible,
+#bottomBtn.nav-visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transform: scale(1) !important;
+}
+
+/* --- Barra de contexto sticky (topo, aparece ao rolar) --- */
+.sticky-info-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  background: var(--primary-color);
+  color: white;
+  padding: 8px 20px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-100%);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sticky-info-bar.bar-visible {
+  transform: translateY(0);
+}
+
+.sticky-info-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  max-width: 900px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.sticky-info-icon {
+  opacity: 0.85;
+  flex-shrink: 0;
+}
+
+.sticky-info-label {
+  opacity: 0.75;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.sticky-info-value {
+  font-family: 'SFMono-Regular', Consolas, monospace;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.sticky-info-sep {
+  opacity: 0.35;
+  flex-shrink: 0;
+}
+
+.sticky-copy {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  width: 26px !important;
+  height: 26px !important;
+  min-width: 26px !important;
+  flex-shrink: 0;
+}
+
+.sticky-copy:hover {
+  background: rgba(255, 255, 255, 0.28) !important;
+}
+
+body.dark-mode .sticky-info-bar {
+  background: var(--primary-dark, #0056a3);
+}
+
+/* Empurrar conteúdo quando a barra está visível */
+body.sticky-bar-active .container {
+  padding-top: calc(var(--spacing-md) + 38px);
+}
+
+/* Responsivo: simplificar barra no mobile */
+@media (max-width: 600px) {
+  .sticky-info-sep,
+  .sticky-info-bar .sticky-info-label:last-of-type,
+  #stickyInfoGateway,
+  .sticky-copy:last-of-type {
+    display: none;
+  }
+}
+

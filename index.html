@@ -44,6 +44,24 @@
     <button onclick="window.location.reload()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; margin-left: 10px; border-radius: 3px; cursor: pointer;">Recarregar</button>
   </div>
 
+  <!-- Barra de contexto sticky (aparece ao rolar) -->
+  <div id="stickyInfoBar" class="sticky-info-bar" aria-hidden="true">
+    <div class="sticky-info-inner">
+      <i class="fas fa-network-wired sticky-info-icon"></i>
+      <span class="sticky-info-label">Bloco:</span>
+      <span id="stickyInfoCidr" class="sticky-info-value">—</span>
+      <button class="copy-btn sticky-copy" onclick="copyToClipboard(document.getElementById('stickyInfoCidr').textContent)" title="Copiar CIDR">
+        <i class="fas fa-copy"></i>
+      </button>
+      <span class="sticky-info-sep">|</span>
+      <span class="sticky-info-label">Gateway:</span>
+      <span id="stickyInfoGateway" class="sticky-info-value">—</span>
+      <button class="copy-btn sticky-copy" onclick="copyToClipboard(document.getElementById('stickyInfoGateway').textContent)" title="Copiar Gateway">
+        <i class="fas fa-copy"></i>
+      </button>
+    </div>
+  </div>
+
   <div class="container">
     <!-- Cabeçalho -->
     <header class="header">
